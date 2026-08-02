@@ -1,0 +1,17 @@
+{
+  "name": "home-video-streamer",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev -w backend\" \"npm run dev -w frontend\"",
+    "build": "npm run build -w frontend",
+    "start": "npm start -w backend"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

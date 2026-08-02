@@ -1,0 +1,16 @@
+{
+  "profiles": [
+    {
+      "id": "profile-user",
+      "name": "User",
+      "pin": "1234",
+      "allowedPaths": ["c:\\Users\\<USER>\\Videos\\**"]
+    },
+    {
+      "id": "profile-guest",
+      "name": "Guest",
+      "pin": "",
+      "allowedPaths": ["c:\\Users\\<USER>\\Videos\\**"]
+    }
+  ]
+}

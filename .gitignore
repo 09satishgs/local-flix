@@ -1,0 +1,5 @@
+sample-videos
+node_modules
+backend/config.json
+backend/database.db
+backend/dist

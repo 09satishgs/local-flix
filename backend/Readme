@@ -1,0 +1,4 @@
+Configuration Steps (config.js):
+
+1. Rename the file example.config.json to config.json
+2. Update the "allowedPaths" with the actual full pathname of folders with videos
