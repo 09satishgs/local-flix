@@ -28,13 +28,13 @@ async function getPins(req, res) {
 }
 
 async function pinFolder(req, res) {
-  const { folderPath, title, thumbnail } = req.body;
+  const { folderPath, title } = req.body;
   if (!folderPath || !isPathAllowed(folderPath, req.profile.allowedPaths)) {
     return res.status(403).json({ error: "Invalid or restricted path" });
   }
 
   try {
-    await explorerService.pinFolder(folderPath, title, thumbnail, req.profile.id);
+    await explorerService.pinFolder(folderPath, title, req.profile.id);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: "Failed to pin folder" });
@@ -51,9 +51,39 @@ async function unpinFolder(req, res) {
   }
 }
 
+async function setFolderThumbnail(req, res) {
+  const { folderPath, thumbnail } = req.body;
+  if (!folderPath || !thumbnail || !isPathAllowed(folderPath, req.profile.allowedPaths)) {
+    return res.status(403).json({ error: "Invalid or restricted path" });
+  }
+
+  try {
+    await explorerService.setFolderThumbnail(folderPath, thumbnail, req.profile.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to set thumbnail" });
+  }
+}
+
+async function deleteFolderThumbnail(req, res) {
+  const queryPath = req.query.path;
+  if (!queryPath || !isPathAllowed(queryPath, req.profile.allowedPaths)) {
+    return res.status(403).json({ error: "Invalid or restricted path" });
+  }
+
+  try {
+    await explorerService.deleteFolderThumbnail(queryPath, req.profile.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete thumbnail" });
+  }
+}
+
 module.exports = {
   getDirectoryContents,
   getPins,
   pinFolder,
   unpinFolder,
+  setFolderThumbnail,
+  deleteFolderThumbnail,
 };

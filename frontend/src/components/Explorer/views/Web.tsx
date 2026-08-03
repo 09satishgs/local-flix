@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -17,6 +17,8 @@ import {
   DialogContent,
   DialogActions,
   CircularProgress,
+  Menu,
+  MenuItem,
 } from '@mui/material';
 import {
   Folder,
@@ -27,7 +29,9 @@ import {
   ArrowUpward,
   PlayArrow,
   CheckCircle,
+  MoreVert,
 } from '@mui/icons-material';
+import type { ExplorerItem } from '../../../api';
 import type { ExplorerViewProps } from './types';
 
 export const WebExplorerView: React.FC<ExplorerViewProps> = ({
@@ -40,6 +44,11 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
   setPinDialogOpen,
   pinTitle,
   setPinTitle,
+  thumbnailDialogOpen,
+  setThumbnailDialogOpen,
+  handleThumbnailOpen,
+  handleThumbnailSubmit,
+  handleThumbnailRemove,
   imageSearchQuery,
   setImageSearchQuery,
   searchResults,
@@ -56,6 +65,28 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
   onPlayVideo,
   isPathAllowed,
 }) => {
+  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
+  const [menuItem, setMenuItem] = useState<ExplorerItem | null>(null);
+  const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
+
+  const handleOpenMenu = (event: React.MouseEvent, item: ExplorerItem) => {
+    event.stopPropagation();
+    setMenuAnchorEl(event.currentTarget as HTMLElement);
+    setMenuItem(item);
+  };
+
+  const handleOpenContextMenu = (event: React.MouseEvent, item: ExplorerItem) => {
+    event.preventDefault();
+    setContextMenuPos({ x: event.clientX, y: event.clientY });
+    setMenuItem(item);
+  };
+
+  const handleCloseMenu = () => {
+    setMenuAnchorEl(null);
+    setContextMenuPos(null);
+    setMenuItem(null);
+  };
+
   // Helper to construct breadcrumbs
   const renderBreadcrumbs = () => {
     if (!currentPath) {
@@ -209,6 +240,7 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
                 <Card
                   className="movie-card"
                   onClick={() => isDir ? handleFolderClick(item.path) : onPlayVideo(item.path, item.progress?.position || 0)}
+                  onContextMenu={(e) => handleOpenContextMenu(e, item)}
                   sx={{
                     bgcolor: 'var(--bg-card)',
                     border: '1px solid #222',
@@ -276,20 +308,38 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
                       </>
                     )}
 
-                    {/* Pin button */}
+                    {/* Bookmark Pin Button */}
                     {isDir && (
                       <IconButton
                         onClick={(e) => handlePinToggle(e, item)}
                         sx={{
                           position: 'absolute',
                           top: 8,
-                          right: 8,
-                          color: item.isPinned ? 'var(--localflix-red)' : 'rgba(255,255,255,0.4)',
+                          left: 8,
+                          color: item.isPinned ? 'var(--localflix-red)' : 'rgba(255,255,255,0.7)',
                           bgcolor: 'rgba(0,0,0,0.4)',
                           '&:hover': { bgcolor: 'rgba(0,0,0,0.6)' },
                         }}
                       >
-                        {item.isPinned ? <Bookmark /> : <BookmarkBorder />}
+                        {item.isPinned ? <Bookmark sx={{ fontSize: 18 }} /> : <BookmarkBorder sx={{ fontSize: 18 }} />}
+                      </IconButton>
+                    )}
+
+                    {/* Folder Menu Button */}
+                    {isDir && (
+                      <IconButton
+                        className="menu-button"
+                        onClick={(e) => handleOpenMenu(e, item)}
+                        sx={{
+                          position: 'absolute',
+                          top: 8,
+                          right: 8,
+                          color: 'rgba(255,255,255,0.7)',
+                          bgcolor: 'rgba(0,0,0,0.4)',
+                          '&:hover': { bgcolor: 'rgba(0,0,0,0.6)' },
+                        }}
+                      >
+                        <MoreVert sx={{ fontSize: 18 }} />
                       </IconButton>
                     )}
                   </Box>
@@ -357,7 +407,55 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
         </Box>
       )}
 
-      {/* Pin Customization & Image Search Dialog */}
+      {/* Folder Action/Context Menu */}
+      <Menu
+        anchorEl={menuAnchorEl}
+        open={Boolean(menuAnchorEl) || contextMenuPos !== null}
+        onClose={handleCloseMenu}
+        anchorReference={contextMenuPos !== null ? 'anchorPosition' : 'anchorEl'}
+        anchorPosition={
+          contextMenuPos !== null
+            ? { top: contextMenuPos.y, left: contextMenuPos.x }
+            : undefined
+        }
+        PaperProps={{
+          sx: {
+            bgcolor: 'var(--bg-card)',
+            color: '#fff',
+            border: '1px solid #333',
+            minWidth: 180,
+            '& .MuiMenuItem-root': {
+              fontSize: '0.9rem',
+              py: 1,
+              '&:hover': {
+                bgcolor: 'rgba(255,255,255,0.05)',
+              }
+            }
+          }
+        }}
+      >
+        <MenuItem
+          onClick={() => {
+            if (menuItem) handleThumbnailOpen(null, menuItem);
+            handleCloseMenu();
+          }}
+        >
+          Set/Change Thumbnail
+        </MenuItem>
+        {menuItem?.thumbnail && (
+          <MenuItem
+            onClick={() => {
+              if (menuItem) handleThumbnailRemove(menuItem);
+              handleCloseMenu();
+            }}
+            sx={{ color: 'var(--localflix-red)' }}
+          >
+            Remove Thumbnail
+          </MenuItem>
+        )}
+      </Menu>
+
+      {/* Pin Title Customization Dialog */}
       <Dialog
         open={pinDialogOpen}
         onClose={() => setPinDialogOpen(false)}
@@ -374,13 +472,13 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
         }}
       >
         <DialogTitle sx={{ fontWeight: 700, pb: 1 }}>
-          Pin Shortcut & Set Thumbnail
+          Pin Folder to Shortcuts
         </DialogTitle>
         <DialogContent dividers sx={{ borderColor: '#333' }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
             <TextField
               fullWidth
-              label="Pin Title"
+              label="Pin Name"
               value={pinTitle}
               onChange={(e) => setPinTitle(e.target.value)}
               variant="outlined"
@@ -395,12 +493,135 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
 
             <Box>
               <Typography variant="subtitle2" sx={{ color: 'var(--text-secondary)', mb: 1.5, fontWeight: 600 }}>
-                Search and Select Thumbnail (LocalFlix Search)
+                Search and Select Thumbnail Cover Art (Optional)
               </Typography>
               <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
                 <TextField
                   fullWidth
-                  placeholder="Search Google Images..."
+                  placeholder="Search artwork..."
+                  value={imageSearchQuery}
+                  onChange={(e) => setImageSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearchImages()}
+                  variant="outlined"
+                  size="small"
+                  sx={{
+                    '& .MuiInputBase-root': { color: '#fff' },
+                    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#333' },
+                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#555' },
+                    '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--localflix-red)' }
+                  }}
+                />
+                <Button
+                  variant="contained"
+                  onClick={handleSearchImages}
+                  disabled={searchingImages}
+                  sx={{
+                    bgcolor: 'var(--localflix-red)',
+                    color: '#fff',
+                    fontWeight: 600,
+                    px: 3,
+                    '&:hover': { bgcolor: 'var(--localflix-dark-red)' },
+                    '&.Mui-disabled': { bgcolor: '#444', color: '#888' }
+                  }}
+                >
+                  {searchingImages ? <CircularProgress size={20} color="inherit" /> : 'Search'}
+                </Button>
+              </Box>
+
+              {searchingImages && searchResults.length === 0 ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                  <CircularProgress sx={{ color: 'var(--localflix-red)' }} />
+                </Box>
+              ) : searchResults.length > 0 ? (
+                <Grid container spacing={2} sx={{ maxHeight: 300, overflowY: 'auto', pr: 1, '&::-webkit-scrollbar': { width: 6 }, '&::-webkit-scrollbar-thumb': { bgcolor: '#333', borderRadius: 3 } }}>
+                  {searchResults.map((item, idx) => {
+                    const isSelected = selectedThumbnail === item.thumbnail;
+                    return (
+                      <Grid item xs={6} sm={4} md={3} key={idx}>
+                        <Box
+                          onClick={() => setSelectedThumbnail(isSelected ? null : item.thumbnail)}
+                          sx={{
+                            height: 80,
+                            borderRadius: 1,
+                            border: isSelected ? '3px solid var(--localflix-red)' : '1px solid #333',
+                            backgroundImage: `url(${item.thumbnail})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            cursor: 'pointer',
+                            position: 'relative',
+                            transition: 'all 0.2s',
+                            '&:hover': { opacity: 0.8 },
+                          }}
+                        >
+                          {isSelected && (
+                            <Box sx={{ position: 'absolute', top: 4, right: 4, bgcolor: 'var(--bg-dark)', borderRadius: '50%', display: 'flex' }}>
+                              <CheckCircle sx={{ color: 'var(--localflix-red)', fontSize: 20 }} />
+                            </Box>
+                          )}
+                        </Box>
+                      </Grid>
+                    );
+                  })}
+                </Grid>
+              ) : (
+                <Box sx={{ border: '1px dashed #333', p: 4, textAlign: 'center', borderRadius: 1 }}>
+                  <Typography variant="body2" sx={{ color: 'var(--text-secondary)' }}>
+                    Search for images above to select a thumbnail (Optional)
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, borderColor: '#333' }}>
+          <Button onClick={() => setPinDialogOpen(false)} sx={{ color: 'var(--text-secondary)', fontWeight: 600 }}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handlePinSubmit}
+            variant="contained"
+            sx={{
+              bgcolor: 'var(--localflix-red)',
+              color: '#fff',
+              fontWeight: 600,
+              px: 3,
+              '&:hover': { bgcolor: 'var(--localflix-dark-red)' }
+            }}
+          >
+            Pin Shortcut
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Thumbnail Selection Dialog */}
+      <Dialog
+        open={thumbnailDialogOpen}
+        onClose={() => setThumbnailDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            bgcolor: 'var(--bg-card)',
+            color: '#fff',
+            border: '1px solid #333',
+            borderRadius: 2,
+            p: 1
+          }
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, pb: 1 }}>
+          Set Folder Thumbnail
+        </DialogTitle>
+        <DialogContent dividers sx={{ borderColor: '#333' }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
+            <Box>
+              <Typography variant="subtitle2" sx={{ color: 'var(--text-secondary)', mb: 1.5, fontWeight: 600 }}>
+                Search and Select Thumbnail Cover Art
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+                <TextField
+                  fullWidth
+                  placeholder="Search artwork..."
                   value={imageSearchQuery}
                   onChange={(e) => setImageSearchQuery(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearchImages()}
@@ -476,21 +697,23 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
           </Box>
         </DialogContent>
         <DialogActions sx={{ p: 2, borderColor: '#333' }}>
-          <Button onClick={() => setPinDialogOpen(false)} sx={{ color: 'var(--text-secondary)', fontWeight: 600 }}>
+          <Button onClick={() => setThumbnailDialogOpen(false)} sx={{ color: 'var(--text-secondary)', fontWeight: 600 }}>
             Cancel
           </Button>
           <Button
-            onClick={handlePinSubmit}
+            onClick={handleThumbnailSubmit}
             variant="contained"
+            disabled={!selectedThumbnail}
             sx={{
               bgcolor: 'var(--localflix-red)',
               color: '#fff',
               fontWeight: 600,
               px: 3,
-              '&:hover': { bgcolor: 'var(--localflix-dark-red)' }
+              '&:hover': { bgcolor: 'var(--localflix-dark-red)' },
+              '&.Mui-disabled': { bgcolor: '#444', color: '#888' }
             }}
           >
-            Pin Shortcut
+            Save Thumbnail
           </Button>
         </DialogActions>
       </Dialog>

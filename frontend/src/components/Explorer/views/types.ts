@@ -13,6 +13,12 @@ export interface ExplorerViewProps {
   pinTargetItem: ExplorerItem | null;
   pinTitle: string;
   setPinTitle: (title: string) => void;
+  thumbnailDialogOpen: boolean;
+  setThumbnailDialogOpen: (open: boolean) => void;
+  thumbnailTargetItem: ExplorerItem | null;
+  handleThumbnailOpen: (e: React.MouseEvent | null, item: ExplorerItem) => void;
+  handleThumbnailSubmit: () => void;
+  handleThumbnailRemove: (item: ExplorerItem) => void;
   imageSearchQuery: string;
   setImageSearchQuery: (query: string) => void;
   searchResults: SearchImageResult[];
@@ -22,7 +28,7 @@ export interface ExplorerViewProps {
   loadDirectory: (path: string) => void;
   handleFolderClick: (path: string) => void;
   handleBackClick: () => void;
-  handlePinToggle: (e: React.MouseEvent, item: ExplorerItem) => void;
+  handlePinToggle: (e: React.MouseEvent | null, item: ExplorerItem) => void;
   handleSearchImages: () => void;
   handlePinSubmit: () => void;
   formatSize: (bytes?: number) => string;

@@ -2,9 +2,10 @@ const path = require("path");
 const fs = require("fs");
 const pinRepository = require("../repositories/pinRepository");
 const progressRepository = require("../repositories/progressRepository");
+const thumbnailRepository = require("../repositories/thumbnailRepository");
 
 async function getThumbnailsMap(profileId) {
-  return pinRepository.getPins(profileId);
+  return thumbnailRepository.getThumbnails(profileId);
 }
 
 function matchThumbnail(itemPath, pins) {
@@ -103,9 +104,9 @@ async function readDirectory(queryPath, profileId, allowedPaths) {
   return { currentPath: queryPath, items: result };
 }
 
-async function pinFolder(folderPath, customTitle, thumbnail, profileId) {
+async function pinFolder(folderPath, customTitle, profileId) {
   const title = customTitle || path.basename(folderPath) || folderPath;
-  return pinRepository.pinFolder(profileId, folderPath, title, thumbnail);
+  return pinRepository.pinFolder(profileId, folderPath, title);
 }
 
 async function unpinFolder(folderPath, profileId) {
@@ -113,7 +114,21 @@ async function unpinFolder(folderPath, profileId) {
 }
 
 async function getPinnedFolders(profileId) {
-  return pinRepository.getPins(profileId);
+  const pins = await pinRepository.getPins(profileId);
+  const thumbnails = await getThumbnailsMap(profileId);
+  return pins.map(pin => ({
+    path: pin.path,
+    title: pin.title,
+    thumbnail: matchThumbnail(pin.path, thumbnails)
+  }));
+}
+
+async function setFolderThumbnail(folderPath, thumbnail, profileId) {
+  return thumbnailRepository.setThumbnail(profileId, folderPath, thumbnail);
+}
+
+async function deleteFolderThumbnail(folderPath, profileId) {
+  return thumbnailRepository.deleteThumbnail(profileId, folderPath);
 }
 
 module.exports = {
@@ -123,4 +138,6 @@ module.exports = {
   getPinnedFolders,
   getThumbnailsMap,
   matchThumbnail,
+  setFolderThumbnail,
+  deleteFolderThumbnail,
 };

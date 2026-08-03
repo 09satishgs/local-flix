@@ -27,6 +27,8 @@ app.get("/api/explorer", verifyProfile, explorerController.getDirectoryContents)
 app.get("/api/explorer/pins", verifyProfile, explorerController.getPins);
 app.post("/api/explorer/pin", verifyProfile, explorerController.pinFolder);
 app.post("/api/explorer/unpin", verifyProfile, explorerController.unpinFolder);
+app.post("/api/explorer/thumbnail", verifyProfile, explorerController.setFolderThumbnail);
+app.delete("/api/explorer/thumbnail", verifyProfile, explorerController.deleteFolderThumbnail);
 
 // Video streaming routes
 app.get("/api/video/metadata", verifyProfile, videoController.getVideoMetadata);

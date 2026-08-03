@@ -37,6 +37,13 @@ async function initDatabase() {
       thumbnail TEXT,
       PRIMARY KEY (profile_id, path)
     );
+
+    CREATE TABLE IF NOT EXISTS folder_thumbnails (
+      profile_id TEXT,
+      path TEXT,
+      thumbnail TEXT,
+      PRIMARY KEY (profile_id, path)
+    );
   `);
 
   // Deduplicate watch_history to keep only the latest entry per file per profile

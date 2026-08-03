@@ -88,8 +88,12 @@ export const useExplorer = (initialPath: string) => {
     loadDirectory(loadPath);
   };
 
-  const handlePinToggle = async (e: React.MouseEvent, item: ExplorerItem) => {
-    e.stopPropagation(); // prevent directory navigation click
+  // Thumbnail dialog states
+  const [thumbnailDialogOpen, setThumbnailDialogOpen] = useState(false);
+  const [thumbnailTargetItem, setThumbnailTargetItem] = useState<ExplorerItem | null>(null);
+
+  const handlePinToggle = async (e: React.MouseEvent | null, item: ExplorerItem) => {
+    if (e) e.stopPropagation(); // prevent directory navigation click
     try {
       if (item.isPinned) {
         await api.unpinFolder(item.path);
@@ -99,7 +103,7 @@ export const useExplorer = (initialPath: string) => {
         setPinTitle(item.name);
         setImageSearchQuery(item.name);
         setSearchResults([]);
-        setSelectedThumbnail(null);
+        setSelectedThumbnail(item.thumbnail || null);
         setPinDialogOpen(true);
 
         // Trigger pre-search
@@ -114,6 +118,24 @@ export const useExplorer = (initialPath: string) => {
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const handleThumbnailOpen = (e: React.MouseEvent | null, item: ExplorerItem) => {
+    if (e) e.stopPropagation();
+    setThumbnailTargetItem(item);
+    setImageSearchQuery(item.name);
+    setSearchResults([]);
+    setSelectedThumbnail(item.thumbnail || null);
+    setThumbnailDialogOpen(true);
+
+    // Trigger pre-search
+    setSearchingImages(true);
+    api.searchImages(item.name)
+      .then(res => {
+        setSearchResults(res);
+      })
+      .catch(err => console.error(err))
+      .finally(() => setSearchingImages(false));
   };
 
   const handleSearchImages = async () => {
@@ -132,8 +154,31 @@ export const useExplorer = (initialPath: string) => {
   const handlePinSubmit = async () => {
     if (!pinTargetItem) return;
     try {
-      await api.pinFolder(pinTargetItem.path, pinTitle, selectedThumbnail || undefined);
+      await api.pinFolder(pinTargetItem.path, pinTitle);
+      if (selectedThumbnail) {
+        await api.setFolderThumbnail(pinTargetItem.path, selectedThumbnail);
+      }
       setPinDialogOpen(false);
+      loadDirectory(currentPath);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleThumbnailSubmit = async () => {
+    if (!thumbnailTargetItem || !selectedThumbnail) return;
+    try {
+      await api.setFolderThumbnail(thumbnailTargetItem.path, selectedThumbnail);
+      setThumbnailDialogOpen(false);
+      loadDirectory(currentPath);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleThumbnailRemove = async (item: ExplorerItem) => {
+    try {
+      await api.deleteFolderThumbnail(item.path);
       loadDirectory(currentPath);
     } catch (err) {
       console.error(err);
@@ -165,6 +210,12 @@ export const useExplorer = (initialPath: string) => {
     pinTargetItem,
     pinTitle,
     setPinTitle,
+    thumbnailDialogOpen,
+    setThumbnailDialogOpen,
+    thumbnailTargetItem,
+    handleThumbnailOpen,
+    handleThumbnailSubmit,
+    handleThumbnailRemove,
     imageSearchQuery,
     setImageSearchQuery,
     searchResults,

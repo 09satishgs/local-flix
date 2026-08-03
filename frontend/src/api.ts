@@ -112,11 +112,11 @@ export const api = {
     return res.json();
   },
 
-  async pinFolder(folderPath: string, title?: string, thumbnail?: string): Promise<void> {
+  async pinFolder(folderPath: string, title?: string): Promise<void> {
     const res = await fetch('/api/explorer/pin', {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify({ folderPath, title, thumbnail }),
+      body: JSON.stringify({ folderPath, title }),
     });
     if (!res.ok) throw new Error('Failed to pin folder');
   },
@@ -128,6 +128,23 @@ export const api = {
       body: JSON.stringify({ folderPath }),
     });
     if (!res.ok) throw new Error('Failed to unpin folder');
+  },
+
+  async setFolderThumbnail(folderPath: string, thumbnail: string): Promise<void> {
+    const res = await fetch('/api/explorer/thumbnail', {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ folderPath, thumbnail }),
+    });
+    if (!res.ok) throw new Error('Failed to set thumbnail');
+  },
+
+  async deleteFolderThumbnail(folderPath: string): Promise<void> {
+    const res = await fetch(`/api/explorer/thumbnail?path=${encodeURIComponent(folderPath)}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to delete thumbnail');
   },
 
   // Metadata

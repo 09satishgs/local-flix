@@ -8,11 +8,11 @@ async function getPins(profileId) {
   );
 }
 
-async function pinFolder(profileId, folderPath, title, thumbnail) {
+async function pinFolder(profileId, folderPath, title) {
   const db = getDb();
   return db.run(
-    "INSERT OR REPLACE INTO pinned_folders (profile_id, path, title, thumbnail) VALUES (?, ?, ?, ?)",
-    [profileId, folderPath, title, thumbnail || null]
+    "INSERT OR REPLACE INTO pinned_folders (profile_id, path, title, thumbnail) VALUES (?, ?, ?, NULL)",
+    [profileId, folderPath, title]
   );
 }
 

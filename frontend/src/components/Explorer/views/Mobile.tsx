@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -17,6 +17,8 @@ import {
   DialogContent,
   DialogActions,
   CircularProgress,
+  Menu,
+  MenuItem,
 } from '@mui/material';
 import {
   Folder,
@@ -27,7 +29,9 @@ import {
   ArrowUpward,
   PlayArrow,
   CheckCircle,
+  MoreVert,
 } from '@mui/icons-material';
+import type { ExplorerItem } from '../../../api';
 import type { ExplorerViewProps } from './types';
 
 export const MobileExplorerView: React.FC<ExplorerViewProps> = ({
@@ -40,6 +44,11 @@ export const MobileExplorerView: React.FC<ExplorerViewProps> = ({
   setPinDialogOpen,
   pinTitle,
   setPinTitle,
+  thumbnailDialogOpen,
+  setThumbnailDialogOpen,
+  handleThumbnailOpen,
+  handleThumbnailSubmit,
+  handleThumbnailRemove,
   imageSearchQuery,
   setImageSearchQuery,
   searchResults,
@@ -56,6 +65,20 @@ export const MobileExplorerView: React.FC<ExplorerViewProps> = ({
   onPlayVideo,
   isPathAllowed,
 }) => {
+  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
+  const [menuItem, setMenuItem] = useState<ExplorerItem | null>(null);
+
+  const handleOpenMenu = (event: React.MouseEvent, item: ExplorerItem) => {
+    event.stopPropagation();
+    setMenuAnchorEl(event.currentTarget as HTMLElement);
+    setMenuItem(item);
+  };
+
+  const handleCloseMenu = () => {
+    setMenuAnchorEl(null);
+    setMenuItem(null);
+  };
+
   // Helper to construct breadcrumbs with horizontal scrolling
   const renderBreadcrumbs = () => {
     if (!currentPath) {
@@ -261,6 +284,7 @@ export const MobileExplorerView: React.FC<ExplorerViewProps> = ({
                       </>
                     )}
 
+                    {/* Bookmark Pin Button */}
                     {isDir && (
                       <IconButton
                         onClick={(e) => handlePinToggle(e, item)}
@@ -268,12 +292,29 @@ export const MobileExplorerView: React.FC<ExplorerViewProps> = ({
                         sx={{
                           position: 'absolute',
                           top: 4,
-                          right: 4,
-                          color: item.isPinned ? 'var(--localflix-red)' : 'rgba(255,255,255,0.4)',
+                          left: 4,
+                          color: item.isPinned ? 'var(--localflix-red)' : 'rgba(255,255,255,0.7)',
                           bgcolor: 'rgba(0,0,0,0.4)',
                         }}
                       >
-                        {item.isPinned ? <Bookmark fontSize="small" /> : <BookmarkBorder fontSize="small" />}
+                        {item.isPinned ? <Bookmark sx={{ fontSize: 16 }} /> : <BookmarkBorder sx={{ fontSize: 16 }} />}
+                      </IconButton>
+                    )}
+
+                    {/* Folder Menu Button */}
+                    {isDir && (
+                      <IconButton
+                        onClick={(e) => handleOpenMenu(e, item)}
+                        size="small"
+                        sx={{
+                          position: 'absolute',
+                          top: 4,
+                          right: 4,
+                          color: 'rgba(255,255,255,0.7)',
+                          bgcolor: 'rgba(0,0,0,0.4)',
+                        }}
+                      >
+                        <MoreVert sx={{ fontSize: 16 }} />
                       </IconButton>
                     )}
                   </Box>
@@ -334,6 +375,49 @@ export const MobileExplorerView: React.FC<ExplorerViewProps> = ({
       )}
 
       {/* Pin Customization fullscreen dialog on Mobile */}
+      {/* Folder Action/Context Menu */}
+      <Menu
+        anchorEl={menuAnchorEl}
+        open={Boolean(menuAnchorEl)}
+        onClose={handleCloseMenu}
+        PaperProps={{
+          sx: {
+            bgcolor: 'var(--bg-card)',
+            color: '#fff',
+            border: '1px solid #333',
+            minWidth: 180,
+            '& .MuiMenuItem-root': {
+              fontSize: '0.9rem',
+              py: 1.2,
+              '&:hover': {
+                bgcolor: 'rgba(255,255,255,0.05)',
+              }
+            }
+          }
+        }}
+      >
+        <MenuItem
+          onClick={() => {
+            if (menuItem) handleThumbnailOpen(null, menuItem);
+            handleCloseMenu();
+          }}
+        >
+          Set/Change Thumbnail
+        </MenuItem>
+        {menuItem?.thumbnail && (
+          <MenuItem
+            onClick={() => {
+              if (menuItem) handleThumbnailRemove(menuItem);
+              handleCloseMenu();
+            }}
+            sx={{ color: 'var(--localflix-red)' }}
+          >
+            Remove Thumbnail
+          </MenuItem>
+        )}
+      </Menu>
+
+      {/* Pin Title Customization Dialog */}
       <Dialog
         fullScreen
         open={pinDialogOpen}
@@ -347,13 +431,13 @@ export const MobileExplorerView: React.FC<ExplorerViewProps> = ({
         }}
       >
         <DialogTitle sx={{ fontWeight: 700, px: 2, pt: 2, pb: 1 }}>
-          Pin Shortcut & Thumbnail
+          Pin Folder to Shortcuts
         </DialogTitle>
         <DialogContent sx={{ px: 2, py: 1 }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
             <TextField
               fullWidth
-              label="Pin Title"
+              label="Pin Name"
               value={pinTitle}
               onChange={(e) => setPinTitle(e.target.value)}
               variant="outlined"
@@ -361,18 +445,20 @@ export const MobileExplorerView: React.FC<ExplorerViewProps> = ({
               sx={{
                 '& .MuiInputLabel-root': { color: 'var(--text-secondary)' },
                 '& .MuiInputBase-root': { color: '#fff' },
-                '& .MuiOutlinedInput-notchedOutline': { borderColor: '#333' }
+                '& .MuiOutlinedInput-notchedOutline': { borderColor: '#333' },
+                '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#555' },
+                '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--localflix-red)' }
               }}
             />
 
             <Box>
               <Typography variant="body2" sx={{ color: 'var(--text-secondary)', mb: 1, fontWeight: 600 }}>
-                Select Thumbnail
+                Select Thumbnail Cover Art (Optional)
               </Typography>
               <Box sx={{ display: 'flex', gap: 1.5, mb: 2 }}>
                 <TextField
                   fullWidth
-                  placeholder="Search Images..."
+                  placeholder="Search artwork..."
                   value={imageSearchQuery}
                   onChange={(e) => setImageSearchQuery(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearchImages()}
@@ -380,7 +466,9 @@ export const MobileExplorerView: React.FC<ExplorerViewProps> = ({
                   size="small"
                   sx={{
                     '& .MuiInputBase-root': { color: '#fff' },
-                    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#333' }
+                    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#333' },
+                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#555' },
+                    '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--localflix-red)' }
                   }}
                 />
                 <Button
@@ -391,6 +479,8 @@ export const MobileExplorerView: React.FC<ExplorerViewProps> = ({
                     bgcolor: 'var(--localflix-red)',
                     color: '#fff',
                     fontWeight: 600,
+                    '&:hover': { bgcolor: 'var(--localflix-dark-red)' },
+                    '&.Mui-disabled': { bgcolor: '#444', color: '#888' }
                   }}
                 >
                   {searchingImages ? <CircularProgress size={16} color="inherit" /> : 'Search'}
@@ -417,6 +507,124 @@ export const MobileExplorerView: React.FC<ExplorerViewProps> = ({
                             backgroundSize: 'cover',
                             backgroundPosition: 'center',
                             position: 'relative',
+                            transition: 'all 0.2s',
+                          }}
+                        >
+                          {isSelected && (
+                            <Box sx={{ position: 'absolute', top: 4, right: 4, bgcolor: 'var(--bg-dark)', borderRadius: '50%', display: 'flex' }}>
+                              <CheckCircle sx={{ color: 'var(--localflix-red)', fontSize: 18 }} />
+                            </Box>
+                          )}
+                        </Box>
+                      </Grid>
+                    );
+                  })}
+                </Grid>
+              ) : (
+                <Box sx={{ border: '1px dashed #333', p: 3, textAlign: 'center', borderRadius: 1 }}>
+                  <Typography variant="caption" sx={{ color: 'var(--text-secondary)' }}>
+                    Search images above to set thumbnail (Optional)
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setPinDialogOpen(false)} sx={{ color: 'var(--text-secondary)', fontWeight: 600 }}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handlePinSubmit}
+            variant="contained"
+            sx={{
+              bgcolor: 'var(--localflix-red)',
+              color: '#fff',
+              fontWeight: 600,
+              px: 3,
+              '&:hover': { bgcolor: 'var(--localflix-dark-red)' }
+            }}
+          >
+            Pin
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Thumbnail Selection Dialog */}
+      <Dialog
+        fullScreen
+        open={thumbnailDialogOpen}
+        onClose={() => setThumbnailDialogOpen(false)}
+        PaperProps={{
+          sx: {
+            bgcolor: 'var(--bg-dark)',
+            color: '#fff',
+            p: 2
+          }
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, px: 2, pt: 2, pb: 1 }}>
+          Set Folder Thumbnail
+        </DialogTitle>
+        <DialogContent sx={{ px: 2, py: 1 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
+            <Box>
+              <Typography variant="body2" sx={{ color: 'var(--text-secondary)', mb: 1, fontWeight: 600 }}>
+                Select Thumbnail Cover Art
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1.5, mb: 2 }}>
+                <TextField
+                  fullWidth
+                  placeholder="Search Images..."
+                  value={imageSearchQuery}
+                  onChange={(e) => setImageSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearchImages()}
+                  variant="outlined"
+                  size="small"
+                  sx={{
+                    '& .MuiInputBase-root': { color: '#fff' },
+                    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#333' },
+                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#555' },
+                    '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--localflix-red)' }
+                  }}
+                />
+                <Button
+                  variant="contained"
+                  onClick={handleSearchImages}
+                  disabled={searchingImages}
+                  sx={{
+                    bgcolor: 'var(--localflix-red)',
+                    color: '#fff',
+                    fontWeight: 600,
+                    '&:hover': { bgcolor: 'var(--localflix-dark-red)' },
+                    '&.Mui-disabled': { bgcolor: '#444', color: '#888' }
+                  }}
+                >
+                  {searchingImages ? <CircularProgress size={16} color="inherit" /> : 'Search'}
+                </Button>
+              </Box>
+
+              {searchingImages && searchResults.length === 0 ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                  <CircularProgress size={30} sx={{ color: 'var(--localflix-red)' }} />
+                </Box>
+              ) : searchResults.length > 0 ? (
+                <Grid container spacing={1} sx={{ maxHeight: 280, overflowY: 'auto', pr: 0.5 }}>
+                  {searchResults.map((item, idx) => {
+                    const isSelected = selectedThumbnail === item.thumbnail;
+                    return (
+                      <Grid item xs={6} key={idx}>
+                        <Box
+                          onClick={() => setSelectedThumbnail(isSelected ? null : item.thumbnail)}
+                          sx={{
+                            height: 70,
+                            borderRadius: 1,
+                            border: isSelected ? '3px solid var(--localflix-red)' : '1px solid #333',
+                            backgroundImage: `url(${item.thumbnail})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            position: 'relative',
+                            transition: 'all 0.2s',
                           }}
                         >
                           {isSelected && (
@@ -440,19 +648,23 @@ export const MobileExplorerView: React.FC<ExplorerViewProps> = ({
           </Box>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setPinDialogOpen(false)} sx={{ color: 'var(--text-secondary)', fontWeight: 600 }}>
+          <Button onClick={() => setThumbnailDialogOpen(false)} sx={{ color: 'var(--text-secondary)', fontWeight: 600 }}>
             Cancel
           </Button>
           <Button
-            onClick={handlePinSubmit}
+            onClick={handleThumbnailSubmit}
             variant="contained"
+            disabled={!selectedThumbnail}
             sx={{
               bgcolor: 'var(--localflix-red)',
               color: '#fff',
               fontWeight: 600,
+              px: 3,
+              '&:hover': { bgcolor: 'var(--localflix-dark-red)' },
+              '&.Mui-disabled': { bgcolor: '#444', color: '#888' }
             }}
           >
-            Pin
+            Save
           </Button>
         </DialogActions>
       </Dialog>
