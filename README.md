@@ -216,7 +216,7 @@ LocalFlix solves both problems with a lightweight, fully customizable streaming 
 ## Project Structure
 
 ```
-home-video-streamer/
+local-flix/
 ├── package.json                    # Workspace root (npm workspaces)
 │
 ├── backend/
@@ -404,8 +404,8 @@ Copy `example.config.json` to `config.json` and customize:
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/09satishgs/home-video-streamer.git
-cd home-video-streamer
+git clone https://github.com/09satishgs/local-flix.git
+cd local-flix
 
 # 2. Install all dependencies (root + backend + frontend workspaces)
 npm install
