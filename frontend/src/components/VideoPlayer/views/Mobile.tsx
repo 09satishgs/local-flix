@@ -390,7 +390,7 @@ export const MobileVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
                       </MenuItem>
                     ))}
                     {activeSubtitle !== null && (
-                      <>
+                      <Box>
                         <Box sx={{ borderTop: '1px solid #333', my: 1 }} />
                         <Box sx={{ px: 2, py: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
                           <Typography variant="caption" sx={{ color: 'var(--text-secondary)', fontWeight: 600 }}>
@@ -416,7 +416,7 @@ export const MobileVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
                             </Button>
                           </Box>
                         </Box>
-                      </>
+                      </Box>
                     )}
                   </Menu>
                 </>
