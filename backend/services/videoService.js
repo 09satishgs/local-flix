@@ -48,7 +48,7 @@ async function getVideoMetadata(videoPath, profileId, allowedPaths) {
           const streams = metadata.streams || [];
 
           const subtitles = streams
-            .filter((s) => s.codec_type === "subtitle" && ["subrip", "ass", "ssa", "mov_text", "webvtt"].includes(s.codec_name))
+            .filter((s) => s.codec_type === "subtitle" && ["subrip", "ass", "ssa", "mov_text", "webvtt", "hdmv_pgs_subtitle", "dvd_subtitle"].includes(s.codec_name))
             .map((s, idx) => ({
               index: s.index,
               trackIndex: idx,
@@ -243,8 +243,8 @@ function generateVodManifest(duration, targetDuration = 5) {
   return m3u8;
 }
 
-async function getHlsPlaylist(videoPath, audioTrack, profileId, profileToken, startTime) {
-  const jobId = `${videoPath}#${audioTrack || "default"}`;
+async function getHlsPlaylist(videoPath, audioTrack, profileId, profileToken, startTime, subtitleTrack, burnSubtitles) {
+  const jobId = `${videoPath}#a${audioTrack || "default"}#s${subtitleTrack || "none"}#b${burnSubtitles || "false"}`;
   const requestStartTime = parseFloat(startTime || 0);
 
   // Terminate and delete other streams to conserve CPU and NVMe storage
@@ -266,9 +266,10 @@ async function getHlsPlaylist(videoPath, audioTrack, profileId, profileToken, st
     const segmentFilename = path.join(tempDir, "segment_%d.ts");
 
     // Retrieve video duration using ffprobe metadata call
+    let meta = null;
     let duration = 0;
     try {
-      const meta = await getVideoMetadata(videoPath, profileId, []);
+      meta = await getVideoMetadata(videoPath, profileId, []);
       duration = meta.duration;
     } catch (e) {
       console.error("Failed to read video metadata for manifest", e);
@@ -279,46 +280,114 @@ async function getHlsPlaylist(videoPath, audioTrack, profileId, profileToken, st
     fs.writeFileSync(playlistPath, manifestContent, "utf8");
 
     const startSecs = parseFloat(startTime || 0);
-    const args = [];
-    if (!isNaN(startSecs) && startSecs > 0) {
-      args.push("-ss", startSecs.toString());
-    }
-    args.push("-i", videoPath);
-
-    if (isValidAudioTrack(audioTrack)) {
-      args.push("-map", "0:v:0", "-map", `0:${audioTrack}`);
-    }
-
     const startSegment = Math.floor(startSecs / 5);
 
-    args.push(
-      "-c:v", "copy",
-      "-c:a", "aac",
-      "-sn",
-      "-f", "hls",
-      "-hls_time", "5",
-      "-hls_list_size", "0",
-      "-start_number", startSegment.toString(),
-      "-hls_segment_filename", segmentFilename,
-      path.join(tempDir, "stream.m3u8")
-    );
+    const startJob = (useQsv = true) => {
+      const args = [];
+      if (!isNaN(startSecs) && startSecs > 0) {
+        args.push("-ss", startSecs.toString());
+      }
+      args.push("-i", videoPath);
 
-    const ffmpeg = spawn(ffmpegPath, args);
-    let stderrLog = "";
-    ffmpeg.stderr.on("data", (data) => {
-      stderrLog += data.toString();
-    });
+      // Determine if burning subtitles
+      const isBurning = burnSubtitles === "true" && subtitleTrack !== undefined && subtitleTrack !== null && subtitleTrack !== "" && subtitleTrack !== "none";
+      let mappedVideo = false;
+
+      if (isBurning && meta) {
+        const subIdx = parseInt(subtitleTrack, 10);
+        const subTrack = meta.subtitles.find(s => s.index === subIdx);
+        if (subTrack) {
+          if (["hdmv_pgs_subtitle", "dvd_subtitle"].includes(subTrack.codec)) {
+            // Image subtitle overlay
+            args.push("-filter_complex", `[0:v:0][0:${subIdx}]overlay[v]`);
+            args.push("-map", "[v]");
+            mappedVideo = true;
+          } else {
+            // Text subtitle filter
+            const escapedPath = videoPath.replace(/\\/g, "/").replace(/:/g, "\\:");
+            args.push("-vf", `subtitles='${escapedPath}':si=${subTrack.trackIndex}`);
+          }
+        }
+      }
+
+      if (!mappedVideo) {
+        args.push("-map", "0:v:0");
+      }
+
+      if (isValidAudioTrack(audioTrack)) {
+        args.push("-map", `0:${audioTrack}`);
+      } else {
+        args.push("-map", "0:a:0?");
+      }
+
+      // Video encoder settings
+      if (isBurning) {
+        if (useQsv) {
+          args.push("-c:v", "h264_qsv", "-b:v", "4000k", "-maxrate", "6000k", "-bufsize", "8000k", "-preset", "fast");
+        } else {
+          args.push("-c:v", "libx264", "-preset", "veryfast", "-b:v", "4000k", "-maxrate", "6000k", "-bufsize", "8000k");
+        }
+      } else {
+        // Direct stream copy
+        args.push("-c:v", "copy");
+      }
+
+      args.push(
+        "-c:a", "aac",
+        "-sn",
+        "-f", "hls",
+        "-hls_time", "5",
+        "-hls_list_size", "0",
+        "-start_number", startSegment.toString(),
+        "-hls_segment_filename", segmentFilename,
+        path.join(tempDir, "stream.m3u8")
+      );
+
+      const ffmpeg = spawn(ffmpegPath, args);
+      let stderrLog = "";
+      let hasError = false;
+
+      ffmpeg.stderr.on("data", (data) => {
+        const str = data.toString();
+        stderrLog += str;
+        if (useQsv && !hasError && (str.includes("Device setup failed") || str.includes("Error open") || (str.includes("qsv") && str.includes("failed")))) {
+          hasError = true;
+        }
+      });
+
+      ffmpeg.on("exit", (code) => {
+        if (code !== 0 && code !== null && useQsv && !hasError) {
+          hasError = true;
+        }
+        if (hasError && useQsv) {
+          console.error(`QSV HLS transcoding process exited with error. Stderr:\n${stderrLog}`);
+          console.log("Retrying HLS stream job with software x264...");
+          try { ffmpeg.kill(); } catch (e) {}
+          
+          const softwareInstance = startJob(false);
+          const currentJob = activeJobs.get(jobId);
+          if (currentJob) {
+            currentJob.ffmpeg = softwareInstance.ffmpeg;
+            currentJob.getStderr = softwareInstance.getStderr;
+          }
+        }
+      });
+
+      return { ffmpeg, getStderr: () => stderrLog };
+    };
+
+    const initialInstance = startJob(true);
 
     job = {
       tempDir,
       playlistPath,
-      ffmpeg,
+      ffmpeg: initialInstance.ffmpeg,
       createdAt: Date.now(),
       startTime: startSecs,
       startSegment,
       audioTrack,
       videoPath,
-      getStderr: () => stderrLog
+      getStderr: initialInstance.getStderr
     };
     activeJobs.set(jobId, job);
   }

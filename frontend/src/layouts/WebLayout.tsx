@@ -8,6 +8,8 @@ import {
   Avatar,
   Menu,
   MenuItem,
+  Switch,
+  FormControlLabel,
 } from "@mui/material";
 import SwitchAccountIcon from "@mui/icons-material/SwitchAccount";
 
@@ -16,6 +18,8 @@ interface LayoutProps {
   onPageChange: (page: "home" | "explorer" | "history") => void;
   profileName: string | null;
   avatarColor: string;
+  useAltPlayer: boolean;
+  onToggleAltPlayer: (val: boolean) => void;
   onLogout: () => void;
   children: React.ReactNode;
 }
@@ -25,6 +29,8 @@ export const WebLayout: React.FC<LayoutProps> = ({
   onPageChange,
   profileName,
   avatarColor,
+  useAltPlayer,
+  onToggleAltPlayer,
   onLogout,
   children,
 }) => {
@@ -163,10 +169,28 @@ export const WebLayout: React.FC<LayoutProps> = ({
                   color: "#fff",
                   border: "1px solid #333",
                   mt: 1.5,
-                  minWidth: 160,
+                  minWidth: 180,
                 },
               }}
             >
+              <MenuItem disableRipple sx={{ gap: 1.5, py: 1, borderBottom: "1px solid #222", cursor: "default", "&:hover": { bgcolor: "transparent" } }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      size="small"
+                      checked={useAltPlayer}
+                      onChange={(e) => onToggleAltPlayer(e.target.checked)}
+                      color="error"
+                    />
+                  }
+                  label={
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: "#fff" }}>
+                      Alt Player (QSV)
+                    </Typography>
+                  }
+                  sx={{ m: 0 }}
+                />
+              </MenuItem>
               <MenuItem onClick={onLogout} sx={{ gap: 1.5 }}>
                 <SwitchAccountIcon
                   fontSize="small"

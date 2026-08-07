@@ -58,10 +58,6 @@ export interface VideoPlayerViewProps {
   selectAudioTrack: (trackIndex: number | null) => void;
   togglePictureInPicture: () => void;
   formatTime: (secs: number) => string;
-  subtitleDelay: number;
-  adjustSubtitleDelay: (amount: number) => void;
-  downloadSubtitles: (trackIndex: number) => void;
-  subtitleToast: string | null;
   starredSubtitles: string[];
   toggleStarSubtitle: (title: string) => void;
   onClose: () => void;
