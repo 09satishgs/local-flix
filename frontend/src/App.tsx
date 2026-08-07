@@ -10,18 +10,67 @@ type Page = "home" | "explorer" | "history";
 
 const AVATAR_COLORS = ["#1e90ff", "#e50914", "#2ecc71", "#f1c40f", "#9b59b6"];
 
+interface RouteState {
+  page: Page;
+  path: string;
+  videoPath: string | null;
+  videoPosition: number;
+}
+
+const parseHash = (): RouteState => {
+  const hash = window.location.hash || "#/";
+  const pathWithQuery = hash.slice(1);
+  const [pathname, queryString] = pathWithQuery.split("?");
+  
+  const searchParams = new URLSearchParams(queryString || "");
+  const path = searchParams.get("path") || "";
+  const videoPath = searchParams.get("video") || null;
+  const videoPosition = parseInt(searchParams.get("position") || "0", 10);
+
+  let page: Page = "home";
+  if (pathname === "/history") {
+    page = "history";
+  } else if (pathname === "/explorer") {
+    page = "explorer";
+  }
+
+  return { page, path, videoPath, videoPosition };
+};
+
+const navigateTo = (page: Page, path: string, videoPath: string | null, position: number = 0) => {
+  const pathname = page === "home" ? "/" : `/${page}`;
+  const params = new URLSearchParams();
+  if (path) {
+    params.set("path", path);
+  }
+  if (videoPath) {
+    params.set("video", videoPath);
+  }
+  if (position > 0) {
+    params.set("position", position.toString());
+  }
+
+  const queryStr = params.toString();
+  window.location.hash = queryStr ? `${pathname}?${queryStr}` : pathname;
+};
+
 function App() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   const [profileId, setProfileId] = useState<string | null>(null);
   const [profileName, setProfileName] = useState<string | null>(null);
-  const [activePage, setActivePage] = useState<Page>("home");
-  const [explorerPath, setExplorerPath] = useState<string>("");
+  
+  const [route, setRoute] = useState<RouteState>(parseHash());
 
-  // Video playback overlays
-  const [activeVideo, setActiveVideo] = useState<string | null>(null);
-  const [videoPosition, setVideoPosition] = useState(0);
+  // Listen for hash changes to sync routing state
+  useEffect(() => {
+    const handleHashChange = () => {
+      setRoute(parseHash());
+    };
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
 
   // Fetch logged in profile on load
   useEffect(() => {
@@ -36,8 +85,8 @@ function App() {
   const handleProfileSelected = (id: string, name: string) => {
     setProfileId(id);
     setProfileName(name);
-    setActivePage("home");
-    setExplorerPath("");
+    // Clear out any old parameters and go home on login
+    navigateTo("home", "", null);
   };
 
   const handleLogout = () => {
@@ -46,27 +95,21 @@ function App() {
     localStorage.removeItem("profileToken");
     setProfileId(null);
     setProfileName(null);
-    setActivePage("home");
-    setExplorerPath("");
+    window.location.hash = "";
   };
 
   const handlePlayVideo = (path: string, position: number) => {
-    setVideoPosition(position);
-    setActiveVideo(path);
+    navigateTo(route.page, route.path, path, position);
   };
 
   const handleNavigateToFolder = (path: string) => {
-    setExplorerPath(path);
-    setActivePage("explorer");
+    navigateTo("explorer", path, null);
   };
 
   const handlePageChange = (page: Page) => {
     // Reset folder path when clicking Explorer menu button directly,
     // so it starts from the root allowed paths.
-    if (page === "explorer") {
-      setExplorerPath("");
-    }
-    setActivePage(page);
+    navigateTo(page, "", null);
   };
 
   // Get index for avatar color
@@ -86,28 +129,28 @@ function App() {
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "var(--bg-dark)" }}>
       <Layout
-        activePage={activePage}
+        activePage={route.page}
         onPageChange={handlePageChange}
         profileName={profileName}
         avatarColor={getAvatarColor()}
         onLogout={handleLogout}
       >
         <Router
-          activePage={activePage}
-          explorerPath={explorerPath}
+          activePage={route.page}
+          explorerPath={route.path}
           onPlayVideo={handlePlayVideo}
           onNavigateToPath={handleNavigateToFolder}
         />
       </Layout>
 
       {/* Custom Fullscreen Video Player Overlay */}
-      {activeVideo && (
+      {route.videoPath && (
         <VideoPlayer
-          videoPath={activeVideo}
-          initialPosition={videoPosition}
+          videoPath={route.videoPath}
+          initialPosition={route.videoPosition}
           onClose={() => {
-            setActiveVideo(null);
-            setVideoPosition(0);
+            // Remove video param and preserve current page and explorer path
+            navigateTo(route.page, route.path, null);
             // Refresh window locations/data triggers on close to reflect progress updates
             window.dispatchEvent(new Event("playback-closed"));
           }}
