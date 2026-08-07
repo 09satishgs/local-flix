@@ -21,6 +21,7 @@ import {
   Replay,
   SkipNext,
   SkipPrevious,
+  Download,
 } from '@mui/icons-material';
 import type { VideoPlayerViewProps } from './types';
 
@@ -69,6 +70,10 @@ export const MobileVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
   selectSubtitle,
   selectAudioTrack,
   formatTime,
+  subtitleDelay,
+  adjustSubtitleDelay,
+  downloadSubtitles,
+  subtitleToast,
   onClose,
 }) => {
   return (
@@ -120,6 +125,36 @@ export const MobileVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
           />
         ))}
       </video>
+
+      {/* Subtitle Change Toast */}
+      {subtitleToast && (
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: 80, // positioned safely above mobile controls
+            left: '50%',
+            transform: 'translateX(-50%)',
+            bgcolor: 'rgba(0, 0, 0, 0.8)',
+            color: '#fff',
+            px: 2.5,
+            py: 0.75,
+            borderRadius: 1.5,
+            fontSize: '0.9rem',
+            fontWeight: 600,
+            pointerEvents: 'none',
+            zIndex: 110,
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
+            animation: 'fadeInOut 0.2s ease',
+            '@keyframes fadeInOut': {
+              from: { opacity: 0, transform: 'translate(-50%, 12px)' },
+              to: { opacity: 1, transform: 'translate(-50%, 0)' }
+            }
+          }}
+        >
+          {subtitleToast}
+        </Box>
+      )}
 
       {/* Finished Overlay */}
       {isEnded && (
@@ -337,10 +372,52 @@ export const MobileVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
                         key={track.index}
                         onClick={() => selectSubtitle(track.index)}
                         selected={activeSubtitle === track.index}
+                        sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2, minWidth: 200 }}
                       >
-                        {track.language.toUpperCase()} ({track.title})
+                        <Typography variant="body2" sx={{ flexGrow: 1 }}>
+                          {track.language.toUpperCase()} ({track.title})
+                        </Typography>
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            downloadSubtitles(track.index);
+                          }}
+                          sx={{ color: 'var(--text-secondary)', p: 0.5 }}
+                        >
+                          <Download sx={{ fontSize: 16 }} />
+                        </IconButton>
                       </MenuItem>
                     ))}
+                    {activeSubtitle !== null && (
+                      <>
+                        <Box sx={{ borderTop: '1px solid #333', my: 1 }} />
+                        <Box sx={{ px: 2, py: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                          <Typography variant="caption" sx={{ color: 'var(--text-secondary)', fontWeight: 600 }}>
+                            SUBTITLE DELAY
+                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, justifyContent: 'space-between' }}>
+                            <Button
+                              size="small"
+                              onClick={() => adjustSubtitleDelay(-0.5)}
+                              sx={{ minWidth: 32, p: 0.5, border: '1px solid #333', color: '#fff' }}
+                            >
+                              -0.5s
+                            </Button>
+                            <Typography variant="body2" sx={{ fontWeight: 600, minWidth: 50, textAlign: 'center' }}>
+                              {subtitleDelay > 0 ? `+${subtitleDelay.toFixed(1)}s` : `${subtitleDelay.toFixed(1)}s`}
+                            </Typography>
+                            <Button
+                              size="small"
+                              onClick={() => adjustSubtitleDelay(0.5)}
+                              sx={{ minWidth: 32, p: 0.5, border: '1px solid #333', color: '#fff' }}
+                            >
+                              +0.5s
+                            </Button>
+                          </Box>
+                        </Box>
+                      </>
+                    )}
                   </Menu>
                 </>
               )}

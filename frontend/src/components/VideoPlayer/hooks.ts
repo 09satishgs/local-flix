@@ -36,6 +36,12 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
   const [activeSubtitle, setActiveSubtitle] = useState<number | null>(null); // absolute stream index
   const [activeAudio, setActiveAudio] = useState<number | null>(null); // relative audio index
 
+  // Subtitle delay and toast notification states
+  const [subtitleDelay, setSubtitleDelay] = useState(0);
+  const [subtitleToast, setSubtitleToast] = useState<string | null>(null);
+  const toastTimeoutRef = useRef<any>(null);
+  const isMountedRef = useRef(false);
+
   // Menu Anchors
   const [subtitleAnchor, setSubtitleAnchor] = useState<null | HTMLElement>(
     null,
@@ -576,6 +582,96 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
     }
   };
 
+  // Subtitle delay and offset synchronization
+  const applyTrackOffset = (track: TextTrack, targetOffset: number) => {
+    const currentApplied = (track as any).appliedOffset || 0;
+    const delta = targetOffset - currentApplied;
+    if (delta === 0) return;
+
+    const cues = track.cues;
+    if (cues && cues.length > 0) {
+      for (let i = 0; i < cues.length; i++) {
+        const cue = cues[i] as VTTCue;
+        cue.startTime += delta;
+        cue.endTime += delta;
+      }
+      (track as any).appliedOffset = targetOffset;
+      console.log(`Applied offset delta ${delta}s to track (new offset: ${targetOffset}s, cues: ${cues.length})`);
+    }
+  };
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const syncActiveTrack = () => {
+      const activeTrack = Array.from(video.textTracks).find(t => t.mode === 'showing');
+      if (activeTrack && activeTrack.cues && activeTrack.cues.length > 0) {
+        applyTrackOffset(activeTrack, subtitleDelay);
+      }
+    };
+
+    const handleTrackLoad = () => {
+      syncActiveTrack();
+    };
+
+    syncActiveTrack();
+
+    const trackElements = video.querySelectorAll('track');
+    trackElements.forEach(trackEl => {
+      trackEl.addEventListener('load', handleTrackLoad);
+    });
+
+    video.textTracks.addEventListener('change', syncActiveTrack);
+
+    return () => {
+      trackElements.forEach(trackEl => {
+        trackEl.removeEventListener('load', handleTrackLoad);
+      });
+      video.textTracks.removeEventListener('change', syncActiveTrack);
+    };
+  }, [currentVideoPath, activeSubtitle, subtitleDelay]);
+
+  // Toast notification on subtitle change
+  useEffect(() => {
+    if (!isMountedRef.current) {
+      isMountedRef.current = true;
+      return;
+    }
+
+    let label = 'Off';
+    if (activeSubtitle !== null) {
+      const track = subtitles.find(s => s.index === activeSubtitle);
+      label = track ? track.title || `Track ${track.index}` : `Track ${activeSubtitle}`;
+    }
+
+    setSubtitleToast(`Subtitles: ${label}`);
+
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
+
+    toastTimeoutRef.current = setTimeout(() => {
+      setSubtitleToast(null);
+    }, 1000);
+
+    return () => {
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+      }
+    };
+  }, [activeSubtitle, subtitles]);
+
+  const adjustSubtitleDelay = (amount: number) => {
+    setSubtitleDelay(prev => Math.round((prev + amount) * 10) / 10);
+  };
+
+  const downloadSubtitles = (trackIndex: number) => {
+    const token = localStorage.getItem('profileToken') || '';
+    const url = `/api/video/subtitles?path=${encodeURIComponent(currentVideoPath)}&trackIndex=${trackIndex}&download=true&profileId=${encodeURIComponent(profileId)}&profileToken=${encodeURIComponent(token)}`;
+    window.open(url, '_blank');
+  };
+
   // Format seconds to HH:MM:SS
   const formatTime = (secs: number) => {
     if (isNaN(secs) || secs < 0) return "0:00";
@@ -717,5 +813,9 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
     selectAudioTrack,
     togglePictureInPicture,
     formatTime,
+    subtitleDelay,
+    adjustSubtitleDelay,
+    downloadSubtitles,
+    subtitleToast,
   };
 };

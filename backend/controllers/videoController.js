@@ -1,3 +1,4 @@
+const path = require("path");
 const videoService = require("../services/videoService");
 const { isPathAllowed } = require("../config/security");
 
@@ -31,7 +32,14 @@ function extractSubtitles(req, res) {
     return res.status(400).json({ error: "trackIndex required" });
   }
 
+  const download = req.query.download;
+
   res.setHeader("Content-Type", "text/vtt; charset=utf-8");
+  if (download === "true") {
+    const filename = `${encodeURIComponent(path.basename(videoPath, path.extname(videoPath)))}.vtt`;
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+  }
+
   const ffmpeg = videoService.extractSubtitles(videoPath, trackIndex, startOffset);
   ffmpeg.stdout.pipe(res);
 
