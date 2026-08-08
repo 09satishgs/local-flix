@@ -317,9 +317,10 @@ async function getHlsPlaylist(
   }
 
   if (!job) {
-    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "localflix-hls-"));
-    const playlistPath = path.join(tempDir, "index.m3u8");
-    const segmentFilename = path.join(tempDir, "segment_%d.ts");
+    const normalizedVideoPath = videoPath.replace(/\\/g, "/");
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "localflix-hls-")).replace(/\\/g, "/");
+    const playlistPath = path.join(tempDir, "stream.m3u8").replace(/\\/g, "/");
+    const segmentFilename = path.join(tempDir, "segment_%d.ts").replace(/\\/g, "/");
 
     // Retrieve video duration using ffprobe metadata call
     let meta = null;
@@ -343,7 +344,7 @@ async function getHlsPlaylist(
       if (!isNaN(startSecs) && startSecs > 0) {
         args.push("-ss", startSecs.toString());
       }
-      args.push("-i", videoPath);
+      args.push("-i", normalizedVideoPath);
 
       // Determine if burning subtitles
       const isBurning =
@@ -434,17 +435,30 @@ async function getHlsPlaylist(
         startSegment.toString(),
         "-hls_segment_filename",
         segmentFilename,
-        path.join(tempDir, "stream.m3u8"),
+        path.join(tempDir, "stream.m3u8").replace(/\\/g, "/"),
       );
 
       console.log(`[FFmpeg Spawn] Command: ffmpeg ${args.join(" ")}`);
       const ffmpeg = spawn(ffmpegPath, args, { windowsHide: true });
       let stderrLog = "";
       let hasError = false;
+      let startupLinesPrinted = 0;
 
       ffmpeg.stderr.on("data", (data) => {
         const str = data.toString();
         stderrLog += str;
+
+        // Print first 40 lines of stderr to the console in real-time to debug startup issues
+        if (startupLinesPrinted < 40) {
+          const lines = str.split("\n");
+          for (const line of lines) {
+            if (startupLinesPrinted < 40 && line.trim()) {
+              console.log(`[FFmpeg Spawn Stderr] ${line.trim()}`);
+              startupLinesPrinted++;
+            }
+          }
+        }
+
         if (
           useQsv &&
           !hasError &&
@@ -493,7 +507,7 @@ async function getHlsPlaylist(
       startTime: startSecs,
       startSegment,
       audioTrack,
-      videoPath,
+      videoPath: normalizedVideoPath,
       getStderr: initialInstance.getStderr,
     };
     activeJobs.set(jobId, job);
@@ -556,7 +570,7 @@ async function serveHlsFile(jobId, name, res) {
       } catch (e) {}
 
       // Spawn a new FFmpeg process starting at targetTime
-      const segmentFilename = path.join(job.tempDir, "segment_%d.ts");
+      const segmentFilename = path.join(job.tempDir, "segment_%d.ts").replace(/\\/g, "/");
       const args = ["-y"];
       if (targetTime > 0) {
         args.push("-ss", targetTime.toString());
@@ -583,14 +597,25 @@ async function serveHlsFile(jobId, name, res) {
         requestedSegmentIndex.toString(),
         "-hls_segment_filename",
         segmentFilename,
-        path.join(job.tempDir, "stream.m3u8"),
+        path.join(job.tempDir, "stream.m3u8").replace(/\\/g, "/"),
       );
 
       console.log(`[FFmpeg Spawn (Seek)] Command: ffmpeg ${args.join(" ")}`);
       const ffmpeg = spawn(ffmpegPath, args, { windowsHide: true });
       let stderrLog = "";
+      let startupLinesPrinted = 0;
       ffmpeg.stderr.on("data", (data) => {
-        stderrLog += data.toString();
+        const str = data.toString();
+        stderrLog += str;
+        if (startupLinesPrinted < 40) {
+          const lines = str.split("\n");
+          for (const line of lines) {
+            if (startupLinesPrinted < 40 && line.trim()) {
+              console.log(`[FFmpeg Seek Stderr] ${line.trim()}`);
+              startupLinesPrinted++;
+            }
+          }
+        }
       });
 
       ffmpeg.on("exit", (code) => {
