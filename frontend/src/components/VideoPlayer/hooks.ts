@@ -41,6 +41,8 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
   const [subtitleToast, setSubtitleToast] = useState<string | null>(null);
   const toastTimeoutRef = useRef<any>(null);
   const isMountedRef = useRef(false);
+  const networkRetryCountRef = useRef(0);
+  const mediaRetryCountRef = useRef(0);
 
   // Menu Anchors
   const [subtitleAnchor, setSubtitleAnchor] = useState<null | HTMLElement>(
@@ -578,17 +580,40 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
           });
       });
 
+      hls.on(Hls.Events.FRAG_LOADED, () => {
+        networkRetryCountRef.current = 0;
+        mediaRetryCountRef.current = 0;
+      });
+
       hls.on(Hls.Events.ERROR, (_event, data) => {
         if (data.fatal) {
           switch (data.type) {
             case Hls.ErrorTypes.NETWORK_ERROR:
-              hls.startLoad();
+              if (networkRetryCountRef.current < 3) {
+                networkRetryCountRef.current += 1;
+                console.warn(`HLS Network Error, retrying (${networkRetryCountRef.current}/3)...`);
+                hls.startLoad();
+              } else {
+                console.error("HLS Network Error: Max retry limit reached.");
+                setIsLoading(false);
+                setIsPlaying(false);
+              }
               break;
             case Hls.ErrorTypes.MEDIA_ERROR:
-              hls.recoverMediaError();
+              if (mediaRetryCountRef.current < 3) {
+                mediaRetryCountRef.current += 1;
+                console.warn(`HLS Media Error, recovering (${mediaRetryCountRef.current}/3)...`);
+                hls.recoverMediaError();
+              } else {
+                console.error("HLS Media Error: Max recovery limit reached.");
+                setIsLoading(false);
+                setIsPlaying(false);
+              }
               break;
             default:
               console.error("Fatal HLS error", data);
+              setIsLoading(false);
+              setIsPlaying(false);
               break;
           }
         }

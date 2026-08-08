@@ -419,9 +419,13 @@ async function getHlsPlaylist(
         args.push("-c:v", "copy");
       }
 
+      if (meta && meta.audioTracks.length > 0) {
+        args.push("-c:a", "aac");
+      } else {
+        args.push("-an");
+      }
+
       args.push(
-        "-c:a",
-        "aac",
         "-sn",
         "-f",
         "hls",
