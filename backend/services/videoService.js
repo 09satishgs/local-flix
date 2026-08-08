@@ -448,11 +448,11 @@ async function getHlsPlaylist(
         const str = data.toString();
         stderrLog += str;
 
-        // Print first 40 lines of stderr to the console in real-time to debug startup issues
-        if (startupLinesPrinted < 40) {
+        // Print first 150 lines of stderr to the console in real-time to debug startup issues
+        if (startupLinesPrinted < 150) {
           const lines = str.split("\n");
           for (const line of lines) {
-            if (startupLinesPrinted < 40 && line.trim()) {
+            if (startupLinesPrinted < 150 && line.trim()) {
               console.log(`[FFmpeg Spawn Stderr] ${line.trim()}`);
               startupLinesPrinted++;
             }
@@ -607,10 +607,10 @@ async function serveHlsFile(jobId, name, res) {
       ffmpeg.stderr.on("data", (data) => {
         const str = data.toString();
         stderrLog += str;
-        if (startupLinesPrinted < 40) {
+        if (startupLinesPrinted < 150) {
           const lines = str.split("\n");
           for (const line of lines) {
-            if (startupLinesPrinted < 40 && line.trim()) {
+            if (startupLinesPrinted < 150 && line.trim()) {
               console.log(`[FFmpeg Seek Stderr] ${line.trim()}`);
               startupLinesPrinted++;
             }
