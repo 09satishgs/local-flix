@@ -437,6 +437,7 @@ async function getHlsPlaylist(
         path.join(tempDir, "stream.m3u8"),
       );
 
+      console.log(`[FFmpeg Spawn] Command: ffmpeg ${args.join(" ")}`);
       const ffmpeg = spawn(ffmpegPath, args, { windowsHide: true });
       let stderrLog = "";
       let hasError = false;
@@ -456,13 +457,15 @@ async function getHlsPlaylist(
       });
 
       ffmpeg.on("exit", (code) => {
+        if (code !== 0 && code !== null) {
+          console.error(`[FFmpeg Exit Error] Process exited with code ${code}. Command: ffmpeg ${args.join(" ")}`);
+          console.error(`[FFmpeg Error Stderr]:\n${stderrLog}`);
+        }
+
         if (code !== 0 && code !== null && useQsv && !hasError) {
           hasError = true;
         }
         if (hasError && useQsv) {
-          console.error(
-            `QSV HLS transcoding process exited with error. Stderr:\n${stderrLog}`,
-          );
           console.log("Retrying HLS stream job with software x264...");
           try {
             ffmpeg.kill();
@@ -583,10 +586,18 @@ async function serveHlsFile(jobId, name, res) {
         path.join(job.tempDir, "stream.m3u8"),
       );
 
+      console.log(`[FFmpeg Spawn (Seek)] Command: ffmpeg ${args.join(" ")}`);
       const ffmpeg = spawn(ffmpegPath, args, { windowsHide: true });
       let stderrLog = "";
       ffmpeg.stderr.on("data", (data) => {
         stderrLog += data.toString();
+      });
+
+      ffmpeg.on("exit", (code) => {
+        if (code !== 0 && code !== null) {
+          console.error(`[FFmpeg Seek Exit Error] Process exited with code ${code}. Command: ffmpeg ${args.join(" ")}`);
+          console.error(`[FFmpeg Seek Error Stderr]:\n${stderrLog}`);
+        }
       });
 
       job.ffmpeg = ffmpeg;
@@ -597,22 +608,32 @@ async function serveHlsFile(jobId, name, res) {
   }
 
   const filePath = path.join(job.tempDir, name);
-  console.log(`[HLS SEGMENT REQUEST] jobId: ${jobId}, segmentName: ${name}`);
-
-  const startTimeWait = Date.now();
   const exists = await waitForFile(filePath, 8000);
-  const elapsed = Date.now() - startTimeWait;
 
   if (!exists) {
-    console.error(`[HLS SEGMENT NOT FOUND] jobId: ${jobId}, segmentName: ${name} (waited ${elapsed}ms)`);
+    console.error(`[HLS SEGMENT TIMEOUT] Segment file not found: ${name} for jobId: ${jobId} (waited 8000ms)`);
+    if (job.getStderr) {
+      console.error(`[FFmpeg Spawn Error Stderr]:\n${job.getStderr()}`);
+    }
     return res.status(404).json({ error: `Segment file not found: ${name}` });
   }
 
-  const stats = fs.statSync(filePath);
-  console.log(`[HLS SERVING SEGMENT] segmentName: ${name}, size: ${stats.size} bytes, waited: ${elapsed}ms, ETag/Caching disabled`);
-
   // Disable etag, lastModified, and caching to prevent 304 Not Modified responses
   res.sendFile(filePath, { maxAge: 0, lastModified: false, etag: false });
+}
+
+function stopHlsStream(videoPath) {
+  let cleanedAny = false;
+  for (const [id, job] of activeJobs.entries()) {
+    if (job.videoPath === videoPath) {
+      console.log(`[HLS Stop] Cleaning active job: ${id} for video: ${videoPath}`);
+      cleanJob(id);
+      cleanedAny = true;
+    }
+  }
+  if (!cleanedAny) {
+    console.log(`[HLS Stop] No active jobs found for video: ${videoPath}`);
+  }
 }
 
 module.exports = {
@@ -622,4 +643,5 @@ module.exports = {
   getHlsPlaylist,
   serveHlsFile,
   cleanJob,
+  stopHlsStream,
 };

@@ -125,10 +125,8 @@ function serveHlsFile(req, res) {
 
 function stopHlsStream(req, res) {
   const videoPath = req.body.path;
-  const audioTrack = req.body.audioTrack;
   if (videoPath) {
-    const jobId = `${videoPath}#${audioTrack || "default"}`;
-    videoService.cleanJob(jobId);
+    videoService.stopHlsStream(videoPath);
   }
   res.json({ success: true });
 }
