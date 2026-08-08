@@ -300,6 +300,7 @@ async function getHlsPlaylist(
   burnSubtitles,
 ) {
   const jobId = `${videoPath}#a${audioTrack || "default"}#s${subtitleTrack || "none"}#b${burnSubtitles || "false"}`;
+  console.log(`[HLS PLAYLIST REQUEST] path: ${videoPath}, audioTrack: ${audioTrack || "default"}, startTime: ${startTime || 0}, subtitleTrack: ${subtitleTrack || "none"}, burnSubtitles: ${burnSubtitles || "false"}`);
   const requestStartTime = parseFloat(startTime || 0);
 
   // Terminate and delete other streams to conserve CPU and NVMe storage
@@ -596,12 +597,22 @@ async function serveHlsFile(jobId, name, res) {
   }
 
   const filePath = path.join(job.tempDir, name);
+  console.log(`[HLS SEGMENT REQUEST] jobId: ${jobId}, segmentName: ${name}`);
+
+  const startTimeWait = Date.now();
   const exists = await waitForFile(filePath, 8000);
+  const elapsed = Date.now() - startTimeWait;
+
   if (!exists) {
+    console.error(`[HLS SEGMENT NOT FOUND] jobId: ${jobId}, segmentName: ${name} (waited ${elapsed}ms)`);
     return res.status(404).json({ error: `Segment file not found: ${name}` });
   }
 
-  res.sendFile(filePath);
+  const stats = fs.statSync(filePath);
+  console.log(`[HLS SERVING SEGMENT] segmentName: ${name}, size: ${stats.size} bytes, waited: ${elapsed}ms, ETag/Caching disabled`);
+
+  // Disable etag, lastModified, and caching to prevent 304 Not Modified responses
+  res.sendFile(filePath, { maxAge: 0, lastModified: false, etag: false });
 }
 
 module.exports = {
