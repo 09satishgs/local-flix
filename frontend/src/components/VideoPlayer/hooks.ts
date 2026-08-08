@@ -49,6 +49,8 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
   const [audioAnchor, setAudioAnchor] = useState<null | HTMLElement>(null);
   const [speedAnchor, setSpeedAnchor] = useState<null | HTMLElement>(null);
 
+  const [loadingMetadata, setLoadingMetadata] = useState(true);
+
   const [starredSubtitles, setStarredSubtitles] = useState<string[]>(() => {
     const saved = localStorage.getItem("starredSubtitles");
     return saved ? JSON.parse(saved) : [];
@@ -67,6 +69,7 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
   // Load Metadata
   useEffect(() => {
     let active = true;
+    setLoadingMetadata(true);
     api
       .getVideoMetadata(currentVideoPath)
       .then((meta) => {
@@ -117,9 +120,11 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
         } else {
           setActiveSubtitle(null);
         }
+        setLoadingMetadata(false);
       })
       .catch((err) => {
         console.error("Failed to load video metadata:", err);
+        setLoadingMetadata(false);
       });
     return () => {
       active = false;
@@ -290,6 +295,21 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
   const hasPrevious = currentIndex > 0;
   const hasNext = currentIndex !== -1 && currentIndex < playlist.length - 1;
 
+  const syncUrlHash = (newVideoPath: string) => {
+    const hash = window.location.hash || "#/";
+    const pathname = hash.split("?")[0] || "#/";
+    const params = new URLSearchParams(hash.split("?")[1] || "");
+    if (newVideoPath) {
+      params.set("video", newVideoPath);
+      params.set("position", "0");
+    } else {
+      params.delete("video");
+      params.delete("position");
+    }
+    const queryStr = params.toString();
+    window.location.hash = queryStr ? `${pathname}?${queryStr}` : pathname;
+  };
+
   const playPrevious = () => {
     if (!hasPrevious) return;
     const video = videoRef.current;
@@ -307,8 +327,14 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
     currentTimeRef.current = 0;
     setDuration(0);
     setIsEnded(false);
+    setLoadingMetadata(true);
+    setSubtitles([]);
+    setAudioTracks([]);
+    setActiveSubtitle(null);
+    setActiveAudio(null);
     setCurrentVideoPath(prevPath);
     setIsLoading(true);
+    syncUrlHash(prevPath);
   };
 
   const playNext = () => {
@@ -328,8 +354,14 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
     currentTimeRef.current = 0;
     setDuration(0);
     setIsEnded(false);
+    setLoadingMetadata(true);
+    setSubtitles([]);
+    setAudioTracks([]);
+    setActiveSubtitle(null);
+    setActiveAudio(null);
     setCurrentVideoPath(nextPath);
     setIsLoading(true);
+    syncUrlHash(nextPath);
   };
 
   const cycleAudio = () => {
@@ -506,6 +538,8 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
 
   // Load HLS Stream
   useEffect(() => {
+    if (loadingMetadata) return;
+
     const video = videoRef.current;
     if (!video) return;
 
@@ -579,6 +613,8 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
       };
     }
 
+    syncUrlHash(currentVideoPath);
+
     return () => {
       if (hlsRef.current) {
         hlsRef.current.destroy();
@@ -586,7 +622,7 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
       }
       api.stopHlsStream(currentVideoPath, activeAudio).catch(console.error);
     };
-  }, [currentVideoPath, activeAudio]);
+  }, [currentVideoPath, activeAudio, loadingMetadata]);
 
   // Audio track switching
   const selectAudioTrack = (trackIndex: number | null) => {
