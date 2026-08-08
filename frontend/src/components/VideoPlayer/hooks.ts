@@ -36,6 +36,23 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
   const [activeSubtitle, setActiveSubtitle] = useState<number | null>(null); // absolute stream index
   const [activeAudio, setActiveAudio] = useState<number | null>(null); // relative audio index
 
+  const currentVideoPathRef = useRef(currentVideoPath);
+  const activeAudioRef = useRef(activeAudio);
+
+  useEffect(() => {
+    currentVideoPathRef.current = currentVideoPath;
+  }, [currentVideoPath]);
+
+  useEffect(() => {
+    activeAudioRef.current = activeAudio;
+  }, [activeAudio]);
+
+  useEffect(() => {
+    return () => {
+      api.stopHlsStream(currentVideoPathRef.current, activeAudioRef.current).catch(console.error);
+    };
+  }, []);
+
   // Subtitle delay and toast notification states
   const [subtitleDelay, setSubtitleDelay] = useState(0);
   const [subtitleToast, setSubtitleToast] = useState<string | null>(null);
@@ -620,7 +637,6 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
         hlsRef.current.destroy();
         hlsRef.current = null;
       }
-      api.stopHlsStream(currentVideoPath, activeAudio).catch(console.error);
     };
   }, [currentVideoPath, activeAudio, loadingMetadata]);
 

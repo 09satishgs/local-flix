@@ -36,6 +36,23 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
   const [activeSubtitle, setActiveSubtitle] = useState<number | null>(null); // absolute stream index
   const [activeAudio, setActiveAudio] = useState<number | null>(null); // relative audio index
 
+  const currentVideoPathRef = useRef(currentVideoPath);
+  const activeAudioRef = useRef(activeAudio);
+
+  useEffect(() => {
+    currentVideoPathRef.current = currentVideoPath;
+  }, [currentVideoPath]);
+
+  useEffect(() => {
+    activeAudioRef.current = activeAudio;
+  }, [activeAudio]);
+
+  useEffect(() => {
+    return () => {
+      api.stopHlsStream(currentVideoPathRef.current, activeAudioRef.current).catch(console.error);
+    };
+  }, []);
+
   // Menu Anchors
   const [subtitleAnchor, setSubtitleAnchor] = useState<null | HTMLElement>(null);
   const [audioAnchor, setAudioAnchor] = useState<null | HTMLElement>(null);
