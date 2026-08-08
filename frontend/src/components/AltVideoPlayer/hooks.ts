@@ -41,6 +41,8 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
   const [audioAnchor, setAudioAnchor] = useState<null | HTMLElement>(null);
   const [speedAnchor, setSpeedAnchor] = useState<null | HTMLElement>(null);
 
+  const [loadingMetadata, setLoadingMetadata] = useState(true);
+
   const [starredSubtitles, setStarredSubtitles] = useState<string[]>(() => {
     const saved = localStorage.getItem("starredSubtitles");
     return saved ? JSON.parse(saved) : [];
@@ -59,6 +61,7 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
   // Load Metadata
   useEffect(() => {
     let active = true;
+    setLoadingMetadata(true);
     api
       .getVideoMetadata(currentVideoPath)
       .then((meta) => {
@@ -109,9 +112,11 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
         } else {
           setActiveSubtitle(null);
         }
+        setLoadingMetadata(false);
       })
       .catch((err) => {
         console.error("Failed to load video metadata:", err);
+        setLoadingMetadata(false);
       });
     return () => {
       active = false;
@@ -123,13 +128,36 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
   const hasPrevious = currentIdx > 0;
   const hasNext = currentIdx >= 0 && currentIdx < playlist.length - 1;
 
+  const syncUrlHash = (newVideoPath: string) => {
+    const hash = window.location.hash || "#/";
+    const pathname = hash.split("?")[0] || "#/";
+    const params = new URLSearchParams(hash.split("?")[1] || "");
+    if (newVideoPath) {
+      params.set("video", newVideoPath);
+      params.set("position", "0");
+    } else {
+      params.delete("video");
+      params.delete("position");
+    }
+    const queryStr = params.toString();
+    window.location.hash = queryStr ? `${pathname}?${queryStr}` : pathname;
+  };
+
   const playPrevious = () => {
     if (hasPrevious) {
       const prevVideo = playlist[currentIdx - 1];
       currentTimeRef.current = 0;
       setCurrentTime(0);
+      setDuration(0);
+      setIsEnded(false);
+      setLoadingMetadata(true);
+      setSubtitles([]);
+      setAudioTracks([]);
+      setActiveSubtitle(null);
+      setActiveAudio(null);
       setCurrentVideoPath(prevVideo);
       setIsLoading(true);
+      syncUrlHash(prevVideo);
     }
   };
 
@@ -138,8 +166,16 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
       const nextVideo = playlist[currentIdx + 1];
       currentTimeRef.current = 0;
       setCurrentTime(0);
+      setDuration(0);
+      setIsEnded(false);
+      setLoadingMetadata(true);
+      setSubtitles([]);
+      setAudioTracks([]);
+      setActiveSubtitle(null);
+      setActiveAudio(null);
       setCurrentVideoPath(nextVideo);
       setIsLoading(true);
+      syncUrlHash(nextVideo);
     }
   };
 
@@ -155,6 +191,8 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
 
   // Load HLS Stream with subtitle burning toggles
   useEffect(() => {
+    if (loadingMetadata) return;
+
     const video = videoRef.current;
     if (!video) return;
 
@@ -235,7 +273,7 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
         hlsRef.current = null;
       }
     };
-  }, [currentVideoPath, activeAudio, activeSubtitle]);
+  }, [currentVideoPath, activeAudio, activeSubtitle, loadingMetadata]);
 
   // Report watch history ticks
   useEffect(() => {
