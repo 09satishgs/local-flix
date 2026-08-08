@@ -97,6 +97,11 @@ async function getVideoMetadata(videoPath, profileId, allowedPaths) {
               codec: s.codec_name,
             }));
 
+          console.log(`[Metadata Scan] Parsed for: ${videoPath}`);
+          console.log(`[Metadata Scan] Raw Streams: ${JSON.stringify(streams.map(s => ({ index: s.index, codec_type: s.codec_type, codec_name: s.codec_name })), null, 2)}`);
+          console.log(`[Metadata Scan] Audio Tracks: ${JSON.stringify(audioTracks, null, 2)}`);
+          console.log(`[Metadata Scan] Subtitles: ${JSON.stringify(subtitles, null, 2)}`);
+
           resolve({
             duration: parseFloat(metadata.format?.duration || 0),
             subtitles,
