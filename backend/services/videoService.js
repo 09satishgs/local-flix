@@ -2,8 +2,8 @@ const path = require("path");
 const fs = require("fs");
 const os = require("os");
 const { spawn, execFile } = require("child_process");
-const ffmpegPath = require("ffmpeg-static");
-const ffprobePath = require("ffprobe-static").path;
+const ffmpegPath = "ffmpeg";
+const ffprobePath = "ffprobe";
 
 function isValidAudioTrack(track) {
   return (
