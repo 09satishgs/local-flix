@@ -6,7 +6,13 @@ const ffmpegPath = require("ffmpeg-static");
 const ffprobePath = require("ffprobe-static").path;
 
 function isValidAudioTrack(track) {
-  return track !== undefined && track !== null && track !== "" && track !== "null" && track !== "undefined";
+  return (
+    track !== undefined &&
+    track !== null &&
+    track !== "" &&
+    track !== "null" &&
+    track !== "undefined"
+  );
 }
 
 async function getVideoMetadata(videoPath, profileId, allowedPaths) {
@@ -16,8 +22,8 @@ async function getVideoMetadata(videoPath, profileId, allowedPaths) {
   try {
     const files = fs.readdirSync(parentDir);
     playlist = files
-      .map(file => path.join(parentDir, file))
-      .filter(file => {
+      .map((file) => path.join(parentDir, file))
+      .filter((file) => {
         let stats;
         try {
           stats = fs.statSync(file);
@@ -26,9 +32,11 @@ async function getVideoMetadata(videoPath, profileId, allowedPaths) {
         }
         if (stats.isDirectory()) return false;
         const ext = path.extname(file).toLowerCase();
-        return ['.mp4', '.mkv', '.ts', '.m4v', '.mov', '.avi'].includes(ext);
+        return [".mp4", ".mkv", ".ts", ".m4v", ".mov", ".avi"].includes(ext);
       });
-    playlist.sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+    playlist.sort((a, b) =>
+      a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }),
+    );
   } catch (err) {
     console.error("Failed to read playlist:", err);
   }
@@ -36,7 +44,15 @@ async function getVideoMetadata(videoPath, profileId, allowedPaths) {
   return new Promise((resolve, reject) => {
     execFile(
       ffprobePath,
-      ["-v", "error", "-show_format", "-show_streams", "-of", "json", videoPath],
+      [
+        "-v",
+        "error",
+        "-show_format",
+        "-show_streams",
+        "-of",
+        "json",
+        videoPath,
+      ],
       (err, stdout, stderr) => {
         if (err) {
           console.error("ffprobe error:", err);
@@ -48,7 +64,19 @@ async function getVideoMetadata(videoPath, profileId, allowedPaths) {
           const streams = metadata.streams || [];
 
           const subtitles = streams
-            .filter((s) => s.codec_type === "subtitle" && ["subrip", "ass", "ssa", "mov_text", "webvtt", "hdmv_pgs_subtitle", "dvd_subtitle"].includes(s.codec_name))
+            .filter(
+              (s) =>
+                s.codec_type === "subtitle" &&
+                [
+                  "subrip",
+                  "ass",
+                  "ssa",
+                  "mov_text",
+                  "webvtt",
+                  "hdmv_pgs_subtitle",
+                  "dvd_subtitle",
+                ].includes(s.codec_name),
+            )
             .map((s, idx) => ({
               index: s.index,
               trackIndex: idx,
@@ -61,7 +89,9 @@ async function getVideoMetadata(videoPath, profileId, allowedPaths) {
             .filter((s) => s.codec_type === "audio")
             .map((s, idx) => ({
               index: s.index,
-              trackIndex: s.index - streams.findIndex((str) => str.codec_type === "audio"),
+              trackIndex:
+                s.index -
+                streams.findIndex((str) => str.codec_type === "audio"),
               language: s.tags?.language || "Unknown",
               title: s.tags?.title || `Audio ${idx + 1} (${s.codec_name})`,
               codec: s.codec_name,
@@ -71,12 +101,12 @@ async function getVideoMetadata(videoPath, profileId, allowedPaths) {
             duration: parseFloat(metadata.format?.duration || 0),
             subtitles,
             audioTracks,
-            playlist
+            playlist,
           });
         } catch (e) {
           reject(new Error("Error parsing metadata"));
         }
-      }
+      },
     );
   });
 }
@@ -87,17 +117,22 @@ function extractSubtitles(videoPath, trackIndex, startOffset) {
     args.push("-ss", startOffset);
   }
   args.push(
-    "-i", videoPath,
-    "-map", `0:${trackIndex}`,
-    "-f", "webvtt",
-    "pipe:1"
+    "-i",
+    videoPath,
+    "-map",
+    `0:${trackIndex}`,
+    "-f",
+    "webvtt",
+    "pipe:1",
   );
 
-  return spawn(ffmpegPath, args);
+  return spawn(ffmpegPath, args, { windowsHide: true });
 }
 
 function streamVideo(videoPath, startParam, audioTrack, req, res) {
-  const isMkvOrTs = videoPath.toLowerCase().endsWith('.mkv') || videoPath.toLowerCase().endsWith('.ts');
+  const isMkvOrTs =
+    videoPath.toLowerCase().endsWith(".mkv") ||
+    videoPath.toLowerCase().endsWith(".ts");
 
   // Direct MP4 range streaming if not MKV/TS and no audio track override
   if (!isMkvOrTs && !isValidAudioTrack(audioTrack)) {
@@ -156,10 +191,14 @@ function streamVideo(videoPath, startParam, audioTrack, req, res) {
   }
 
   args.push(
-    "-fflags", "+genpts",
-    "-analyzeduration", "0",
-    "-probesize", "32",
-    "-i", videoPath
+    "-fflags",
+    "+genpts",
+    "-analyzeduration",
+    "0",
+    "-probesize",
+    "32",
+    "-i",
+    videoPath,
   );
 
   args.push("-c:v", "copy");
@@ -170,14 +209,18 @@ function streamVideo(videoPath, startParam, audioTrack, req, res) {
   }
 
   args.push(
-    "-f", "mp4",
-    "-movflags", "frag_keyframe+empty_moov+default_base_moof",
-    "-avoid_negative_ts", "make_zero",
-    "-async", "1",
-    "pipe:1"
+    "-f",
+    "mp4",
+    "-movflags",
+    "frag_keyframe+empty_moov+default_base_moof",
+    "-avoid_negative_ts",
+    "make_zero",
+    "-async",
+    "1",
+    "pipe:1",
   );
 
-  const ffmpeg = spawn(ffmpegPath, args);
+  const ffmpeg = spawn(ffmpegPath, args, { windowsHide: true });
   ffmpeg.stdout.pipe(res);
 
   ffmpeg.stderr.on("data", (data) => {
@@ -236,14 +279,26 @@ function generateVodManifest(duration, targetDuration = 5) {
   const segmentCount = Math.ceil(duration / targetDuration);
   for (let i = 0; i < segmentCount; i++) {
     const isLast = i === segmentCount - 1;
-    const segmentLength = isLast ? (duration % targetDuration === 0 ? targetDuration : duration % targetDuration) : targetDuration;
+    const segmentLength = isLast
+      ? duration % targetDuration === 0
+        ? targetDuration
+        : duration % targetDuration
+      : targetDuration;
     m3u8 += `#EXTINF:${segmentLength.toFixed(6)},\nsegment_${i}.ts\n`;
   }
   m3u8 += "#EXT-X-ENDLIST\n";
   return m3u8;
 }
 
-async function getHlsPlaylist(videoPath, audioTrack, profileId, profileToken, startTime, subtitleTrack, burnSubtitles) {
+async function getHlsPlaylist(
+  videoPath,
+  audioTrack,
+  profileId,
+  profileToken,
+  startTime,
+  subtitleTrack,
+  burnSubtitles,
+) {
   const jobId = `${videoPath}#a${audioTrack || "default"}#s${subtitleTrack || "none"}#b${burnSubtitles || "false"}`;
   const requestStartTime = parseFloat(startTime || 0);
 
@@ -290,12 +345,17 @@ async function getHlsPlaylist(videoPath, audioTrack, profileId, profileToken, st
       args.push("-i", videoPath);
 
       // Determine if burning subtitles
-      const isBurning = burnSubtitles === "true" && subtitleTrack !== undefined && subtitleTrack !== null && subtitleTrack !== "" && subtitleTrack !== "none";
+      const isBurning =
+        burnSubtitles === "true" &&
+        subtitleTrack !== undefined &&
+        subtitleTrack !== null &&
+        subtitleTrack !== "" &&
+        subtitleTrack !== "none";
       let mappedVideo = false;
 
       if (isBurning && meta) {
         const subIdx = parseInt(subtitleTrack, 10);
-        const subTrack = meta.subtitles.find(s => s.index === subIdx);
+        const subTrack = meta.subtitles.find((s) => s.index === subIdx);
         if (subTrack) {
           if (["hdmv_pgs_subtitle", "dvd_subtitle"].includes(subTrack.codec)) {
             // Image subtitle overlay
@@ -304,8 +364,13 @@ async function getHlsPlaylist(videoPath, audioTrack, profileId, profileToken, st
             mappedVideo = true;
           } else {
             // Text subtitle filter
-            const escapedPath = videoPath.replace(/\\/g, "/").replace(/:/g, "\\:");
-            args.push("-vf", `subtitles='${escapedPath}':si=${subTrack.trackIndex}`);
+            const escapedPath = videoPath
+              .replace(/\\/g, "/")
+              .replace(/:/g, "\\:");
+            args.push(
+              "-vf",
+              `subtitles='${escapedPath}':si=${subTrack.trackIndex}`,
+            );
           }
         }
       }
@@ -323,9 +388,31 @@ async function getHlsPlaylist(videoPath, audioTrack, profileId, profileToken, st
       // Video encoder settings
       if (isBurning) {
         if (useQsv) {
-          args.push("-c:v", "h264_qsv", "-b:v", "4000k", "-maxrate", "6000k", "-bufsize", "8000k", "-preset", "fast");
+          args.push(
+            "-c:v",
+            "h264_qsv",
+            "-b:v",
+            "4000k",
+            "-maxrate",
+            "6000k",
+            "-bufsize",
+            "8000k",
+            "-preset",
+            "fast",
+          );
         } else {
-          args.push("-c:v", "libx264", "-preset", "veryfast", "-b:v", "4000k", "-maxrate", "6000k", "-bufsize", "8000k");
+          args.push(
+            "-c:v",
+            "libx264",
+            "-preset",
+            "veryfast",
+            "-b:v",
+            "4000k",
+            "-maxrate",
+            "6000k",
+            "-bufsize",
+            "8000k",
+          );
         }
       } else {
         // Direct stream copy
@@ -333,24 +420,36 @@ async function getHlsPlaylist(videoPath, audioTrack, profileId, profileToken, st
       }
 
       args.push(
-        "-c:a", "aac",
+        "-c:a",
+        "aac",
         "-sn",
-        "-f", "hls",
-        "-hls_time", "5",
-        "-hls_list_size", "0",
-        "-start_number", startSegment.toString(),
-        "-hls_segment_filename", segmentFilename,
-        path.join(tempDir, "stream.m3u8")
+        "-f",
+        "hls",
+        "-hls_time",
+        "5",
+        "-hls_list_size",
+        "0",
+        "-start_number",
+        startSegment.toString(),
+        "-hls_segment_filename",
+        segmentFilename,
+        path.join(tempDir, "stream.m3u8"),
       );
 
-      const ffmpeg = spawn(ffmpegPath, args);
+      const ffmpeg = spawn(ffmpegPath, args, { windowsHide: true });
       let stderrLog = "";
       let hasError = false;
 
       ffmpeg.stderr.on("data", (data) => {
         const str = data.toString();
         stderrLog += str;
-        if (useQsv && !hasError && (str.includes("Device setup failed") || str.includes("Error open") || (str.includes("qsv") && str.includes("failed")))) {
+        if (
+          useQsv &&
+          !hasError &&
+          (str.includes("Device setup failed") ||
+            str.includes("Error open") ||
+            (str.includes("qsv") && str.includes("failed")))
+        ) {
           hasError = true;
         }
       });
@@ -360,10 +459,14 @@ async function getHlsPlaylist(videoPath, audioTrack, profileId, profileToken, st
           hasError = true;
         }
         if (hasError && useQsv) {
-          console.error(`QSV HLS transcoding process exited with error. Stderr:\n${stderrLog}`);
+          console.error(
+            `QSV HLS transcoding process exited with error. Stderr:\n${stderrLog}`,
+          );
           console.log("Retrying HLS stream job with software x264...");
-          try { ffmpeg.kill(); } catch (e) {}
-          
+          try {
+            ffmpeg.kill();
+          } catch (e) {}
+
           const softwareInstance = startJob(false);
           const currentJob = activeJobs.get(jobId);
           if (currentJob) {
@@ -387,7 +490,7 @@ async function getHlsPlaylist(videoPath, audioTrack, profileId, profileToken, st
       startSegment,
       audioTrack,
       videoPath,
-      getStderr: initialInstance.getStderr
+      getStderr: initialInstance.getStderr,
     };
     activeJobs.set(jobId, job);
   }
@@ -439,7 +542,9 @@ async function serveHlsFile(jobId, name, res) {
     const isBehind = requestedSegmentIndex < job.startSegment;
 
     if (isAhead || isBehind) {
-      console.log(`Seek detected! Requested segment ${requestedSegmentIndex}. Max segment on disk: ${maxSegmentOnDisk}. Restarting FFmpeg from ${targetTime}s...`);
+      console.log(
+        `Seek detected! Requested segment ${requestedSegmentIndex}. Max segment on disk: ${maxSegmentOnDisk}. Restarting FFmpeg from ${targetTime}s...`,
+      );
 
       // Kill the existing FFmpeg job
       try {
@@ -459,18 +564,25 @@ async function serveHlsFile(jobId, name, res) {
       }
 
       args.push(
-        "-c:v", "copy",
-        "-c:a", "aac",
+        "-c:v",
+        "copy",
+        "-c:a",
+        "aac",
         "-sn",
-        "-f", "hls",
-        "-hls_time", "5",
-        "-hls_list_size", "0",
-        "-start_number", requestedSegmentIndex.toString(),
-        "-hls_segment_filename", segmentFilename,
-        path.join(job.tempDir, "stream.m3u8")
+        "-f",
+        "hls",
+        "-hls_time",
+        "5",
+        "-hls_list_size",
+        "0",
+        "-start_number",
+        requestedSegmentIndex.toString(),
+        "-hls_segment_filename",
+        segmentFilename,
+        path.join(job.tempDir, "stream.m3u8"),
       );
 
-      const ffmpeg = spawn(ffmpegPath, args);
+      const ffmpeg = spawn(ffmpegPath, args, { windowsHide: true });
       let stderrLog = "";
       ffmpeg.stderr.on("data", (data) => {
         stderrLog += data.toString();
