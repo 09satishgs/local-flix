@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { ProfileSelector } from "./components/ProfileSelector";
 import { VideoPlayer } from "./components/VideoPlayer";
+import { AltVideoPlayer } from "./components/AltVideoPlayer";
 import { Box, useMediaQuery, useTheme } from "@mui/material";
 import { WebLayout } from "./layouts/WebLayout";
 import { MobileLayout } from "./layouts/MobileLayout";
@@ -60,6 +61,13 @@ function App() {
 
   const [profileId, setProfileId] = useState<string | null>(null);
   const [profileName, setProfileName] = useState<string | null>(null);
+  
+  const [useAltPlayer, setUseAltPlayer] = useState(() => localStorage.getItem("useAltPlayer") === "true");
+
+  const handleToggleAltPlayer = (val: boolean) => {
+    setUseAltPlayer(val);
+    localStorage.setItem("useAltPlayer", val ? "true" : "false");
+  };
   
   const [route, setRoute] = useState<RouteState>(parseHash());
 
@@ -133,6 +141,8 @@ function App() {
         onPageChange={handlePageChange}
         profileName={profileName}
         avatarColor={getAvatarColor()}
+        useAltPlayer={useAltPlayer}
+        onToggleAltPlayer={handleToggleAltPlayer}
         onLogout={handleLogout}
       >
         <Router
@@ -145,16 +155,29 @@ function App() {
 
       {/* Custom Fullscreen Video Player Overlay */}
       {route.videoPath && (
-        <VideoPlayer
-          videoPath={route.videoPath}
-          initialPosition={route.videoPosition}
-          onClose={() => {
-            // Remove video param and preserve current page and explorer path
-            navigateTo(route.page, route.path, null);
-            // Refresh window locations/data triggers on close to reflect progress updates
-            window.dispatchEvent(new Event("playback-closed"));
-          }}
-        />
+        useAltPlayer ? (
+          <AltVideoPlayer
+            videoPath={route.videoPath}
+            initialPosition={route.videoPosition}
+            onClose={() => {
+              // Remove video param and preserve current page and explorer path
+              navigateTo(route.page, route.path, null);
+              // Refresh window locations/data triggers on close to reflect progress updates
+              window.dispatchEvent(new Event("playback-closed"));
+            }}
+          />
+        ) : (
+          <VideoPlayer
+            videoPath={route.videoPath}
+            initialPosition={route.videoPosition}
+            onClose={() => {
+              // Remove video param and preserve current page and explorer path
+              navigateTo(route.page, route.path, null);
+              // Refresh window locations/data triggers on close to reflect progress updates
+              window.dispatchEvent(new Event("playback-closed"));
+            }}
+          />
+        )
       )}
     </Box>
   );

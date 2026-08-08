@@ -49,6 +49,21 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
   const [audioAnchor, setAudioAnchor] = useState<null | HTMLElement>(null);
   const [speedAnchor, setSpeedAnchor] = useState<null | HTMLElement>(null);
 
+  const [starredSubtitles, setStarredSubtitles] = useState<string[]>(() => {
+    const saved = localStorage.getItem("starredSubtitles");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const toggleStarSubtitle = (title: string) => {
+    setStarredSubtitles((prev) => {
+      const next = prev.includes(title)
+        ? prev.filter((t) => t !== title)
+        : [...prev, title];
+      localStorage.setItem("starredSubtitles", JSON.stringify(next));
+      return next;
+    });
+  };
+
   // Load Metadata
   useEffect(() => {
     let active = true;
@@ -75,16 +90,30 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
           setActiveAudio(null);
         }
 
-        // Auto-select English Subtitles if available
-        const engSub = meta.subtitles.find(
-          (t) =>
-            t.language.toLowerCase().includes("eng") ||
-            t.language.toLowerCase().includes("english") ||
-            t.title.toLowerCase().includes("english") ||
-            t.title.toLowerCase().includes("eng"),
-        );
-        if (engSub) {
-          setActiveSubtitle(engSub.index);
+        // Auto-select starred subtitle or fallback to the last English track in the array
+        const savedStarred = localStorage.getItem("starredSubtitles");
+        const starredList: string[] = savedStarred ? JSON.parse(savedStarred) : [];
+
+        let targetSub = null;
+        if (starredList.length > 0) {
+          targetSub = meta.subtitles.find(s => starredList.includes(s.title));
+        }
+
+        if (!targetSub) {
+          const engSubs = meta.subtitles.filter(
+            (t) =>
+              t.language.toLowerCase().includes("eng") ||
+              t.language.toLowerCase().includes("english") ||
+              t.title.toLowerCase().includes("english") ||
+              t.title.toLowerCase().includes("eng")
+          );
+          if (engSubs.length > 0) {
+            targetSub = engSubs[engSubs.length - 1];
+          }
+        }
+
+        if (targetSub) {
+          setActiveSubtitle(targetSub.index);
         } else {
           setActiveSubtitle(null);
         }
@@ -817,5 +846,7 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
     adjustSubtitleDelay,
     downloadSubtitles,
     subtitleToast,
+    starredSubtitles,
+    toggleStarSubtitle,
   };
 };

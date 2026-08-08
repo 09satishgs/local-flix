@@ -28,6 +28,8 @@ import {
   SkipNext,
   SkipPrevious,
   Download,
+  Star,
+  StarBorder,
 } from "@mui/icons-material";
 import type { VideoPlayerViewProps } from "./types";
 
@@ -85,6 +87,8 @@ export const WebVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
   adjustSubtitleDelay,
   downloadSubtitles,
   subtitleToast,
+  starredSubtitles,
+  toggleStarSubtitle,
   onClose,
 }) => {
   return (
@@ -490,27 +494,44 @@ export const WebVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
                           justifyContent: "space-between",
                           alignItems: "center",
                           gap: 2,
-                          minWidth: 220,
+                          minWidth: 260,
                         }}
                       >
                         <Typography variant="body2" sx={{ flexGrow: 1 }}>
                           {track.title} [{track.language.toUpperCase()}]
                         </Typography>
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            downloadSubtitles(track.index);
-                          }}
-                          sx={{
-                            color: "var(--text-secondary)",
-                            "&:hover": { color: "#fff" },
-                            p: 0.5,
-                          }}
-                          title="Download Subtitles"
-                        >
-                          <Download sx={{ fontSize: 16 }} />
-                        </IconButton>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleStarSubtitle(track.title);
+                            }}
+                            sx={{
+                              color: starredSubtitles.includes(track.title) ? "#ffb400" : "var(--text-secondary)",
+                              "&:hover": { color: "#ffb400" },
+                              p: 0.5,
+                            }}
+                            title="Star Subtitle"
+                          >
+                            {starredSubtitles.includes(track.title) ? <Star sx={{ fontSize: 16 }} /> : <StarBorder sx={{ fontSize: 16 }} />}
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              downloadSubtitles(track.index);
+                            }}
+                            sx={{
+                              color: "var(--text-secondary)",
+                              "&:hover": { color: "#fff" },
+                              p: 0.5,
+                            }}
+                            title="Download Subtitles"
+                          >
+                            <Download sx={{ fontSize: 16 }} />
+                          </IconButton>
+                        </Box>
                       </MenuItem>
                     ))}
                     {activeSubtitle !== null && (

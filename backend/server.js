@@ -23,31 +23,79 @@ app.post("/api/profiles/login", profileController.loginProfile);
 app.get("/api/profiles/me", verifyProfile, profileController.getMe);
 
 // Explorer routes
-app.get("/api/explorer", verifyProfile, explorerController.getDirectoryContents);
+app.get(
+  "/api/explorer",
+  verifyProfile,
+  explorerController.getDirectoryContents,
+);
 app.get("/api/explorer/pins", verifyProfile, explorerController.getPins);
 app.post("/api/explorer/pin", verifyProfile, explorerController.pinFolder);
 app.post("/api/explorer/unpin", verifyProfile, explorerController.unpinFolder);
-app.post("/api/explorer/thumbnail", verifyProfile, explorerController.setFolderThumbnail);
-app.delete("/api/explorer/thumbnail", verifyProfile, explorerController.deleteFolderThumbnail);
+app.post(
+  "/api/explorer/thumbnail",
+  verifyProfile,
+  explorerController.setFolderThumbnail,
+);
+app.delete(
+  "/api/explorer/thumbnail",
+  verifyProfile,
+  explorerController.deleteFolderThumbnail,
+);
 
 // Video streaming routes
 app.get("/api/video/metadata", verifyProfile, videoController.getVideoMetadata);
-app.get("/api/video/subtitles", verifyProfile, videoController.extractSubtitles);
+app.get(
+  "/api/video/subtitles",
+  verifyProfile,
+  videoController.extractSubtitles,
+);
 app.get("/api/video", verifyProfile, videoController.streamVideo);
-app.get("/api/video/hls/index.m3u8", verifyProfile, videoController.getHlsPlaylist);
+app.get(
+  "/api/video/hls/index.m3u8",
+  verifyProfile,
+  videoController.getHlsPlaylist,
+);
 app.get("/api/video/hls/file", verifyProfile, videoController.serveHlsFile);
 app.post("/api/video/hls/stop", verifyProfile, videoController.stopHlsStream);
 
 // Playback progress routes
-app.get("/api/playback/continue", verifyProfile, playbackController.getContinueWatching);
-app.get("/api/playback/history", verifyProfile, playbackController.getWatchHistory);
-app.post("/api/playback/progress", verifyProfile, playbackController.updateProgress);
-app.post("/api/playback/finished", verifyProfile, playbackController.markFinished);
-app.delete("/api/playback/progress", verifyProfile, playbackController.deleteProgress);
-app.delete("/api/playback/history/:id", verifyProfile, playbackController.deleteHistoryItem);
+app.get(
+  "/api/playback/continue",
+  verifyProfile,
+  playbackController.getContinueWatching,
+);
+app.get(
+  "/api/playback/history",
+  verifyProfile,
+  playbackController.getWatchHistory,
+);
+app.post(
+  "/api/playback/progress",
+  verifyProfile,
+  playbackController.updateProgress,
+);
+app.post(
+  "/api/playback/finished",
+  verifyProfile,
+  playbackController.markFinished,
+);
+app.delete(
+  "/api/playback/progress",
+  verifyProfile,
+  playbackController.deleteProgress,
+);
+app.delete(
+  "/api/playback/history/:id",
+  verifyProfile,
+  playbackController.deleteHistoryItem,
+);
 
 // Image search scraper route
-app.get("/api/search-images", verifyProfile, imageSearchController.searchImages);
+app.get(
+  "/api/search-images",
+  verifyProfile,
+  imageSearchController.searchImages,
+);
 
 // Serve frontend assets in production
 const frontendDistPath = path.join(__dirname, "dist");
@@ -63,7 +111,7 @@ if (fs.existsSync(frontendDistPath)) {
 }
 
 // Start Server
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 4000;
 initDatabase()
   .then(() => {
     app.listen(PORT, "0.0.0.0", () => {

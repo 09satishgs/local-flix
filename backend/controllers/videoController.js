@@ -86,6 +86,8 @@ async function getHlsPlaylist(req, res) {
   const videoPath = req.query.path;
   const audioTrack = req.query.audioTrack;
   const startTime = req.query.startTime;
+  const subtitleTrack = req.query.subtitleTrack;
+  const burnSubtitles = req.query.burnSubtitles;
   
   if (!videoPath || !isPathAllowed(videoPath, req.profile.allowedPaths)) {
     return res.status(403).json({ error: "Access denied" });
@@ -95,7 +97,15 @@ async function getHlsPlaylist(req, res) {
     const profileId = req.profile.id;
     const profileToken = req.headers['x-profile-token'] || req.query.profileToken || "";
 
-    const playlist = await videoService.getHlsPlaylist(videoPath, audioTrack, profileId, profileToken, startTime);
+    const playlist = await videoService.getHlsPlaylist(
+      videoPath, 
+      audioTrack, 
+      profileId, 
+      profileToken, 
+      startTime,
+      subtitleTrack,
+      burnSubtitles
+    );
     res.setHeader("Content-Type", "application/x-mpegURL");
     res.send(playlist);
   } catch (err) {
