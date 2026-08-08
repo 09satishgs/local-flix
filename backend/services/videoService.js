@@ -339,7 +339,7 @@ async function getHlsPlaylist(
     const startSegment = Math.floor(startSecs / 5);
 
     const startJob = (useQsv = true) => {
-      const args = [];
+      const args = ["-y"];
       if (!isNaN(startSecs) && startSecs > 0) {
         args.push("-ss", startSecs.toString());
       }
@@ -557,7 +557,7 @@ async function serveHlsFile(jobId, name, res) {
 
       // Spawn a new FFmpeg process starting at targetTime
       const segmentFilename = path.join(job.tempDir, "segment_%d.ts");
-      const args = [];
+      const args = ["-y"];
       if (targetTime > 0) {
         args.push("-ss", targetTime.toString());
       }
