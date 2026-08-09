@@ -11,8 +11,104 @@ import {
   Avatar,
   Divider,
 } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material';
 import { PlayArrow, History as HistoryIcon, AccessTime, Movie, Delete } from '@mui/icons-material';
 import type { HistoryViewProps } from './types';
+
+// --- Extracted sx style constants ---
+
+const historyContainerSx: SxProps<Theme> = { px: { xs: 3, md: 6 }, pb: 6 };
+
+const historyHeadingTypographySx: SxProps<Theme> = {
+  color: '#fff',
+  fontWeight: 700,
+  mb: 4,
+  display: 'flex',
+  alignItems: 'center',
+  gap: 1.5,
+};
+
+const historyIconSx: SxProps<Theme> = { color: 'var(--localflix-red)', fontSize: 36 };
+
+const historyCardSx: SxProps<Theme> = {
+  bgcolor: 'var(--bg-card)',
+  border: '1px solid #222',
+  borderRadius: 2,
+};
+
+const actionButtonsContainerSx: SxProps<Theme> = { display: 'flex', gap: 1 };
+
+const deleteButtonSx: SxProps<Theme> = {
+  bgcolor: 'rgba(255,255,255,0.05)',
+  color: 'rgba(255,255,255,0.6)',
+  '&:hover': {
+    bgcolor: 'var(--localflix-red)',
+    color: '#fff',
+  },
+};
+
+const playButtonSx: SxProps<Theme> = {
+  bgcolor: 'rgba(255,255,255,0.05)',
+  color: '#fff',
+  '&:hover': {
+    bgcolor: 'var(--localflix-red)',
+    color: '#fff',
+  },
+};
+
+const listItemSx: SxProps<Theme> = {
+  px: 3,
+  py: 2.5,
+  '&:hover': {
+    bgcolor: 'rgba(255, 255, 255, 0.02)',
+  },
+};
+
+const listItemAvatarSx: SxProps<Theme> = { mr: 2 };
+
+const thumbnailAvatarSx: SxProps<Theme> = {
+  width: 80,
+  height: 50,
+  bgcolor: '#222',
+  border: '1px solid #333',
+};
+
+const movieIconSx: SxProps<Theme> = { color: 'var(--localflix-red)' };
+
+const itemNameTypographySx: SxProps<Theme> = { color: '#fff', fontWeight: 600 };
+
+const secondaryContainerSx: SxProps<Theme> = { mt: 0.5 };
+
+const pathTypographySx: SxProps<Theme> = {
+  color: 'var(--text-secondary)',
+  display: 'block',
+  mb: 0.5,
+};
+
+const metaRowSx: SxProps<Theme> = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 2,
+  color: 'var(--text-secondary)',
+};
+
+const timeInfoSx: SxProps<Theme> = { display: 'flex', alignItems: 'center', gap: 0.5 };
+
+const accessTimeIconSx: SxProps<Theme> = { fontSize: 14 };
+
+const historyDividerSx: SxProps<Theme> = { borderColor: '#222' };
+
+const emptyStateSx: SxProps<Theme> = {
+  border: '2px dashed #333',
+  borderRadius: 2,
+  p: 6,
+  textAlign: 'center',
+  color: 'var(--text-secondary)',
+};
+
+const emptyHeadingTypographySx: SxProps<Theme> = { mb: 1 };
+
+// --- Component ---
 
 export const WebHistoryView: React.FC<HistoryViewProps> = ({
   historyList,
@@ -21,13 +117,13 @@ export const WebHistoryView: React.FC<HistoryViewProps> = ({
   handleDeleteHistoryItem,
 }) => {
   return (
-    <Box className="fade-in" sx={{ px: { xs: 3, md: 6 }, pb: 6 }}>
-      <Typography variant="h4" sx={{ color: '#fff', fontWeight: 700, mb: 4, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-        <HistoryIcon sx={{ color: 'var(--localflix-red)', fontSize: 36 }} /> Watch History
+    <Box className="fade-in" sx={historyContainerSx} data-style="historyContainerSx">
+      <Typography variant="h4" sx={historyHeadingTypographySx}>
+        <HistoryIcon sx={historyIconSx} /> Watch History
       </Typography>
 
       {historyList.length > 0 ? (
-        <Card sx={{ bgcolor: 'var(--bg-card)', border: '1px solid #222', borderRadius: 2 }}>
+        <Card sx={historyCardSx}>
           <List disablePadding>
             {historyList.map((item, index) => {
               const isLast = index === historyList.length - 1;
@@ -37,71 +133,48 @@ export const WebHistoryView: React.FC<HistoryViewProps> = ({
                   <ListItem
                     alignItems="flex-start"
                     secondaryAction={
-                      <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Box sx={actionButtonsContainerSx} data-style="actionButtonsContainerSx">
                         <IconButton
                           onClick={() => handleDeleteHistoryItem(item.id)}
-                          sx={{
-                            bgcolor: 'rgba(255,255,255,0.05)',
-                            color: 'rgba(255,255,255,0.6)',
-                            '&:hover': {
-                              bgcolor: 'var(--localflix-red)',
-                              color: '#fff'
-                            }
-                          }}
+                          sx={deleteButtonSx}
+                          data-style="deleteButtonSx"
                         >
                           <Delete />
                         </IconButton>
                         <IconButton
                           onClick={() => onPlayVideo(item.path, item.position)}
-                          sx={{
-                            bgcolor: 'rgba(255,255,255,0.05)',
-                            color: '#fff',
-                            '&:hover': {
-                              bgcolor: 'var(--localflix-red)',
-                              color: '#fff'
-                            }
-                          }}
+                          sx={playButtonSx}
+                          data-style="playButtonSx"
                         >
                           <PlayArrow />
                         </IconButton>
                       </Box>
                     }
-                    sx={{
-                      px: 3,
-                      py: 2.5,
-                      '&:hover': {
-                        bgcolor: 'rgba(255, 255, 255, 0.02)'
-                      }
-                    }}
+                    sx={listItemSx}
                   >
-                    <ListItemAvatar sx={{ mr: 2 }}>
+                    <ListItemAvatar sx={listItemAvatarSx}>
                       <Avatar
                         variant="rounded"
                         src={item.thumbnail}
-                        sx={{
-                          width: 80,
-                          height: 50,
-                          bgcolor: '#222',
-                          border: '1px solid #333',
-                        }}
+                        sx={thumbnailAvatarSx}
                       >
-                        <Movie sx={{ color: 'var(--localflix-red)' }} />
+                        <Movie sx={movieIconSx} />
                       </Avatar>
                     </ListItemAvatar>
                     <ListItemText
                       primary={
-                        <Typography variant="subtitle1" sx={{ color: '#fff', fontWeight: 600 }}>
+                        <Typography variant="subtitle1" sx={itemNameTypographySx}>
                           {item.name}
                         </Typography>
                       }
                       secondary={
-                        <Box sx={{ mt: 0.5 }}>
-                          <Typography variant="caption" sx={{ color: 'var(--text-secondary)', display: 'block', mb: 0.5 }}>
+                        <Box sx={secondaryContainerSx} data-style="secondaryContainerSx">
+                          <Typography variant="caption" sx={pathTypographySx}>
                             Path: {item.path}
                           </Typography>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, color: 'var(--text-secondary)' }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                              <AccessTime sx={{ fontSize: 14 }} />
+                          <Box sx={metaRowSx} data-style="metaRowSx">
+                            <Box sx={timeInfoSx} data-style="timeInfoSx">
+                              <AccessTime sx={accessTimeIconSx} />
                               <Typography variant="caption">
                                 Stopped at {Math.floor(item.position / 60)}m
                               </Typography>
@@ -114,7 +187,7 @@ export const WebHistoryView: React.FC<HistoryViewProps> = ({
                       }
                     />
                   </ListItem>
-                  {!isLast && <Divider sx={{ borderColor: '#222' }} />}
+                  {!isLast && <Divider sx={historyDividerSx} />}
                 </React.Fragment>
               );
             })}
@@ -122,15 +195,10 @@ export const WebHistoryView: React.FC<HistoryViewProps> = ({
         </Card>
       ) : (
         <Box
-          sx={{
-            border: '2px dashed #333',
-            borderRadius: 2,
-            p: 6,
-            textAlign: 'center',
-            color: 'var(--text-secondary)',
-          }}
+          sx={emptyStateSx}
+          data-style="emptyStateSx"
         >
-          <Typography variant="h6" sx={{ mb: 1 }}>
+          <Typography variant="h6" sx={emptyHeadingTypographySx}>
             No history yet
           </Typography>
           <Typography variant="body2">

@@ -11,8 +11,114 @@ import {
   Avatar,
   Divider,
 } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material';
 import { PlayArrow, History as HistoryIcon, AccessTime, Movie, Delete } from '@mui/icons-material';
 import type { HistoryViewProps } from './types';
+
+// --- Extracted sx style constants ---
+
+const mobileHistoryContainerSx: SxProps<Theme> = { px: 2, pb: 4 };
+
+const mobileHistoryTitleSx: SxProps<Theme> = {
+  color: '#fff',
+  fontWeight: 700,
+  mb: 3,
+  display: 'flex',
+  alignItems: 'center',
+  gap: 1,
+};
+
+const mobileHistoryTitleIconSx: SxProps<Theme> = {
+  color: 'var(--localflix-red)',
+  fontSize: 28,
+};
+
+const mobileHistoryCardSx: SxProps<Theme> = {
+  bgcolor: 'var(--bg-card)',
+  border: '1px solid #222',
+  borderRadius: 2,
+};
+
+const mobileHistoryActionsContainerSx: SxProps<Theme> = {
+  display: 'flex',
+  gap: 0.5,
+};
+
+const mobileHistoryDeleteBtnSx: SxProps<Theme> = {
+  color: 'rgba(255,255,255,0.4)',
+  '&:active': {
+    color: 'var(--localflix-red)',
+  },
+};
+
+const mobileHistoryPlayBtnSx: SxProps<Theme> = {
+  bgcolor: 'rgba(255,255,255,0.05)',
+  color: '#fff',
+  '&:active': {
+    bgcolor: 'var(--localflix-red)',
+  },
+};
+
+const mobileHistoryListItemSx: SxProps<Theme> = {
+  px: 1.5,
+  py: 2,
+};
+
+const mobileHistoryListItemAvatarSx: SxProps<Theme> = { mr: 1.5 };
+
+const mobileHistoryThumbnailSx: SxProps<Theme> = {
+  width: 64,
+  height: 40,
+  bgcolor: '#222',
+  border: '1px solid #333',
+};
+
+const mobileHistoryMovieIconSx: SxProps<Theme> = {
+  color: 'var(--localflix-red)',
+  fontSize: 20,
+};
+
+const mobileHistoryItemNameSx: SxProps<Theme> = {
+  color: '#fff',
+  fontWeight: 600,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+  maxWidth: 'calc(100vw - 160px)',
+};
+
+const mobileHistorySecondaryWrapperSx: SxProps<Theme> = { mt: 0.25 };
+
+const mobileHistorySecondaryColumnSx: SxProps<Theme> = {
+  display: 'flex',
+  flexDirection: 'column',
+  color: 'var(--text-secondary)',
+};
+
+const mobileHistoryTimeRowSx: SxProps<Theme> = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 0.5,
+  mb: 0.25,
+};
+
+const mobileHistoryAccessTimeIconSx: SxProps<Theme> = { fontSize: 12 };
+
+const mobileHistoryDateCaptionSx: SxProps<Theme> = { fontSize: '0.7rem' };
+
+const mobileHistoryDividerSx: SxProps<Theme> = { borderColor: '#222' };
+
+const mobileHistoryEmptyStateSx: SxProps<Theme> = {
+  border: '1px dashed #333',
+  borderRadius: 2,
+  p: 4,
+  textAlign: 'center',
+  color: 'var(--text-secondary)',
+};
+
+const mobileHistoryEmptyTitleSx: SxProps<Theme> = { mb: 0.5 };
+
+// --- Component ---
 
 export const MobileHistoryView: React.FC<HistoryViewProps> = ({
   historyList,
@@ -21,13 +127,13 @@ export const MobileHistoryView: React.FC<HistoryViewProps> = ({
   handleDeleteHistoryItem,
 }) => {
   return (
-    <Box className="fade-in" sx={{ px: 2, pb: 4 }}>
-      <Typography variant="h5" sx={{ color: '#fff', fontWeight: 700, mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
-        <HistoryIcon sx={{ color: 'var(--localflix-red)', fontSize: 28 }} /> Watch History
+    <Box className="fade-in" data-style="mobileHistoryContainerSx" sx={mobileHistoryContainerSx}>
+      <Typography variant="h5" sx={mobileHistoryTitleSx}>
+        <HistoryIcon sx={mobileHistoryTitleIconSx} /> Watch History
       </Typography>
 
       {historyList.length > 0 ? (
-        <Card sx={{ bgcolor: 'var(--bg-card)', border: '1px solid #222', borderRadius: 2 }}>
+        <Card sx={mobileHistoryCardSx}>
           <List disablePadding>
             {historyList.map((item, index) => {
               const isLast = index === historyList.length - 1;
@@ -37,69 +143,52 @@ export const MobileHistoryView: React.FC<HistoryViewProps> = ({
                   <ListItem
                     alignItems="center"
                     secondaryAction={
-                      <Box sx={{ display: 'flex', gap: 0.5 }}>
+                      <Box data-style="mobileHistoryActionsContainerSx" sx={mobileHistoryActionsContainerSx}>
                         <IconButton
                           onClick={() => handleDeleteHistoryItem(item.id)}
                           size="small"
-                          sx={{
-                            color: 'rgba(255,255,255,0.4)',
-                            '&:active': {
-                              color: 'var(--localflix-red)',
-                            }
-                          }}
+                          data-style="mobileHistoryDeleteBtnSx"
+                          sx={mobileHistoryDeleteBtnSx}
                         >
                           <Delete fontSize="small" />
                         </IconButton>
                         <IconButton
                           onClick={() => onPlayVideo(item.path, item.position)}
                           size="small"
-                          sx={{
-                            bgcolor: 'rgba(255,255,255,0.05)',
-                            color: '#fff',
-                            '&:active': {
-                              bgcolor: 'var(--localflix-red)',
-                            }
-                          }}
+                          data-style="mobileHistoryPlayBtnSx"
+                          sx={mobileHistoryPlayBtnSx}
                         >
                           <PlayArrow fontSize="small" />
                         </IconButton>
                       </Box>
                     }
-                    sx={{
-                      px: 1.5,
-                      py: 2,
-                    }}
+                    sx={mobileHistoryListItemSx}
                   >
-                    <ListItemAvatar sx={{ mr: 1.5 }}>
+                    <ListItemAvatar sx={mobileHistoryListItemAvatarSx}>
                       <Avatar
                         variant="rounded"
                         src={item.thumbnail}
-                        sx={{
-                          width: 64,
-                          height: 40,
-                          bgcolor: '#222',
-                          border: '1px solid #333',
-                        }}
+                        sx={mobileHistoryThumbnailSx}
                       >
-                        <Movie sx={{ color: 'var(--localflix-red)', fontSize: 20 }} />
+                        <Movie sx={mobileHistoryMovieIconSx} />
                       </Avatar>
                     </ListItemAvatar>
                     <ListItemText
                       primary={
-                        <Typography variant="body2" sx={{ color: '#fff', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 'calc(100vw - 160px)' }}>
+                        <Typography variant="body2" sx={mobileHistoryItemNameSx}>
                           {item.name}
                         </Typography>
                       }
                       secondary={
-                        <Box sx={{ mt: 0.25 }}>
-                          <Box sx={{ display: 'flex', flexDirection: 'column', color: 'var(--text-secondary)' }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.25 }}>
-                              <AccessTime sx={{ fontSize: 12 }} />
+                        <Box data-style="mobileHistorySecondaryWrapperSx" sx={mobileHistorySecondaryWrapperSx}>
+                          <Box data-style="mobileHistorySecondaryColumnSx" sx={mobileHistorySecondaryColumnSx}>
+                            <Box data-style="mobileHistoryTimeRowSx" sx={mobileHistoryTimeRowSx}>
+                              <AccessTime sx={mobileHistoryAccessTimeIconSx} />
                               <Typography variant="caption">
                                 Stopped at {Math.floor(item.position / 60)}m
                               </Typography>
                             </Box>
-                            <Typography variant="caption" sx={{ fontSize: '0.7rem' }}>
+                            <Typography variant="caption" sx={mobileHistoryDateCaptionSx}>
                               {formatDate(item.watchedAt)}
                             </Typography>
                           </Box>
@@ -107,15 +196,15 @@ export const MobileHistoryView: React.FC<HistoryViewProps> = ({
                       }
                     />
                   </ListItem>
-                  {!isLast && <Divider sx={{ borderColor: '#222' }} />}
+                  {!isLast && <Divider sx={mobileHistoryDividerSx} />}
                 </React.Fragment>
               );
             })}
           </List>
         </Card>
       ) : (
-        <Box sx={{ border: '1px dashed #333', borderRadius: 2, p: 4, textAlign: 'center', color: 'var(--text-secondary)' }}>
-          <Typography variant="body2" sx={{ mb: 0.5 }}>
+        <Box data-style="mobileHistoryEmptyStateSx" sx={mobileHistoryEmptyStateSx}>
+          <Typography variant="body2" sx={mobileHistoryEmptyTitleSx}>
             No history yet
           </Typography>
           <Typography variant="caption">

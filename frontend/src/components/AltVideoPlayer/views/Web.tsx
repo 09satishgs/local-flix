@@ -1,4 +1,5 @@
-import React from 'react';
+import React from "react";
+import type { SxProps, Theme } from "@mui/material";
 import {
   Box,
   IconButton,
@@ -8,7 +9,7 @@ import {
   Menu,
   MenuItem,
   Tooltip,
-} from '@mui/material';
+} from "@mui/material";
 import {
   PlayArrow,
   Pause,
@@ -28,8 +29,240 @@ import {
   SkipPrevious,
   Star,
   StarBorder,
-} from '@mui/icons-material';
-import type { VideoPlayerViewProps } from './types';
+} from "@mui/icons-material";
+import type { VideoPlayerViewProps } from "./types";
+
+const videoStyle: React.CSSProperties = {
+  width: "100%",
+  height: "100%",
+  maxHeight: "100vh",
+  objectFit: "contain",
+};
+
+const altPlayerContainerSx: SxProps<Theme> = {
+  position: "fixed",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: "#000",
+  zIndex: 1250,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  overflow: "hidden",
+  userSelect: "none",
+};
+
+const altEndedOverlaySx: SxProps<Theme> = {
+  position: "absolute",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  bgcolor: "rgba(0, 0, 0, 0.85)",
+  zIndex: 100,
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 2,
+};
+
+const altPlaybackFinishedTextSx: SxProps<Theme> = {
+  color: "#fff",
+  fontWeight: 700,
+  mb: 1,
+};
+const altReplayButtonsContainerSx: SxProps<Theme> = { display: "flex", gap: 2 };
+const altReplayButtonSx: SxProps<Theme> = {
+  color: "#fff",
+  bgcolor: "rgba(255,255,255,0.1)",
+  p: 1.5,
+  "&:hover": { bgcolor: "var(--localflix-red)" },
+};
+const altReplayIconSx: SxProps<Theme> = { fontSize: 28 };
+const altBackButtonSx: SxProps<Theme> = {
+  color: "#fff",
+  bgcolor: "rgba(255,255,255,0.1)",
+  p: 1.5,
+  "&:hover": { bgcolor: "rgba(255,255,255,0.2)" },
+};
+const altBackIconSx: SxProps<Theme> = { fontSize: 28 };
+
+const altSpinnerContainerSx: SxProps<Theme> = {
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  zIndex: 50,
+  bgcolor: "rgba(0,0,0,0.5)",
+  borderRadius: "50%",
+  p: 2,
+  display: "flex",
+};
+const altSpinnerSx: SxProps<Theme> = { color: "var(--localflix-red)" };
+
+const altHeaderOverlaySx: SxProps<Theme> = {
+  position: "absolute",
+  top: 0,
+  left: 0,
+  right: 0,
+  height: 100,
+  background:
+    "linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%)",
+  display: "flex",
+  alignItems: "center",
+  px: 4,
+  zIndex: 10,
+};
+const altHeaderBackButtonSx: SxProps<Theme> = {
+  color: "#fff",
+  mr: 2,
+  "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
+};
+const altHeaderTitleSx: SxProps<Theme> = { color: "#fff", fontWeight: 600 };
+
+const altControlsOverlaySx: SxProps<Theme> = {
+  position: "absolute",
+  bottom: 0,
+  left: 0,
+  right: 0,
+  background: "linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%)",
+  pt: 4,
+  pb: 3,
+  px: 4,
+  zIndex: 10,
+  display: "flex",
+  flexDirection: "column",
+  gap: 2,
+};
+
+const altTimelineContainerSx: SxProps<Theme> = {
+  display: "flex",
+  alignItems: "center",
+  gap: 2,
+};
+const altTimelineTimeLeftSx: SxProps<Theme> = {
+  color: "#fff",
+  minWidth: 45,
+  textAlign: "right",
+};
+const altTimelineSliderSx: SxProps<Theme> = {
+  color: "var(--localflix-red)",
+  height: 4,
+  "& .MuiSlider-thumb": {
+    width: 12,
+    height: 12,
+    transition: "0.2s",
+    "&:before": { boxShadow: "none" },
+    "&:hover, &.Mui-focusVisible, &.Mui-active": {
+      boxShadow: "none",
+      width: 16,
+      height: 16,
+    },
+  },
+  "& .MuiSlider-rail": {
+    bgcolor: "rgba(255,255,255,0.2)",
+    opacity: 1,
+  },
+  "& .MuiSlider-track": {
+    border: "none",
+  },
+};
+const altTimelineTimeRightSx: SxProps<Theme> = { color: "#fff", minWidth: 45 };
+
+const altActionButtonsContainerSx: SxProps<Theme> = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+};
+const altLeftControlsContainerSx: SxProps<Theme> = {
+  display: "flex",
+  alignItems: "center",
+  gap: 2,
+};
+const altSkipButtonSx: SxProps<Theme> = {
+  color: "#fff",
+  "&.Mui-disabled": { color: "rgba(255,255,255,0.2)" },
+};
+const altPlayPauseButtonSx: SxProps<Theme> = {
+  color: "#fff",
+  bgcolor: "rgba(255,255,255,0.1)",
+  "&:hover": { bgcolor: "rgba(255,255,255,0.2)" },
+};
+
+const altVolumeContainerSx: SxProps<Theme> = {
+  display: "flex",
+  alignItems: "center",
+  gap: 1,
+  ml: 2,
+  width: 150,
+};
+const altVolumeButtonSx: SxProps<Theme> = { color: "#fff" };
+const altVolumeSliderSx: SxProps<Theme> = {
+  color: "#fff",
+  "& .MuiSlider-thumb": {
+    width: 10,
+    height: 10,
+  },
+  "& .MuiSlider-rail": {
+    bgcolor: "rgba(255,255,255,0.2)",
+  },
+};
+
+const altRightControlsContainerSx: SxProps<Theme> = {
+  display: "flex",
+  alignItems: "center",
+  gap: 1,
+};
+const altSubtitleButtonSx: SxProps<Theme> = {};
+const altSubtitleActiveButtonSx: SxProps<Theme> = {
+  ...(altSubtitleButtonSx as object),
+  color: "var(--localflix-red)",
+};
+const altSubtitleInactiveButtonSx: SxProps<Theme> = {
+  ...(altSubtitleButtonSx as object),
+  color: "#fff",
+};
+const altMenuPaperPropsSx: SxProps<Theme> = {
+  bgcolor: "var(--bg-card)",
+  color: "#fff",
+  border: "1px solid #333",
+};
+const altMenuItemTrackSx: SxProps<Theme> = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  gap: 2,
+  minWidth: 240,
+};
+const altMenuItemTrackTitleSx: SxProps<Theme> = { flexGrow: 1 };
+const altStarButtonSx: SxProps<Theme> = {
+  "&:hover": { color: "#ffb400" },
+  p: 0.5,
+};
+const altStarredButtonSx: SxProps<Theme> = {
+  ...(altStarButtonSx as object),
+  color: "#ffb400",
+};
+const altUnstarredButtonSx: SxProps<Theme> = {
+  ...(altStarButtonSx as object),
+  color: "var(--text-secondary)",
+};
+const altStarIconSx: SxProps<Theme> = { fontSize: 16 };
+const altAudioButtonSx: SxProps<Theme> = {};
+const altAudioActiveButtonSx: SxProps<Theme> = {
+  ...(altAudioButtonSx as object),
+  color: "var(--localflix-red)",
+};
+const altAudioInactiveButtonSx: SxProps<Theme> = {
+  ...(altAudioButtonSx as object),
+  color: "#fff",
+};
+const altSpeedButtonSx: SxProps<Theme> = { color: "#fff" };
+const altPipButtonSx: SxProps<Theme> = { color: "#fff" };
+const altFullscreenButtonSx: SxProps<Theme> = { color: "#fff" };
 
 export const WebVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
   videoRef,
@@ -37,6 +270,7 @@ export const WebVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
   isPlaying,
   duration,
   currentTime,
+  currentVideoPath,
   volume,
   isMuted,
   isLoading,
@@ -84,31 +318,13 @@ export const WebVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
   return (
     <Box
       ref={containerRef}
-      sx={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: '#000',
-        zIndex: 1250,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        overflow: 'hidden',
-        userSelect: 'none',
-      }}
+      sx={altPlayerContainerSx}
+      data-style="altPlayerContainerSx"
       onDoubleClick={toggleFullscreen}
     >
-      {/* Video Node - Subtitles are burned into video on backend, so no track tags needed! */}
       <video
         ref={videoRef}
-        style={{
-          width: '100%',
-          height: '100%',
-          maxHeight: '100vh',
-          objectFit: 'contain',
-        }}
+        style={videoStyle}
         autoPlay
         onTimeUpdate={handleTimeUpdate}
         onProgress={handleProgress}
@@ -123,34 +339,30 @@ export const WebVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
 
       {/* Ended Overlay Screen */}
       {isEnded && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            bgcolor: 'rgba(0, 0, 0, 0.85)',
-            zIndex: 100,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 2,
-          }}
-        >
-          <Typography variant="h4" sx={{ color: '#fff', fontWeight: 700, mb: 1 }}>
+        <Box sx={altEndedOverlaySx} data-style="altEndedOverlaySx">
+          <Typography variant="h4" sx={altPlaybackFinishedTextSx}>
             Playback Finished
           </Typography>
-          <Box sx={{ display: 'flex', gap: 2 }}>
+          <Box
+            sx={altReplayButtonsContainerSx}
+            data-style="altReplayButtonsContainerSx"
+          >
             <Tooltip title="Replay">
-              <IconButton onClick={handleReplay} sx={{ color: '#fff', bgcolor: 'rgba(255,255,255,0.1)', p: 1.5, '&:hover': { bgcolor: 'var(--localflix-red)' } }}>
-                <Replay sx={{ fontSize: 28 }} />
+              <IconButton
+                onClick={handleReplay}
+                sx={altReplayButtonSx}
+                data-style="altReplayButtonSx"
+              >
+                <Replay sx={altReplayIconSx} />
               </IconButton>
             </Tooltip>
             <Tooltip title="Back to Files">
-              <IconButton onClick={onClose} sx={{ color: '#fff', bgcolor: 'rgba(255,255,255,0.1)', p: 1.5, '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' } }}>
-                <ArrowBack sx={{ fontSize: 28 }} />
+              <IconButton
+                onClick={onClose}
+                sx={altBackButtonSx}
+                data-style="altBackButtonSx"
+              >
+                <ArrowBack sx={altBackIconSx} />
               </IconButton>
             </Tooltip>
           </Box>
@@ -159,69 +371,33 @@ export const WebVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
 
       {/* Buffer/Loading Spinner */}
       {isLoading && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            zIndex: 50,
-            bgcolor: 'rgba(0,0,0,0.5)',
-            borderRadius: '50%',
-            p: 2,
-            display: 'flex',
-          }}
-        >
-          <CircularProgress sx={{ color: 'var(--localflix-red)' }} size={60} thickness={4} />
+        <Box sx={altSpinnerContainerSx} data-style="altSpinnerContainerSx">
+          <CircularProgress sx={altSpinnerSx} size={60} thickness={4} />
         </Box>
       )}
 
       {/* Player Header Overlay */}
       {showControls && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 100,
-            background: 'linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            px: 4,
-            zIndex: 10,
-          }}
-        >
-          <IconButton onClick={onClose} sx={{ color: '#fff', mr: 2, '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}>
+        <Box sx={altHeaderOverlaySx} data-style="altHeaderOverlaySx">
+          <IconButton
+            onClick={onClose}
+            sx={altHeaderBackButtonSx}
+            data-style="altHeaderBackButtonSx"
+          >
             <ArrowBack />
           </IconButton>
-          <Typography variant="h6" sx={{ color: '#fff', fontWeight: 600 }}>
-            Alt Player (QSV Hardware Transcode Mode)
+          <Typography variant="h6" sx={altHeaderTitleSx}>
+            {currentVideoPath.replace(/\\/g, "/").split("/").pop()} (Alt Player)
           </Typography>
         </Box>
       )}
 
       {/* Player Controls Bar Overlay */}
       {showControls && (
-        <Box
-          sx={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%)',
-            pt: 4,
-            pb: 3,
-            px: 4,
-            zIndex: 10,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 2,
-          }}
-        >
+        <Box sx={altControlsOverlaySx} data-style="altControlsOverlaySx">
           {/* Timeline slider bar */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography variant="body2" sx={{ color: '#fff', minWidth: 45, textAlign: 'right' }}>
+          <Box sx={altTimelineContainerSx} data-style="altTimelineContainerSx">
+            <Typography variant="body2" sx={altTimelineTimeLeftSx}>
               {formatTime(currentTime)}
             </Typography>
             <Slider
@@ -230,52 +406,63 @@ export const WebVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
               min={0}
               max={duration || 100}
               onChange={handleSeek}
-              sx={{
-                color: 'var(--localflix-red)',
-                height: 4,
-                '& .MuiSlider-thumb': {
-                  width: 12,
-                  height: 12,
-                  transition: '0.2s',
-                  '&:before': { boxShadow: 'none' },
-                  '&:hover, &.Mui-focusVisible, &.Mui-active': {
-                    boxShadow: 'none',
-                    width: 16,
-                    height: 16,
-                  },
-                },
-                '& .MuiSlider-rail': {
-                  bgcolor: 'rgba(255,255,255,0.2)',
-                  opacity: 1,
-                },
-                '& .MuiSlider-track': {
-                  border: 'none',
-                },
-              }}
+              sx={altTimelineSliderSx}
             />
-            <Typography variant="body2" sx={{ color: '#fff', minWidth: 45 }}>
+            <Typography variant="body2" sx={altTimelineTimeRightSx}>
               {formatTime(duration)}
             </Typography>
           </Box>
 
           {/* Action buttons controls */}
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box
+            sx={altActionButtonsContainerSx}
+            data-style="altActionButtonsContainerSx"
+          >
             {/* Left Controls */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <IconButton onClick={playPrevious} disabled={!hasPrevious} sx={{ color: '#fff', '&.Mui-disabled': { color: 'rgba(255,255,255,0.2)' } }}>
+            <Box
+              sx={altLeftControlsContainerSx}
+              data-style="altLeftControlsContainerSx"
+            >
+              <IconButton
+                onClick={playPrevious}
+                disabled={!hasPrevious}
+                sx={altSkipButtonSx}
+                data-style="altSkipButtonSx"
+              >
                 <SkipPrevious />
               </IconButton>
-              <IconButton onClick={handlePlayPause} sx={{ color: '#fff', bgcolor: 'rgba(255,255,255,0.1)', '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' } }}>
+              <IconButton
+                onClick={handlePlayPause}
+                sx={altPlayPauseButtonSx}
+                data-style="altPlayPauseButtonSx"
+              >
                 {isPlaying ? <Pause /> : <PlayArrow />}
               </IconButton>
-              <IconButton onClick={playNext} disabled={!hasNext} sx={{ color: '#fff', '&.Mui-disabled': { color: 'rgba(255,255,255,0.2)' } }}>
+              <IconButton
+                onClick={playNext}
+                disabled={!hasNext}
+                sx={altSkipButtonSx}
+                data-style="altSkipButtonSx"
+              >
                 <SkipNext />
               </IconButton>
 
               {/* Volume Slider */}
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 2, width: 150 }}>
-                <IconButton onClick={toggleMute} sx={{ color: '#fff' }}>
-                  {isMuted || volume === 0 ? <VolumeOff /> : volume < 0.3 ? <VolumeMute /> : volume < 0.7 ? <VolumeDown /> : <VolumeUp />}
+              <Box sx={altVolumeContainerSx} data-style="altVolumeContainerSx">
+                <IconButton
+                  onClick={toggleMute}
+                  sx={altVolumeButtonSx}
+                  data-style="altVolumeButtonSx"
+                >
+                  {isMuted || volume === 0 ? (
+                    <VolumeOff />
+                  ) : volume < 0.3 ? (
+                    <VolumeMute />
+                  ) : volume < 0.7 ? (
+                    <VolumeDown />
+                  ) : (
+                    <VolumeUp />
+                  )}
                 </IconButton>
                 <Slider
                   size="small"
@@ -284,27 +471,33 @@ export const WebVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
                   max={1}
                   step={0.05}
                   onChange={handleVolumeChange}
-                  sx={{
-                    color: '#fff',
-                    '& .MuiSlider-thumb': {
-                      width: 10,
-                      height: 10,
-                    },
-                    '& .MuiSlider-rail': {
-                      bgcolor: 'rgba(255,255,255,0.2)',
-                    },
-                  }}
+                  sx={altVolumeSliderSx}
                 />
               </Box>
             </Box>
 
             {/* Right Controls */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box
+              sx={altRightControlsContainerSx}
+              data-style="altRightControlsContainerSx"
+            >
               {/* Subtitles Selection */}
               {subtitles.length > 0 && (
                 <>
                   <Tooltip title="Subtitles (QSV Hardcode)">
-                    <IconButton onClick={(e) => setSubtitleAnchor(e.currentTarget)} sx={{ color: activeSubtitle !== null ? 'var(--localflix-red)' : '#fff' }}>
+                    <IconButton
+                      onClick={(e) => setSubtitleAnchor(e.currentTarget)}
+                      sx={
+                        activeSubtitle !== null
+                          ? altSubtitleActiveButtonSx
+                          : altSubtitleInactiveButtonSx
+                      }
+                      data-style={
+                        activeSubtitle !== null
+                          ? "altSubtitleActiveButtonSx"
+                          : "altSubtitleInactiveButtonSx"
+                      }
+                    >
                       <Subtitles />
                     </IconButton>
                   </Tooltip>
@@ -313,10 +506,13 @@ export const WebVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
                     open={Boolean(subtitleAnchor)}
                     onClose={() => setSubtitleAnchor(null)}
                     PaperProps={{
-                      sx: { bgcolor: 'var(--bg-card)', color: '#fff', border: '1px solid #333' }
+                      sx: altMenuPaperPropsSx,
                     }}
                   >
-                    <MenuItem onClick={() => selectSubtitle(null)} selected={activeSubtitle === null}>
+                    <MenuItem
+                      onClick={() => selectSubtitle(null)}
+                      selected={activeSubtitle === null}
+                    >
                       Off
                     </MenuItem>
                     {subtitles.map((track) => (
@@ -324,15 +520,12 @@ export const WebVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
                         key={track.index}
                         onClick={() => selectSubtitle(track.index)}
                         selected={activeSubtitle === track.index}
-                        sx={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          gap: 2,
-                          minWidth: 240,
-                        }}
+                        sx={altMenuItemTrackSx}
                       >
-                        <Typography variant="body2" sx={{ flexGrow: 1 }}>
+                        <Typography
+                          variant="body2"
+                          sx={altMenuItemTrackTitleSx}
+                        >
                           {track.title} [{track.language.toUpperCase()}]
                         </Typography>
                         <IconButton
@@ -341,14 +534,23 @@ export const WebVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
                             e.stopPropagation();
                             toggleStarSubtitle(track.title);
                           }}
-                          sx={{
-                            color: starredSubtitles.includes(track.title) ? "#ffb400" : "var(--text-secondary)",
-                            "&:hover": { color: "#ffb400" },
-                            p: 0.5,
-                          }}
+                          sx={
+                            starredSubtitles.includes(track.title)
+                              ? altStarredButtonSx
+                              : altUnstarredButtonSx
+                          }
+                          data-style={
+                            starredSubtitles.includes(track.title)
+                              ? "altStarredButtonSx"
+                              : "altUnstarredButtonSx"
+                          }
                           title="Star Subtitle"
                         >
-                          {starredSubtitles.includes(track.title) ? <Star sx={{ fontSize: 16 }} /> : <StarBorder sx={{ fontSize: 16 }} />}
+                          {starredSubtitles.includes(track.title) ? (
+                            <Star sx={altStarIconSx} />
+                          ) : (
+                            <StarBorder sx={altStarIconSx} />
+                          )}
                         </IconButton>
                       </MenuItem>
                     ))}
@@ -360,7 +562,19 @@ export const WebVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
               {audioTracks.length > 0 && (
                 <>
                   <Tooltip title="Audio Tracks">
-                    <IconButton onClick={(e) => setAudioAnchor(e.currentTarget)} sx={{ color: activeAudio !== null ? 'var(--localflix-red)' : '#fff' }}>
+                    <IconButton
+                      onClick={(e) => setAudioAnchor(e.currentTarget)}
+                      sx={
+                        activeAudio !== null
+                          ? altAudioActiveButtonSx
+                          : altAudioInactiveButtonSx
+                      }
+                      data-style={
+                        activeAudio !== null
+                          ? "altAudioActiveButtonSx"
+                          : "altAudioInactiveButtonSx"
+                      }
+                    >
                       <Audiotrack />
                     </IconButton>
                   </Tooltip>
@@ -369,10 +583,13 @@ export const WebVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
                     open={Boolean(audioAnchor)}
                     onClose={() => setAudioAnchor(null)}
                     PaperProps={{
-                      sx: { bgcolor: 'var(--bg-card)', color: '#fff', border: '1px solid #333' }
+                      sx: altMenuPaperPropsSx,
                     }}
                   >
-                    <MenuItem onClick={() => selectAudioTrack(null)} selected={activeAudio === null}>
+                    <MenuItem
+                      onClick={() => selectAudioTrack(null)}
+                      selected={activeAudio === null}
+                    >
                       Default Audio
                     </MenuItem>
                     {audioTracks.map((track) => (
@@ -390,7 +607,11 @@ export const WebVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
 
               {/* Playback Speed */}
               <Tooltip title="Playback Speed">
-                <IconButton onClick={(e) => setSpeedAnchor(e.currentTarget)} sx={{ color: '#fff' }}>
+                <IconButton
+                  onClick={(e) => setSpeedAnchor(e.currentTarget)}
+                  sx={altSpeedButtonSx}
+                  data-style="altSpeedButtonSx"
+                >
                   <Speed />
                 </IconButton>
               </Tooltip>
@@ -399,26 +620,38 @@ export const WebVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
                 open={Boolean(speedAnchor)}
                 onClose={() => setSpeedAnchor(null)}
                 PaperProps={{
-                  sx: { bgcolor: 'var(--bg-card)', color: '#fff', border: '1px solid #333' }
+                  sx: altMenuPaperPropsSx,
                 }}
               >
                 {[0.5, 0.75, 1, 1.25, 1.5, 2].map((s) => (
-                  <MenuItem key={s} onClick={() => handleSpeedSelect(s)} selected={playbackSpeed === s}>
-                    {s === 1 ? 'Normal' : `${s}x`}
+                  <MenuItem
+                    key={s}
+                    onClick={() => handleSpeedSelect(s)}
+                    selected={playbackSpeed === s}
+                  >
+                    {s === 1 ? "Normal" : `${s}x`}
                   </MenuItem>
                 ))}
               </Menu>
 
               {/* Picture in Picture */}
               <Tooltip title="Picture-in-Picture">
-                <IconButton onClick={togglePictureInPicture} sx={{ color: '#fff' }}>
+                <IconButton
+                  onClick={togglePictureInPicture}
+                  sx={altPipButtonSx}
+                  data-style="altPipButtonSx"
+                >
                   <PictureInPicture />
                 </IconButton>
               </Tooltip>
 
               {/* Fullscreen toggle button */}
               <Tooltip title="Fullscreen">
-                <IconButton onClick={toggleFullscreen} sx={{ color: '#fff' }}>
+                <IconButton
+                  onClick={toggleFullscreen}
+                  sx={altFullscreenButtonSx}
+                  data-style="altFullscreenButtonSx"
+                >
                   {isFullscreen ? <FullscreenExit /> : <Fullscreen />}
                 </IconButton>
               </Tooltip>

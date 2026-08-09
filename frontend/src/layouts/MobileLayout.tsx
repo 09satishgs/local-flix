@@ -13,6 +13,7 @@ import {
   Switch,
   FormControlLabel,
 } from "@mui/material";
+import type { SxProps, Theme } from "@mui/material";
 import {
   Home as HomeIcon,
   Folder as FolderIcon,
@@ -31,6 +32,121 @@ interface LayoutProps {
   children: React.ReactNode;
 }
 
+const mobileRootSx: SxProps<Theme> = {
+  minHeight: "100vh",
+  bgcolor: "var(--bg-dark)",
+  color: "#fff",
+  display: "flex",
+  flexDirection: "column",
+  pb: "64px", // height of bottom navigation
+};
+
+const mobileAppBarSx: SxProps<Theme> = {
+  bgcolor: "rgba(20,20,20,0.95)",
+  backgroundImage: "none",
+  boxShadow: "none",
+  borderBottom: "1px solid #1f1f1f",
+  backdropFilter: "blur(10px)",
+  zIndex: 100,
+};
+
+const mobileToolbarSx: SxProps<Theme> = {
+  px: 2,
+  display: "flex",
+  justifyContent: "space-between",
+  minHeight: 56,
+};
+
+const mobileLogoTextSx: SxProps<Theme> = {
+  color: "var(--localflix-red)",
+  fontWeight: 900,
+  letterSpacing: 2,
+  cursor: "pointer",
+  fontFamily: "'Outfit', sans-serif",
+  textTransform: "uppercase",
+  fontSize: "1.3rem",
+};
+
+const mobileProfileCardSx: SxProps<Theme> = {
+  display: "flex",
+  alignItems: "center",
+  cursor: "pointer",
+  p: 0.5,
+  borderRadius: 1,
+};
+
+const mobileAvatarBaseSx: SxProps<Theme> = {
+  width: 30,
+  height: 30,
+  fontSize: "0.85rem",
+  fontWeight: 700,
+  borderRadius: 0.75,
+};
+
+const mobileMenuPaperSx: SxProps<Theme> = {
+  bgcolor: "var(--bg-card)",
+  color: "#fff",
+  border: "1px solid #333",
+  mt: 1,
+  minWidth: 180,
+};
+
+const mobileAltPlayerMenuItemSx: SxProps<Theme> = {
+  gap: 1.5,
+  py: 1,
+  borderBottom: "1px solid #222",
+  backgroundColor: "#5858589b",
+  cursor: "default",
+  "&:hover": { bgcolor: "transparent" },
+};
+
+const mobileAltPlayerLabelSx: SxProps<Theme> = {
+  fontWeight: 600,
+  color: "#fff",
+};
+
+const mobileFormControlLabelSx: SxProps<Theme> = {
+  m: 0,
+};
+
+const mobileLogoutMenuItemSx: SxProps<Theme> = {
+  gap: 1.5,
+};
+
+const mobileSwitchAccountIconSx: SxProps<Theme> = {
+  color: "var(--text-secondary)",
+};
+
+const mobileMainContentSx: SxProps<Theme> = {
+  flexGrow: 1,
+};
+
+const mobilePaperSx: SxProps<Theme> = {
+  position: "fixed",
+  bottom: 0,
+  left: 0,
+  right: 0,
+  zIndex: 100,
+  borderTop: "1px solid #1f1f1f",
+};
+
+const mobileBottomNavigationSx: SxProps<Theme> = {
+  bgcolor: "rgba(20,20,20,0.98)",
+  backdropFilter: "blur(15px)",
+  height: 60,
+  "& .MuiBottomNavigationAction-root": {
+    color: "var(--text-secondary)",
+    minWidth: "auto",
+    padding: "6px 0",
+    "&.Mui-selected": {
+      color: "var(--localflix-red)",
+      "& .MuiSvgIcon-root": {
+        color: "var(--localflix-red)",
+      },
+    },
+  },
+};
+
 export const MobileLayout: React.FC<LayoutProps> = ({
   activePage,
   onPageChange,
@@ -41,74 +157,30 @@ export const MobileLayout: React.FC<LayoutProps> = ({
   onLogout,
   children,
 }) => {
-  const [profileMenuAnchor, setProfileMenuAnchor] = useState<null | HTMLElement>(null);
+  const [profileMenuAnchor, setProfileMenuAnchor] =
+    useState<null | HTMLElement>(null);
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        bgcolor: "var(--bg-dark)",
-        color: "#fff",
-        display: "flex",
-        flexDirection: "column",
-        pb: "64px", // height of bottom navigation
-      }}
-    >
+    <Box sx={mobileRootSx} data-style="mobileRootSx">
       {/* Mobile Top Header */}
-      <AppBar
-        position="sticky"
-        sx={{
-          bgcolor: "rgba(20,20,20,0.95)",
-          backgroundImage: "none",
-          boxShadow: "none",
-          borderBottom: "1px solid #1f1f1f",
-          backdropFilter: "blur(10px)",
-          zIndex: 100,
-        }}
-      >
-        <Toolbar
-          sx={{
-            px: 2,
-            display: "flex",
-            justifyContent: "space-between",
-            minHeight: 56,
-          }}
-        >
+      <AppBar position="sticky" sx={mobileAppBarSx}>
+        <Toolbar sx={mobileToolbarSx}>
           <Typography
             variant="h6"
             onClick={() => onPageChange("home")}
-            sx={{
-              color: "var(--localflix-red)",
-              fontWeight: 900,
-              letterSpacing: 2,
-              cursor: "pointer",
-              fontFamily: "'Outfit', sans-serif",
-              textTransform: "uppercase",
-              fontSize: "1.3rem",
-            }}
+            sx={mobileLogoTextSx}
           >
             LocalFlix
           </Typography>
 
           <Box
             onClick={(e) => setProfileMenuAnchor(e.currentTarget)}
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              cursor: "pointer",
-              p: 0.5,
-              borderRadius: 1,
-            }}
+            sx={mobileProfileCardSx}
+            data-style="mobileProfileCardSx"
           >
             <Avatar
-              sx={{
-                width: 30,
-                height: 30,
-                bgcolor: avatarColor,
-                fontSize: "0.85rem",
-                fontWeight: 700,
-                borderRadius: 0.75,
-              }}
+              sx={mobileAvatarBaseSx}
+              style={{ backgroundColor: avatarColor }}
             >
               {profileName?.slice(0, 2).toUpperCase()}
             </Avatar>
@@ -118,37 +190,31 @@ export const MobileLayout: React.FC<LayoutProps> = ({
               open={Boolean(profileMenuAnchor)}
               onClose={() => setProfileMenuAnchor(null)}
               PaperProps={{
-                sx: {
-                  bgcolor: "var(--bg-card)",
-                  color: "#fff",
-                  border: "1px solid #333",
-                  mt: 1,
-                  minWidth: 180,
-                },
+                sx: mobileMenuPaperSx,
               }}
             >
-              <MenuItem disableRipple sx={{ gap: 1.5, py: 1, borderBottom: "1px solid #222", cursor: "default", "&:hover": { bgcolor: "transparent" } }}>
+              <MenuItem disableRipple sx={mobileAltPlayerMenuItemSx}>
                 <FormControlLabel
                   control={
                     <Switch
                       size="small"
                       checked={useAltPlayer}
                       onChange={(e) => onToggleAltPlayer(e.target.checked)}
-                      color="error"
+                      color="info"
                     />
                   }
                   label={
-                    <Typography variant="body2" sx={{ fontWeight: 600, color: "#fff" }}>
-                      Alt Player (QSV)
+                    <Typography variant="body2" sx={mobileAltPlayerLabelSx}>
+                      Use Alt Player
                     </Typography>
                   }
-                  sx={{ m: 0 }}
+                  sx={mobileFormControlLabelSx}
                 />
               </MenuItem>
-              <MenuItem onClick={onLogout} sx={{ gap: 1.5 }}>
+              <MenuItem onClick={onLogout} sx={mobileLogoutMenuItemSx}>
                 <SwitchAccountIcon
                   fontSize="small"
-                  sx={{ color: "var(--text-secondary)" }}
+                  sx={mobileSwitchAccountIconSx}
                 />
                 <Typography variant="body2">Switch Profile</Typography>
               </MenuItem>
@@ -158,43 +224,18 @@ export const MobileLayout: React.FC<LayoutProps> = ({
       </AppBar>
 
       {/* Main Content Area */}
-      <Box sx={{ flexGrow: 1 }}>
+      <Box sx={mobileMainContentSx} data-style="mobileMainContentSx">
         {children}
       </Box>
 
       {/* Bottom Navigation Bar */}
-      <Paper
-        sx={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          zIndex: 100,
-          borderTop: "1px solid #1f1f1f",
-        }}
-        elevation={3}
-      >
+      <Paper sx={mobilePaperSx} elevation={3}>
         <BottomNavigation
           value={activePage}
           onChange={(_event, newValue) => {
             onPageChange(newValue);
           }}
-          sx={{
-            bgcolor: "rgba(20,20,20,0.98)",
-            backdropFilter: "blur(15px)",
-            height: 60,
-            "& .MuiBottomNavigationAction-root": {
-              color: "var(--text-secondary)",
-              minWidth: "auto",
-              padding: "6px 0",
-              "&.Mui-selected": {
-                color: "var(--localflix-red)",
-                "& .MuiSvgIcon-root": {
-                  color: "var(--localflix-red)",
-                },
-              },
-            },
-          }}
+          sx={mobileBottomNavigationSx}
         >
           <BottomNavigationAction
             label="Home"

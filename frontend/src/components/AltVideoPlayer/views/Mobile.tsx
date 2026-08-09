@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   Box,
   IconButton,
@@ -7,7 +7,8 @@ import {
   CircularProgress,
   Menu,
   MenuItem,
-} from '@mui/material';
+} from "@mui/material";
+import type { SxProps, Theme } from "@mui/material";
 import {
   PlayArrow,
   Pause,
@@ -22,8 +23,241 @@ import {
   SkipPrevious,
   Star,
   StarBorder,
-} from '@mui/icons-material';
-import type { VideoPlayerViewProps } from './types';
+} from "@mui/icons-material";
+import type { VideoPlayerViewProps } from "./types";
+
+const videoStyle: React.CSSProperties = {
+  width: "100%",
+  height: "100%",
+  maxHeight: "100vh",
+  objectFit: "contain",
+};
+
+const altMobilePlayerContainerSx: SxProps<Theme> = {
+  position: "fixed",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: "#000",
+  zIndex: 1250,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  overflow: "hidden",
+  userSelect: "none",
+};
+
+const altMobileEndedOverlaySx: SxProps<Theme> = {
+  position: "absolute",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  bgcolor: "rgba(0, 0, 0, 0.9)",
+  zIndex: 100,
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 3,
+};
+
+const altMobileFinishedTextSx: SxProps<Theme> = {
+  color: "#fff",
+  fontWeight: 700,
+};
+
+const altMobileFinishedActionsSx: SxProps<Theme> = { display: "flex", gap: 3 };
+
+const altMobileReplayButtonSx: SxProps<Theme> = {
+  color: "#fff",
+  bgcolor: "rgba(255,255,255,0.08)",
+  p: 2,
+};
+
+const altMobileCloseButtonSx: SxProps<Theme> = {
+  color: "#fff",
+  bgcolor: "rgba(255,255,255,0.08)",
+  p: 2,
+};
+
+const altMobileSpinnerOverlaySx: SxProps<Theme> = {
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  zIndex: 50,
+  bgcolor: "rgba(0,0,0,0.6)",
+  borderRadius: "50%",
+  p: 1.5,
+  display: "flex",
+};
+
+const altMobileCircularProgressSx: SxProps<Theme> = {
+  color: "var(--localflix-red)",
+};
+
+const altMobileHeaderOverlaySx: SxProps<Theme> = {
+  position: "absolute",
+  top: 0,
+  left: 0,
+  right: 0,
+  height: 70,
+  background:
+    "linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%)",
+  display: "flex",
+  alignItems: "center",
+  px: 2,
+  zIndex: 10,
+};
+
+const altMobileHeaderBackButtonSx: SxProps<Theme> = { color: "#fff", mr: 1 };
+
+const altMobileHeaderTitleSx: SxProps<Theme> = {
+  color: "#fff",
+  fontWeight: 600,
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+};
+
+const altMobileControlsFooterSx: SxProps<Theme> = {
+  position: "absolute",
+  bottom: 0,
+  left: 0,
+  right: 0,
+  background: "linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%)",
+  pt: 4,
+  pb: 2,
+  px: 2,
+  zIndex: 10,
+  display: "flex",
+  flexDirection: "column",
+  gap: 1.5,
+};
+
+const altMobileTimelineContainerSx: SxProps<Theme> = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: 1.5,
+};
+
+const altMobileTimeTextSx: SxProps<Theme> = { color: "#fff", minWidth: 35 };
+
+const altMobileSliderSx: SxProps<Theme> = {
+  color: "var(--localflix-red)",
+  height: 4,
+  py: 1,
+  "& .MuiSlider-thumb": {
+    width: 12,
+    height: 12,
+    "&:before": { boxShadow: "none" },
+  },
+  "& .MuiSlider-rail": {
+    bgcolor: "rgba(255,255,255,0.2)",
+    opacity: 1,
+  },
+};
+
+const altMobileActionButtonsContainerSx: SxProps<Theme> = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  px: 1,
+};
+
+const altMobilePlaybackControlsSx: SxProps<Theme> = {
+  display: "flex",
+  alignItems: "center",
+  gap: 2.5,
+};
+
+const altMobileSkipBtnSx: SxProps<Theme> = {
+  color: "#fff",
+  p: 0.5,
+  "&.Mui-disabled": { color: "rgba(255,255,255,0.2)" },
+};
+
+const altMobilePlayPauseBtnSx: SxProps<Theme> = {
+  color: "#fff",
+  bgcolor: "rgba(255,255,255,0.1)",
+  p: 1,
+};
+
+const altMobileSettingsRowSx: SxProps<Theme> = {
+  display: "flex",
+  alignItems: "center",
+  gap: 2,
+};
+
+const altMobileSubtitlesBtnSx: SxProps<Theme> = {};
+
+const altMobileSubtitlesMenuPaperSx: SxProps<Theme> = {
+  bgcolor: "var(--bg-card)",
+  color: "#fff",
+  border: "1px solid #333",
+};
+
+const altMobileSubtitlesMenuItemSx: SxProps<Theme> = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  gap: 2,
+  minWidth: 240,
+};
+
+const altMobileSubtitlesTrackTitleSx: SxProps<Theme> = { flexGrow: 1 };
+
+const altMobileSubtitlesStarBtnSx: SxProps<Theme> = { p: 0.5 };
+
+const altMobileStarIconSx: SxProps<Theme> = { fontSize: 16 };
+
+const altMobileAudioBtnSx: SxProps<Theme> = {};
+
+const altMobileAudioMenuPaperSx: SxProps<Theme> = {
+  bgcolor: "var(--bg-card)",
+  color: "#fff",
+  border: "1px solid #333",
+};
+
+const altMobileSpeedBtnSx: SxProps<Theme> = { color: "#fff" };
+
+const altMobileSpeedMenuPaperSx: SxProps<Theme> = {
+  bgcolor: "var(--bg-card)",
+  color: "#fff",
+  border: "1px solid #333",
+};
+
+const altMobileFullscreenBtnSx: SxProps<Theme> = { color: "#fff" };
+
+const altMobileSubtitlesActiveSx: SxProps<Theme> = {
+  ...(altMobileSubtitlesBtnSx as object),
+  color: "var(--localflix-red)",
+};
+const altMobileSubtitlesInactiveSx: SxProps<Theme> = {
+  ...(altMobileSubtitlesBtnSx as object),
+  color: "#fff",
+};
+
+const altMobileStarredSx: SxProps<Theme> = {
+  ...(altMobileSubtitlesStarBtnSx as object),
+  color: "#ffb400",
+};
+const altMobileUnstarredSx: SxProps<Theme> = {
+  ...(altMobileSubtitlesStarBtnSx as object),
+  color: "var(--text-secondary)",
+};
+
+const altMobileAudioActiveSx: SxProps<Theme> = {
+  ...(altMobileAudioBtnSx as object),
+  color: "var(--localflix-red)",
+};
+const altMobileAudioInactiveSx: SxProps<Theme> = {
+  ...(altMobileAudioBtnSx as object),
+  color: "#fff",
+};
 
 export const MobileVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
   videoRef,
@@ -31,6 +265,7 @@ export const MobileVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
   isPlaying,
   duration,
   currentTime,
+  currentVideoPath,
   isLoading,
   playbackSpeed,
   showControls,
@@ -73,30 +308,12 @@ export const MobileVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
   return (
     <Box
       ref={containerRef}
-      sx={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: '#000',
-        zIndex: 1250,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        overflow: 'hidden',
-        userSelect: 'none',
-      }}
+      sx={altMobilePlayerContainerSx}
+      data-style="altMobilePlayerContainerSx"
     >
-      {/* Video Node - Subtitles are burned into video on backend, so no track tags needed! */}
       <video
         ref={videoRef}
-        style={{
-          width: '100%',
-          height: '100%',
-          maxHeight: '100vh',
-          objectFit: 'contain',
-        }}
+        style={videoStyle}
         autoPlay
         onTimeUpdate={handleTimeUpdate}
         onProgress={handleProgress}
@@ -112,30 +329,26 @@ export const MobileVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
 
       {/* Finished Overlay */}
       {isEnded && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            bgcolor: 'rgba(0, 0, 0, 0.9)',
-            zIndex: 100,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 3,
-          }}
-        >
-          <Typography variant="h5" sx={{ color: '#fff', fontWeight: 700 }}>
+        <Box sx={altMobileEndedOverlaySx} data-style="altMobileEndedOverlaySx">
+          <Typography variant="h5" sx={altMobileFinishedTextSx}>
             Playback Finished
           </Typography>
-          <Box sx={{ display: 'flex', gap: 3 }}>
-            <IconButton onClick={handleReplay} sx={{ color: '#fff', bgcolor: 'rgba(255,255,255,0.08)', p: 2 }}>
+          <Box
+            sx={altMobileFinishedActionsSx}
+            data-style="altMobileFinishedActionsSx"
+          >
+            <IconButton
+              onClick={handleReplay}
+              sx={altMobileReplayButtonSx}
+              data-style="altMobileReplayButtonSx"
+            >
               <Replay fontSize="large" />
             </IconButton>
-            <IconButton onClick={onClose} sx={{ color: '#fff', bgcolor: 'rgba(255,255,255,0.08)', p: 2 }}>
+            <IconButton
+              onClick={onClose}
+              sx={altMobileCloseButtonSx}
+              data-style="altMobileCloseButtonSx"
+            >
               <ArrowBack fontSize="large" />
             </IconButton>
           </Box>
@@ -145,43 +358,32 @@ export const MobileVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
       {/* Spinner */}
       {isLoading && (
         <Box
-          sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            zIndex: 50,
-            bgcolor: 'rgba(0,0,0,0.6)',
-            borderRadius: '50%',
-            p: 1.5,
-            display: 'flex',
-          }}
+          sx={altMobileSpinnerOverlaySx}
+          data-style="altMobileSpinnerOverlaySx"
         >
-          <CircularProgress sx={{ color: 'var(--localflix-red)' }} size={50} thickness={4} />
+          <CircularProgress
+            sx={altMobileCircularProgressSx}
+            size={50}
+            thickness={4}
+          />
         </Box>
       )}
 
       {/* Header Overlay */}
       {showControls && (
         <Box
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 70,
-            background: 'linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            px: 2,
-            zIndex: 10,
-          }}
+          sx={altMobileHeaderOverlaySx}
+          data-style="altMobileHeaderOverlaySx"
         >
-          <IconButton onClick={onClose} sx={{ color: '#fff', mr: 1 }}>
+          <IconButton
+            onClick={onClose}
+            sx={altMobileHeaderBackButtonSx}
+            data-style="altMobileHeaderBackButtonSx"
+          >
             <ArrowBack />
           </IconButton>
-          <Typography variant="subtitle1" sx={{ color: '#fff', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            Alt Player (QSV Transcode)
+          <Typography variant="subtitle1" sx={altMobileHeaderTitleSx}>
+            {currentVideoPath.replace(/\\/g, "/").split("/").pop()} (Alt Player)
           </Typography>
         </Box>
       )}
@@ -189,24 +391,15 @@ export const MobileVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
       {/* Controls Overlay Footer */}
       {showControls && (
         <Box
-          sx={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%)',
-            pt: 4,
-            pb: 2,
-            px: 2,
-            zIndex: 10,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 1.5,
-          }}
+          sx={altMobileControlsFooterSx}
+          data-style="altMobileControlsFooterSx"
         >
           {/* Timeline slider bar */}
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1.5 }}>
-            <Typography variant="caption" sx={{ color: '#fff', minWidth: 35 }}>
+          <Box
+            sx={altMobileTimelineContainerSx}
+            data-style="altMobileTimelineContainerSx"
+          >
+            <Typography variant="caption" sx={altMobileTimeTextSx}>
               {formatTime(currentTime)}
             </Typography>
             <Slider
@@ -215,47 +408,69 @@ export const MobileVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
               min={0}
               max={duration || 100}
               onChange={handleSeek}
-              sx={{
-                color: 'var(--localflix-red)',
-                height: 4,
-                py: 1,
-                '& .MuiSlider-thumb': {
-                  width: 12,
-                  height: 12,
-                  '&:before': { boxShadow: 'none' },
-                },
-                '& .MuiSlider-rail': {
-                  bgcolor: 'rgba(255,255,255,0.2)',
-                  opacity: 1,
-                },
-              }}
+              sx={altMobileSliderSx}
             />
-            <Typography variant="caption" sx={{ color: '#fff', minWidth: 35 }}>
+            <Typography variant="caption" sx={altMobileTimeTextSx}>
               {formatTime(duration)}
             </Typography>
           </Box>
 
           {/* Action buttons controls */}
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 1 }}>
+          <Box
+            sx={altMobileActionButtonsContainerSx}
+            data-style="altMobileActionButtonsContainerSx"
+          >
             {/* Playback Controls */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5 }}>
-              <IconButton onClick={playPrevious} disabled={!hasPrevious} sx={{ color: '#fff', p: 0.5, '&.Mui-disabled': { color: 'rgba(255,255,255,0.2)' } }}>
+            <Box
+              sx={altMobilePlaybackControlsSx}
+              data-style="altMobilePlaybackControlsSx"
+            >
+              <IconButton
+                onClick={playPrevious}
+                disabled={!hasPrevious}
+                sx={altMobileSkipBtnSx}
+                data-style="altMobileSkipBtnSx"
+              >
                 <SkipPrevious />
               </IconButton>
-              <IconButton onClick={handlePlayPause} sx={{ color: '#fff', bgcolor: 'rgba(255,255,255,0.1)', p: 1 }}>
+              <IconButton
+                onClick={handlePlayPause}
+                sx={altMobilePlayPauseBtnSx}
+                data-style="altMobilePlayPauseBtnSx"
+              >
                 {isPlaying ? <Pause /> : <PlayArrow />}
               </IconButton>
-              <IconButton onClick={playNext} disabled={!hasNext} sx={{ color: '#fff', p: 0.5, '&.Mui-disabled': { color: 'rgba(255,255,255,0.2)' } }}>
+              <IconButton
+                onClick={playNext}
+                disabled={!hasNext}
+                sx={altMobileSkipBtnSx}
+                data-style="altMobileSkipBtnSx"
+              >
                 <SkipNext />
               </IconButton>
             </Box>
 
             {/* Settings Row */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box
+              sx={altMobileSettingsRowSx}
+              data-style="altMobileSettingsRowSx"
+            >
               {/* Subtitles Button */}
               {subtitles.length > 0 && (
                 <>
-                  <IconButton onClick={(e) => setSubtitleAnchor(e.currentTarget)} sx={{ color: activeSubtitle !== null ? 'var(--localflix-red)' : '#fff' }}>
+                  <IconButton
+                    onClick={(e) => setSubtitleAnchor(e.currentTarget)}
+                    sx={
+                      activeSubtitle !== null
+                        ? altMobileSubtitlesActiveSx
+                        : altMobileSubtitlesInactiveSx
+                    }
+                    data-style={
+                      activeSubtitle !== null
+                        ? "altMobileSubtitlesActiveSx"
+                        : "altMobileSubtitlesInactiveSx"
+                    }
+                  >
                     <Subtitles />
                   </IconButton>
                   <Menu
@@ -263,10 +478,13 @@ export const MobileVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
                     open={Boolean(subtitleAnchor)}
                     onClose={() => setSubtitleAnchor(null)}
                     PaperProps={{
-                      sx: { bgcolor: 'var(--bg-card)', color: '#fff', border: '1px solid #333' }
+                      sx: altMobileSubtitlesMenuPaperSx,
                     }}
                   >
-                    <MenuItem onClick={() => selectSubtitle(null)} selected={activeSubtitle === null}>
+                    <MenuItem
+                      onClick={() => selectSubtitle(null)}
+                      selected={activeSubtitle === null}
+                    >
                       Off
                     </MenuItem>
                     {subtitles.map((track) => (
@@ -274,9 +492,12 @@ export const MobileVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
                         key={track.index}
                         onClick={() => selectSubtitle(track.index)}
                         selected={activeSubtitle === track.index}
-                        sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2, minWidth: 240 }}
+                        sx={altMobileSubtitlesMenuItemSx}
                       >
-                        <Typography variant="body2" sx={{ flexGrow: 1 }}>
+                        <Typography
+                          variant="body2"
+                          sx={altMobileSubtitlesTrackTitleSx}
+                        >
                           {track.language.toUpperCase()} ({track.title})
                         </Typography>
                         <IconButton
@@ -285,12 +506,22 @@ export const MobileVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
                             e.stopPropagation();
                             toggleStarSubtitle(track.title);
                           }}
-                          sx={{
-                            color: starredSubtitles.includes(track.title) ? "#ffb400" : "var(--text-secondary)",
-                            p: 0.5,
-                          }}
+                          sx={
+                            starredSubtitles.includes(track.title)
+                              ? altMobileStarredSx
+                              : altMobileUnstarredSx
+                          }
+                          data-style={
+                            starredSubtitles.includes(track.title)
+                              ? "altMobileStarredSx"
+                              : "altMobileUnstarredSx"
+                          }
                         >
-                          {starredSubtitles.includes(track.title) ? <Star sx={{ fontSize: 16 }} /> : <StarBorder sx={{ fontSize: 16 }} />}
+                          {starredSubtitles.includes(track.title) ? (
+                            <Star sx={altMobileStarIconSx} />
+                          ) : (
+                            <StarBorder sx={altMobileStarIconSx} />
+                          )}
                         </IconButton>
                       </MenuItem>
                     ))}
@@ -301,7 +532,19 @@ export const MobileVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
               {/* Audio Tracks */}
               {audioTracks.length > 0 && (
                 <>
-                  <IconButton onClick={(e) => setAudioAnchor(e.currentTarget)} sx={{ color: activeAudio !== null ? 'var(--localflix-red)' : '#fff' }}>
+                  <IconButton
+                    onClick={(e) => setAudioAnchor(e.currentTarget)}
+                    sx={
+                      activeAudio !== null
+                        ? altMobileAudioActiveSx
+                        : altMobileAudioInactiveSx
+                    }
+                    data-style={
+                      activeAudio !== null
+                        ? "altMobileAudioActiveSx"
+                        : "altMobileAudioInactiveSx"
+                    }
+                  >
                     <Audiotrack />
                   </IconButton>
                   <Menu
@@ -309,10 +552,13 @@ export const MobileVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
                     open={Boolean(audioAnchor)}
                     onClose={() => setAudioAnchor(null)}
                     PaperProps={{
-                      sx: { bgcolor: 'var(--bg-card)', color: '#fff', border: '1px solid #333' }
+                      sx: altMobileAudioMenuPaperSx,
                     }}
                   >
-                    <MenuItem onClick={() => selectAudioTrack(null)} selected={activeAudio === null}>
+                    <MenuItem
+                      onClick={() => selectAudioTrack(null)}
+                      selected={activeAudio === null}
+                    >
                       Default Audio
                     </MenuItem>
                     {audioTracks.map((track) => (
@@ -329,7 +575,11 @@ export const MobileVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
               )}
 
               {/* Playback Speed */}
-              <IconButton onClick={(e) => setSpeedAnchor(e.currentTarget)} sx={{ color: '#fff' }}>
+              <IconButton
+                onClick={(e) => setSpeedAnchor(e.currentTarget)}
+                sx={altMobileSpeedBtnSx}
+                data-style="altMobileSpeedBtnSx"
+              >
                 <Speed />
               </IconButton>
               <Menu
@@ -337,18 +587,26 @@ export const MobileVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
                 open={Boolean(speedAnchor)}
                 onClose={() => setSpeedAnchor(null)}
                 PaperProps={{
-                  sx: { bgcolor: 'var(--bg-card)', color: '#fff', border: '1px solid #333' }
+                  sx: altMobileSpeedMenuPaperSx,
                 }}
               >
                 {[0.5, 0.75, 1, 1.25, 1.5, 2].map((s) => (
-                  <MenuItem key={s} onClick={() => handleSpeedSelect(s)} selected={playbackSpeed === s}>
-                    {s === 1 ? 'Normal' : `${s}x`}
+                  <MenuItem
+                    key={s}
+                    onClick={() => handleSpeedSelect(s)}
+                    selected={playbackSpeed === s}
+                  >
+                    {s === 1 ? "Normal" : `${s}x`}
                   </MenuItem>
                 ))}
               </Menu>
 
               {/* Fullscreen toggle button */}
-              <IconButton onClick={toggleFullscreen} sx={{ color: '#fff' }}>
+              <IconButton
+                onClick={toggleFullscreen}
+                sx={altMobileFullscreenBtnSx}
+                data-style="altMobileFullscreenBtnSx"
+              >
                 {isFullscreen ? <FullscreenExit /> : <Fullscreen />}
               </IconButton>
             </Box>

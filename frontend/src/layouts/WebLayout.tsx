@@ -11,6 +11,7 @@ import {
   Switch,
   FormControlLabel,
 } from "@mui/material";
+import type { SxProps, Theme } from "@mui/material";
 import SwitchAccountIcon from "@mui/icons-material/SwitchAccount";
 
 interface LayoutProps {
@@ -24,6 +25,136 @@ interface LayoutProps {
   children: React.ReactNode;
 }
 
+const rootContainerSx: SxProps<Theme> = {
+  minHeight: "100vh",
+  bgcolor: "var(--bg-dark)",
+  color: "#fff",
+  display: "flex",
+  flexDirection: "column",
+};
+
+const appBarSx: SxProps<Theme> = {
+  bgcolor: "rgba(20,20,20,0.95)",
+  backgroundImage: "none",
+  boxShadow: "none",
+  borderBottom: "1px solid #1f1f1f",
+  backdropFilter: "blur(10px)",
+  zIndex: 100,
+};
+
+const toolbarSx: SxProps<Theme> = {
+  px: { xs: 2, md: 6 },
+  display: "flex",
+  justifyContent: "space-between",
+};
+
+const logoNavContainerSx: SxProps<Theme> = {
+  display: "flex",
+  alignItems: "center",
+  gap: 4,
+};
+
+const logoTextSx: SxProps<Theme> = {
+  color: "var(--localflix-red)",
+  fontWeight: 900,
+  letterSpacing: 2,
+  cursor: "pointer",
+  fontFamily: "'Outfit', sans-serif",
+  textTransform: "uppercase",
+  mr: 2,
+  fontSize: "1.8rem",
+};
+
+const navButtonsContainerSx: SxProps<Theme> = {
+  display: "flex",
+  gap: 1,
+};
+
+const navButtonBaseSx: SxProps<Theme> = {
+  textTransform: "none",
+  fontSize: "1rem",
+};
+
+const navButtonActiveSx: SxProps<Theme> = {
+  ...(navButtonBaseSx as object),
+  color: "#fff",
+  fontWeight: 700,
+};
+
+const navButtonInactiveSx: SxProps<Theme> = {
+  ...(navButtonBaseSx as object),
+  color: "var(--text-secondary)",
+  fontWeight: 500,
+};
+
+const profileActionContainerSx: SxProps<Theme> = {
+  display: "flex",
+  alignItems: "center",
+  gap: 1,
+};
+
+const profileCardSx: SxProps<Theme> = {
+  display: "flex",
+  alignItems: "center",
+  gap: 1.5,
+  cursor: "pointer",
+  p: 0.5,
+  borderRadius: 2,
+  transition: "var(--transition-smooth)",
+  "&:hover": { bgcolor: "rgba(255,255,255,0.05)" },
+};
+
+const avatarBaseSx: SxProps<Theme> = {
+  width: 32,
+  height: 32,
+  fontSize: "0.9rem",
+  fontWeight: 700,
+  borderRadius: 1,
+};
+
+const profileNameSx: SxProps<Theme> = {
+  fontWeight: 600,
+  color: "#fff",
+};
+
+const menuPaperSx: SxProps<Theme> = {
+  bgcolor: "var(--bg-card)",
+  color: "#fff",
+  border: "1px solid #333",
+  mt: 1.5,
+  minWidth: 180,
+};
+
+const altPlayerMenuItemSx: SxProps<Theme> = {
+  gap: 1.5,
+  py: 1,
+  borderBottom: "1px solid #222",
+  backgroundColor: "#5858589b",
+  cursor: "default",
+};
+
+const altPlayerLabelSx: SxProps<Theme> = {
+  fontWeight: 600,
+  color: "#d8dde6",
+};
+
+const formControlLabelSx: SxProps<Theme> = {
+  m: 0,
+};
+
+const logoutMenuItemSx: SxProps<Theme> = {
+  gap: 1.5,
+};
+
+const switchAccountIconSx: SxProps<Theme> = {
+  color: "var(--text-secondary)",
+};
+
+const mainContentContainerSx: SxProps<Theme> = {
+  flexGrow: 1,
+  py: 2,
+};
+
 export const WebLayout: React.FC<LayoutProps> = ({
   activePage,
   onPageChange,
@@ -34,87 +165,52 @@ export const WebLayout: React.FC<LayoutProps> = ({
   onLogout,
   children,
 }) => {
-  const [profileMenuAnchor, setProfileMenuAnchor] = useState<null | HTMLElement>(null);
+  const [profileMenuAnchor, setProfileMenuAnchor] =
+    useState<null | HTMLElement>(null);
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        bgcolor: "var(--bg-dark)",
-        color: "#fff",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
+    <Box sx={rootContainerSx} data-style="rootContainerSx">
       {/* Navigation Navbar */}
-      <AppBar
-        position="sticky"
-        sx={{
-          bgcolor: "rgba(20,20,20,0.95)",
-          backgroundImage: "none",
-          boxShadow: "none",
-          borderBottom: "1px solid #1f1f1f",
-          backdropFilter: "blur(10px)",
-          zIndex: 100,
-        }}
-      >
-        <Toolbar
-          sx={{
-            px: { xs: 2, md: 6 },
-            display: "flex",
-            justifyContent: "space-between",
-          }}
-        >
+      <AppBar position="sticky" sx={appBarSx}>
+        <Toolbar sx={toolbarSx}>
           {/* Logo & Navigation Links */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <Box sx={logoNavContainerSx} data-style="logoNavContainerSx">
             <Typography
               variant="h5"
               onClick={() => onPageChange("home")}
-              sx={{
-                color: "var(--localflix-red)",
-                fontWeight: 900,
-                letterSpacing: 2,
-                cursor: "pointer",
-                fontFamily: "'Outfit', sans-serif",
-                textTransform: "uppercase",
-                mr: 2,
-                fontSize: "1.8rem",
-              }}
+              sx={logoTextSx}
             >
               LocalFlix
             </Typography>
 
-            <Box sx={{ display: "flex", gap: 1 }}>
+            <Box sx={navButtonsContainerSx} data-style="navButtonsContainerSx">
               <Button
                 onClick={() => onPageChange("home")}
-                sx={{
-                  color: activePage === "home" ? "#fff" : "var(--text-secondary)",
-                  fontWeight: activePage === "home" ? 700 : 500,
-                  textTransform: "none",
-                  fontSize: "1rem",
-                }}
+                sx={
+                  activePage === "home"
+                    ? navButtonActiveSx
+                    : navButtonInactiveSx
+                }
               >
                 Home
               </Button>
               <Button
                 onClick={() => onPageChange("explorer")}
-                sx={{
-                  color: activePage === "explorer" ? "#fff" : "var(--text-secondary)",
-                  fontWeight: activePage === "explorer" ? 700 : 500,
-                  textTransform: "none",
-                  fontSize: "1rem",
-                }}
+                sx={
+                  activePage === "explorer"
+                    ? navButtonActiveSx
+                    : navButtonInactiveSx
+                }
               >
                 Files
               </Button>
               <Button
                 onClick={() => onPageChange("history")}
-                sx={{
-                  color: activePage === "history" ? "#fff" : "var(--text-secondary)",
-                  fontWeight: activePage === "history" ? 700 : 500,
-                  textTransform: "none",
-                  fontSize: "1rem",
-                }}
+                sx={
+                  activePage === "history"
+                    ? navButtonActiveSx
+                    : navButtonInactiveSx
+                }
               >
                 History
               </Button>
@@ -122,39 +218,22 @@ export const WebLayout: React.FC<LayoutProps> = ({
           </Box>
 
           {/* User Profile Info & Switch Account */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box
+            sx={profileActionContainerSx}
+            data-style="profileActionContainerSx"
+          >
             <Box
               onClick={(e) => setProfileMenuAnchor(e.currentTarget)}
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1.5,
-                cursor: "pointer",
-                p: 0.5,
-                borderRadius: 2,
-                transition: "var(--transition-smooth)",
-                "&:hover": { bgcolor: "rgba(255,255,255,0.05)" },
-              }}
+              sx={profileCardSx}
+              data-style="profileCardSx"
             >
               <Avatar
-                sx={{
-                  width: 32,
-                  height: 32,
-                  bgcolor: avatarColor,
-                  fontSize: "0.9rem",
-                  fontWeight: 700,
-                  borderRadius: 1,
-                }}
+                sx={avatarBaseSx}
+                style={{ backgroundColor: avatarColor }}
               >
                 {profileName?.slice(0, 2).toUpperCase()}
               </Avatar>
-              <Typography
-                variant="body2"
-                sx={{
-                  fontWeight: 600,
-                  color: "#fff",
-                }}
-              >
+              <Typography variant="body2" sx={profileNameSx}>
                 {profileName}
               </Typography>
             </Box>
@@ -164,38 +243,29 @@ export const WebLayout: React.FC<LayoutProps> = ({
               open={Boolean(profileMenuAnchor)}
               onClose={() => setProfileMenuAnchor(null)}
               PaperProps={{
-                sx: {
-                  bgcolor: "var(--bg-card)",
-                  color: "#fff",
-                  border: "1px solid #333",
-                  mt: 1.5,
-                  minWidth: 180,
-                },
+                sx: menuPaperSx,
               }}
             >
-              <MenuItem disableRipple sx={{ gap: 1.5, py: 1, borderBottom: "1px solid #222", cursor: "default", "&:hover": { bgcolor: "transparent" } }}>
+              <MenuItem disableRipple sx={altPlayerMenuItemSx}>
                 <FormControlLabel
                   control={
                     <Switch
                       size="small"
                       checked={useAltPlayer}
                       onChange={(e) => onToggleAltPlayer(e.target.checked)}
-                      color="error"
+                      color="info"
                     />
                   }
                   label={
-                    <Typography variant="body2" sx={{ fontWeight: 600, color: "#fff" }}>
-                      Alt Player (QSV)
+                    <Typography variant="body2" sx={altPlayerLabelSx}>
+                      Use Alt Player
                     </Typography>
                   }
-                  sx={{ m: 0 }}
+                  sx={formControlLabelSx}
                 />
               </MenuItem>
-              <MenuItem onClick={onLogout} sx={{ gap: 1.5 }}>
-                <SwitchAccountIcon
-                  fontSize="small"
-                  sx={{ color: "var(--text-secondary)" }}
-                />
+              <MenuItem onClick={onLogout} sx={logoutMenuItemSx}>
+                <SwitchAccountIcon fontSize="small" sx={switchAccountIconSx} />
                 <Typography variant="body2">Switch Profile</Typography>
               </MenuItem>
             </Menu>
@@ -204,7 +274,7 @@ export const WebLayout: React.FC<LayoutProps> = ({
       </AppBar>
 
       {/* Main Content Area */}
-      <Box sx={{ flexGrow: 1, py: 2 }}>
+      <Box sx={mainContentContainerSx} data-style="mainContentContainerSx">
         {children}
       </Box>
     </Box>

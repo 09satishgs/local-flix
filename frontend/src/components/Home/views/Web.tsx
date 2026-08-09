@@ -9,6 +9,7 @@ import {
   Button,
   LinearProgress,
 } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material';
 import {
   PlayArrow,
   FolderOpen,
@@ -18,6 +19,243 @@ import {
 } from '@mui/icons-material';
 import { CARD_GRADIENTS } from '../hooks';
 import type { HomeViewProps } from './types';
+
+const mainContainerSx: SxProps<Theme> = { pb: 6 };
+
+const heroBannerSx: SxProps<Theme> = {
+  height: '45vh',
+  width: '100%',
+  position: 'relative',
+  background: 'linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(20,20,20,1) 90%), url("https://images.unsplash.com/photo-1574375927938-d5a98e8edd85?q=80&w=1400") no-repeat center/cover',
+  display: 'flex',
+  alignItems: 'flex-end',
+  px: { xs: 3, md: 6 },
+  pb: 4,
+  mb: 4,
+};
+
+const heroContentBoxSx: SxProps<Theme> = { maxWidth: 600 };
+
+const heroSubtitleSx: SxProps<Theme> = { color: 'var(--localflix-red)', fontWeight: 800, letterSpacing: 3 };
+
+const heroTitleSx: SxProps<Theme> = {
+  color: '#fff',
+  fontWeight: 800,
+  mb: 2,
+  fontSize: { xs: '2rem', md: '3.5rem' },
+  lineHeight: 1.1,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  display: '-webkit-box',
+  WebkitLineClamp: 2,
+  WebkitBoxOrient: 'vertical',
+};
+
+const heroActionsBoxSx: SxProps<Theme> = { display: 'flex', gap: 2 };
+
+const resumeButtonSx: SxProps<Theme> = {
+  bgcolor: '#fff',
+  color: '#000',
+  fontWeight: 600,
+  px: 3,
+  py: 1,
+  '&:hover': { bgcolor: 'rgba(255,255,255,0.8)' },
+};
+
+const showFolderButtonSx: SxProps<Theme> = {
+  borderColor: 'rgba(255,255,255,0.4)',
+  color: '#fff',
+  fontWeight: 600,
+  px: 3,
+  py: 1,
+  bgcolor: 'rgba(0, 0, 0, 0.4)',
+  '&:hover': {
+    borderColor: '#fff',
+    bgcolor: 'rgba(0,0,0,0.6)',
+  },
+};
+
+const heroPlaceholderSx: SxProps<Theme> = {
+  height: '35vh',
+  width: '100%',
+  position: 'relative',
+  background: 'linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(20,20,20,1) 100%), url("https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?q=80&w=1400") no-repeat center/cover',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  mb: 4,
+};
+
+const heroPlaceholderTextBoxSx: SxProps<Theme> = { textAlign: 'center', px: 2 };
+
+const heroPlaceholderTitleSx: SxProps<Theme> = { color: '#fff', fontWeight: 800, mb: 1 };
+
+const heroPlaceholderSubtitleSx: SxProps<Theme> = { color: 'var(--text-secondary)' };
+
+const mainRowsContainerSx: SxProps<Theme> = { px: { xs: 3, md: 6 } };
+
+const continueWatchingSectionSx: SxProps<Theme> = { mb: 6 };
+
+const sectionTitleSx: SxProps<Theme> = { color: '#fff', fontWeight: 700, mb: 3, display: 'flex', alignItems: 'center', gap: 1 };
+
+const sectionIconSx: SxProps<Theme> = { color: 'var(--localflix-red)' };
+
+const continueWatchingCardSx: SxProps<Theme> = {
+  bgcolor: 'var(--bg-card)',
+  border: '1px solid #222',
+  borderRadius: 2,
+  height: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+  cursor: 'pointer',
+};
+
+const cardImageBoxSx: SxProps<Theme> = {
+  height: 140,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  px: 2,
+  position: 'relative',
+};
+
+const removeButtonSx: SxProps<Theme> = {
+  position: 'absolute',
+  top: 8,
+  right: 8,
+  color: 'rgba(255, 255, 255, 0.6)',
+  bgcolor: 'rgba(0, 0, 0, 0.5)',
+  '&:hover': {
+    color: '#fff',
+    bgcolor: 'var(--localflix-red)',
+  },
+  zIndex: 10,
+};
+
+const closeIconSx: SxProps<Theme> = { fontSize: 16 };
+
+const playOverlaySx: SxProps<Theme> = {
+  position: 'absolute',
+  bgcolor: 'rgba(0,0,0,0.5)',
+  color: '#fff',
+  opacity: 0,
+  transition: 'opacity 0.2s',
+  '&:hover': { bgcolor: 'rgba(0,0,0,0.8)' },
+};
+
+const cardContentSx: SxProps<Theme> = { flexGrow: 1, p: 2, pb: 1 };
+
+const cardTitleSx: SxProps<Theme> = {
+  color: '#fff',
+  fontWeight: 600,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+};
+
+const cardSubtitleSx: SxProps<Theme> = { color: 'var(--text-secondary)' };
+
+const progressBarContainerSx: SxProps<Theme> = { width: '100%', px: 2, pb: 2 };
+
+const progressBarSx: SxProps<Theme> = {
+  bgcolor: '#333',
+  height: 4,
+  borderRadius: 1,
+  '& .MuiLinearProgress-bar': {
+    bgcolor: 'var(--localflix-red)',
+  },
+};
+
+const pinnedSectionSx: SxProps<Theme> = { mb: 6 };
+
+const pinnedSectionIconSx: SxProps<Theme> = { color: 'var(--localflix-red)' };
+
+const pinnedCardSx: SxProps<Theme> = {
+  bgcolor: 'var(--bg-card)',
+  border: '1px solid #222',
+  borderRadius: 2,
+  height: 110,
+  display: 'flex',
+  alignItems: 'center',
+  position: 'relative',
+  overflow: 'hidden',
+  cursor: 'pointer',
+};
+
+const pinnedRemoveButtonSx: SxProps<Theme> = {
+  position: 'absolute',
+  top: 6,
+  right: 6,
+  color: 'rgba(255, 255, 255, 0.4)',
+  bgcolor: 'rgba(0, 0, 0, 0.4)',
+  '&:hover': {
+    color: '#fff',
+    bgcolor: 'var(--localflix-red)',
+  },
+  zIndex: 10,
+};
+
+const pinnedCloseIconSx: SxProps<Theme> = { fontSize: 14 };
+
+const pinnedImageBoxSx: SxProps<Theme> = {
+  width: 80,
+  height: '100%',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+};
+
+const folderOpenIconSx: SxProps<Theme> = { color: '#fff', fontSize: 32 };
+
+const pinnedCardContentSx: SxProps<Theme> = { p: 2, width: 'calc(100% - 80px)' };
+
+const pinnedCardTitleSx: SxProps<Theme> = {
+  color: '#fff',
+  fontWeight: 600,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+};
+
+const pinnedCardPathSx: SxProps<Theme> = {
+  color: 'var(--text-secondary)',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+  display: 'block',
+};
+
+const noPinnedPlaceholderSx: SxProps<Theme> = {
+  border: '2px dashed #333',
+  borderRadius: 2,
+  p: 4,
+  textAlign: 'center',
+  color: 'var(--text-secondary)',
+};
+
+const noPinnedTextSx: SxProps<Theme> = { mb: 1 };
+
+const noPinnedSubTextSx: SxProps<Theme> = { color: '#666' };
+
+const getContinueWatchingImageSx = (thumbnail: string | undefined | null, gradient: string): SxProps<Theme> => ({
+  ...(cardImageBoxSx as object),
+  background: thumbnail ? 'none' : gradient,
+  ...(thumbnail && {
+    backgroundImage: `url(${thumbnail})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+  }),
+});
+
+const getPinnedFolderImageSx = (thumbnail: string | undefined | null, gradient: string): SxProps<Theme> => ({
+  ...(pinnedImageBoxSx as object),
+  background: thumbnail ? 'none' : gradient,
+  ...(thumbnail && {
+    backgroundImage: `url(${thumbnail})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+  }),
+});
 
 export const WebHomeView: React.FC<HomeViewProps> = ({
   continueList,
@@ -29,56 +267,29 @@ export const WebHomeView: React.FC<HomeViewProps> = ({
   handleRemovePin,
 }) => {
   return (
-    <Box className="fade-in" sx={{ pb: 6 }}>
+    <Box className="fade-in" data-style="mainContainerSx" sx={mainContainerSx}>
       {/* Hero Billboard Banner */}
       {heroItem ? (
         <Box
-          sx={{
-            height: '45vh',
-            width: '100%',
-            position: 'relative',
-            background: 'linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(20,20,20,1) 90%), url("https://images.unsplash.com/photo-1574375927938-d5a98e8edd85?q=80&w=1400") no-repeat center/cover',
-            display: 'flex',
-            alignItems: 'flex-end',
-            px: { xs: 3, md: 6 },
-            pb: 4,
-            mb: 4,
-          }}
+          data-style="heroBannerSx"
+          sx={heroBannerSx}
         >
-          <Box sx={{ maxWidth: 600 }}>
-            <Typography variant="overline" sx={{ color: 'var(--localflix-red)', fontWeight: 800, letterSpacing: 3 }}>
+          <Box data-style="heroContentBoxSx" sx={heroContentBoxSx}>
+            <Typography variant="overline" sx={heroSubtitleSx}>
               CONTINUE WATCHING
             </Typography>
             <Typography
               variant="h3"
-              sx={{
-                color: '#fff',
-                fontWeight: 800,
-                mb: 2,
-                fontSize: { xs: '2rem', md: '3.5rem' },
-                lineHeight: 1.1,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                display: '-webkit-box',
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: 'vertical',
-              }}
+              sx={heroTitleSx}
             >
               {heroItem.name}
             </Typography>
-            <Box sx={{ display: 'flex', gap: 2 }}>
+            <Box data-style="heroActionsBoxSx" sx={heroActionsBoxSx}>
               <Button
                 variant="contained"
                 startIcon={<PlayArrow />}
                 onClick={() => onPlayVideo(heroItem.path, heroItem.position)}
-                sx={{
-                  bgcolor: '#fff',
-                  color: '#000',
-                  fontWeight: 600,
-                  px: 3,
-                  py: 1,
-                  '&:hover': { bgcolor: 'rgba(255,255,255,0.8)' },
-                }}
+                sx={resumeButtonSx}
               >
                 Resume
               </Button>
@@ -86,18 +297,7 @@ export const WebHomeView: React.FC<HomeViewProps> = ({
                 variant="outlined"
                 startIcon={<FolderOpen />}
                 onClick={() => onNavigateToPath(heroItem.path.substring(0, heroItem.path.lastIndexOf('\\')))}
-                sx={{
-                  borderColor: 'rgba(255,255,255,0.4)',
-                  color: '#fff',
-                  fontWeight: 600,
-                  px: 3,
-                  py: 1,
-                  bgcolor: 'rgba(0, 0, 0, 0.4)',
-                  '&:hover': {
-                    borderColor: '#fff',
-                    bgcolor: 'rgba(0,0,0,0.6)',
-                  },
-                }}
+                sx={showFolderButtonSx}
               >
                 Show Folder
               </Button>
@@ -107,22 +307,14 @@ export const WebHomeView: React.FC<HomeViewProps> = ({
       ) : (
         /* Empty Hero placeholder with Netflix Billboard styling */
         <Box
-          sx={{
-            height: '35vh',
-            width: '100%',
-            position: 'relative',
-            background: 'linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(20,20,20,1) 100%), url("https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?q=80&w=1400") no-repeat center/cover',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            mb: 4,
-          }}
+          data-style="heroPlaceholderSx"
+          sx={heroPlaceholderSx}
         >
-          <Box sx={{ textAlign: 'center', px: 2 }}>
-            <Typography variant="h3" sx={{ color: '#fff', fontWeight: 800, mb: 1 }}>
+          <Box data-style="heroPlaceholderTextBoxSx" sx={heroPlaceholderTextBoxSx}>
+            <Typography variant="h3" sx={heroPlaceholderTitleSx}>
               Welcome back
             </Typography>
-            <Typography variant="h6" sx={{ color: 'var(--text-secondary)' }}>
+            <Typography variant="h6" sx={heroPlaceholderSubtitleSx}>
               Browse the file explorer to play your videos and configure storage paths.
             </Typography>
           </Box>
@@ -130,12 +322,12 @@ export const WebHomeView: React.FC<HomeViewProps> = ({
       )}
 
       {/* Main Rows */}
-      <Box sx={{ px: { xs: 3, md: 6 } }}>
+      <Box data-style="mainRowsContainerSx" sx={mainRowsContainerSx}>
         {/* Continue Watching Section */}
         {continueList.length > 0 && (
-          <Box sx={{ mb: 6 }}>
-            <Typography variant="h5" sx={{ color: '#fff', fontWeight: 700, mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
-              <History sx={{ color: 'var(--localflix-red)' }} /> Continue Watching
+          <Box data-style="continueWatchingSectionSx" sx={continueWatchingSectionSx}>
+            <Typography variant="h5" sx={sectionTitleSx}>
+              <History sx={sectionIconSx} /> Continue Watching
             </Typography>
             <Grid container spacing={3}>
               {continueList.map((item, index) => {
@@ -147,96 +339,47 @@ export const WebHomeView: React.FC<HomeViewProps> = ({
                     <Card
                       className="movie-card"
                       onClick={() => onPlayVideo(item.path, item.position)}
-                      sx={{
-                        bgcolor: 'var(--bg-card)',
-                        border: '1px solid #222',
-                        borderRadius: 2,
-                        height: '100%',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        cursor: 'pointer',
-                      }}
+                      sx={continueWatchingCardSx}
                     >
                       <Box
-                        sx={{
-                          height: 140,
-                          background: item.thumbnail ? 'none' : gradient,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          px: 2,
-                          position: 'relative',
-                          ...(item.thumbnail && {
-                            backgroundImage: `url(${item.thumbnail})`,
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center',
-                          }),
-                        }}
+                        data-style="getContinueWatchingImageSx"
+                        sx={getContinueWatchingImageSx(item.thumbnail, gradient)}
                       >
                         {/* Remove button */}
                         <IconButton
+                          data-style="removeButtonSx"
                           onClick={(e) => handleRemoveContinue(e, item.path)}
-                          sx={{
-                            position: 'absolute',
-                            top: 8,
-                            right: 8,
-                            color: 'rgba(255, 255, 255, 0.6)',
-                            bgcolor: 'rgba(0, 0, 0, 0.5)',
-                            '&:hover': {
-                              color: '#fff',
-                              bgcolor: 'var(--localflix-red)',
-                            },
-                            zIndex: 10,
-                          }}
+                          sx={removeButtonSx}
                           size="small"
                         >
-                          <Close sx={{ fontSize: 16 }} />
+                          <Close sx={closeIconSx} />
                         </IconButton>
 
                         <IconButton
                           className="play-overlay"
-                          sx={{
-                            position: 'absolute',
-                            bgcolor: 'rgba(0,0,0,0.5)',
-                            color: '#fff',
-                            opacity: 0,
-                            transition: 'opacity 0.2s',
-                            '&:hover': { bgcolor: 'rgba(0,0,0,0.8)' },
-                          }}
+                          data-style="playOverlaySx"
+                          sx={playOverlaySx}
                         >
                           <PlayArrow fontSize="large" />
                         </IconButton>
                       </Box>
-                      <CardContent sx={{ flexGrow: 1, p: 2, pb: 1 }}>
+                      <CardContent sx={cardContentSx}>
                         <Typography
                           variant="subtitle1"
-                          sx={{
-                            color: '#fff',
-                            fontWeight: 600,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                          }}
+                          sx={cardTitleSx}
                         >
                           {item.name}
                         </Typography>
-                        <Typography variant="caption" sx={{ color: 'var(--text-secondary)' }}>
+                        <Typography variant="caption" sx={cardSubtitleSx}>
                           Resumes at {Math.floor(item.position / 60)}m
                         </Typography>
                       </CardContent>
                       {/* Playback progress bar */}
-                      <Box sx={{ width: '100%', px: 2, pb: 2 }}>
+                      <Box data-style="progressBarContainerSx" sx={progressBarContainerSx}>
                         <LinearProgress
                           variant="determinate"
                           value={percentage}
-                          sx={{
-                            bgcolor: '#333',
-                            height: 4,
-                            borderRadius: 1,
-                            '& .MuiLinearProgress-bar': {
-                              bgcolor: 'var(--localflix-red)',
-                            },
-                          }}
+                          sx={progressBarSx}
                         />
                       </Box>
                     </Card>
@@ -248,9 +391,9 @@ export const WebHomeView: React.FC<HomeViewProps> = ({
         )}
 
         {/* Pinned Folders Section */}
-        <Box sx={{ mb: 6 }}>
-          <Typography variant="h5" sx={{ color: '#fff', fontWeight: 700, mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Bookmark sx={{ color: 'var(--localflix-red)' }} /> Pinned Shortcuts
+        <Box data-style="pinnedSectionSx" sx={pinnedSectionSx}>
+          <Typography variant="h5" sx={sectionTitleSx}>
+            <Bookmark sx={pinnedSectionIconSx} /> Pinned Shortcuts
           </Typography>
           {pinnedList.length > 0 ? (
             <Grid container spacing={3}>
@@ -261,77 +404,34 @@ export const WebHomeView: React.FC<HomeViewProps> = ({
                     <Card
                       className="movie-card"
                       onClick={() => onNavigateToPath(folder.path)}
-                      sx={{
-                        bgcolor: 'var(--bg-card)',
-                        border: '1px solid #222',
-                        borderRadius: 2,
-                        height: 110,
-                        display: 'flex',
-                        alignItems: 'center',
-                        position: 'relative',
-                        overflow: 'hidden',
-                        cursor: 'pointer',
-                      }}
+                      sx={pinnedCardSx}
                     >
                       {/* Remove button */}
                       <IconButton
+                        data-style="pinnedRemoveButtonSx"
                         onClick={(e) => handleRemovePin(e, folder.path)}
-                        sx={{
-                          position: 'absolute',
-                          top: 6,
-                          right: 6,
-                          color: 'rgba(255, 255, 255, 0.4)',
-                          bgcolor: 'rgba(0, 0, 0, 0.4)',
-                          '&:hover': {
-                            color: '#fff',
-                            bgcolor: 'var(--localflix-red)',
-                          },
-                          zIndex: 10,
-                        }}
+                        sx={pinnedRemoveButtonSx}
                         size="small"
                       >
-                        <Close sx={{ fontSize: 14 }} />
+                        <Close sx={pinnedCloseIconSx} />
                       </IconButton>
 
                       <Box
-                        sx={{
-                          width: 80,
-                          height: '100%',
-                          background: folder.thumbnail ? 'none' : gradient,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          ...(folder.thumbnail && {
-                            backgroundImage: `url(${folder.thumbnail})`,
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center',
-                          }),
-                        }}
+                        data-style="getPinnedFolderImageSx"
+                        sx={getPinnedFolderImageSx(folder.thumbnail, gradient)}
                       >
-                        {!folder.thumbnail && <FolderOpen sx={{ color: '#fff', fontSize: 32 }} />}
+                        {!folder.thumbnail && <FolderOpen sx={folderOpenIconSx} />}
                       </Box>
-                      <CardContent sx={{ p: 2, width: 'calc(100% - 80px)' }}>
+                      <CardContent sx={pinnedCardContentSx}>
                         <Typography
                           variant="subtitle1"
-                          sx={{
-                            color: '#fff',
-                            fontWeight: 600,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                          }}
+                          sx={pinnedCardTitleSx}
                         >
                           {folder.title}
                         </Typography>
                         <Typography
                           variant="caption"
-                          sx={{
-                            color: 'var(--text-secondary)',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            display: 'block',
-                          }}
+                          sx={pinnedCardPathSx}
                         >
                           {folder.path}
                         </Typography>
@@ -343,18 +443,13 @@ export const WebHomeView: React.FC<HomeViewProps> = ({
             </Grid>
           ) : (
             <Box
-              sx={{
-                border: '2px dashed #333',
-                borderRadius: 2,
-                p: 4,
-                textAlign: 'center',
-                color: 'var(--text-secondary)',
-              }}
+              data-style="noPinnedPlaceholderSx"
+              sx={noPinnedPlaceholderSx}
             >
-              <Typography variant="body1" sx={{ mb: 1 }}>
+              <Typography variant="body1" sx={noPinnedTextSx}>
                 No pinned folders yet.
               </Typography>
-              <Typography variant="body2" sx={{ color: '#666' }}>
+              <Typography variant="body2" sx={noPinnedSubTextSx}>
                 Navigate to the File Explorer and click the bookmark icon on any directory to pin it here.
               </Typography>
             </Box>

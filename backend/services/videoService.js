@@ -4,16 +4,7 @@ const os = require("os");
 const { spawn, execFile } = require("child_process");
 const ffmpegPath = "ffmpeg";
 const ffprobePath = "ffprobe";
-
-function isValidAudioTrack(track) {
-  return (
-    track !== undefined &&
-    track !== null &&
-    track !== "" &&
-    track !== "null" &&
-    track !== "undefined"
-  );
-}
+const { isValidAudioTrack, isVideoFile } = require("../utils/helpers");
 
 async function getVideoMetadata(videoPath, profileId, allowedPaths) {
   // Sibling playlist scanning
@@ -31,8 +22,7 @@ async function getVideoMetadata(videoPath, profileId, allowedPaths) {
           return false;
         }
         if (stats.isDirectory()) return false;
-        const ext = path.extname(file).toLowerCase();
-        return [".mp4", ".mkv", ".ts", ".m4v", ".mov", ".avi"].includes(ext);
+        return isVideoFile(file);
       });
     playlist.sort((a, b) =>
       a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }),

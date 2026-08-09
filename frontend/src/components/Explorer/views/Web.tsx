@@ -20,6 +20,7 @@ import {
   Menu,
   MenuItem,
 } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material';
 import {
   Folder,
   Movie,
@@ -33,6 +34,223 @@ import {
 } from '@mui/icons-material';
 import type { ExplorerItem } from '../../../api';
 import type { ExplorerViewProps } from './types';
+
+
+const rootBreadcrumbTextSx: SxProps<Theme> = { color: 'var(--localflix-red)', fontWeight: 600 };
+const breadcrumbBarSx: SxProps<Theme> = { color: '#fff', mb: 3 };
+const breadcrumbLinkSx: SxProps<Theme> = { color: 'var(--text-secondary)', textDecoration: 'none', cursor: 'pointer', '&:hover': { color: '#fff' } };
+const breadcrumbDisabledSx: SxProps<Theme> = { color: 'rgba(255, 255, 255, 0.25)', cursor: 'not-allowed', fontStyle: 'italic' };
+const explorerContainerSx: SxProps<Theme> = { px: { xs: 3, md: 6 }, pb: 6 };
+const topToolbarSx: SxProps<Theme> = { display: 'flex', justifyItems: 'center', justifyContent: 'space-between', mb: 4, gap: 2 };
+const titleTextSx: SxProps<Theme> = { color: '#fff', fontWeight: 700, mb: 1 };
+const topToolbarActionsSx: SxProps<Theme> = { display: 'flex', gap: 2, alignItems: 'center' };
+const upButtonSx: SxProps<Theme> = {
+  borderColor: '#333',
+  color: '#fff',
+  bgcolor: 'rgba(255,255,255,0.03)',
+  '&:hover': { borderColor: '#555', bgcolor: 'rgba(255,255,255,0.08)' },
+  '&.Mui-disabled': { borderColor: '#222', color: '#444', bgcolor: 'transparent' }
+};
+const searchAdornmentSx: SxProps<Theme> = { color: 'var(--text-secondary)' };
+const searchInputSx: SxProps<Theme> = {
+  color: '#fff',
+  bgcolor: 'var(--bg-card)',
+  borderColor: '#333',
+  borderRadius: 2,
+  width: 240,
+  '& .MuiOutlinedInput-notchedOutline': {
+    borderColor: '#333',
+  },
+  '&:hover .MuiOutlinedInput-notchedOutline': {
+    borderColor: '#555',
+  },
+  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'var(--localflix-red)',
+  },
+};
+
+const loadingContainerSx: SxProps<Theme> = { display: 'flex', justifyContent: 'center', py: 8 };
+const linearProgressSx: SxProps<Theme> = { width: '50%', bgcolor: '#333', '& .MuiLinearProgress-bar': { bgcolor: 'var(--localflix-red)' } };
+const folderCardSx: SxProps<Theme> = {
+  bgcolor: 'var(--bg-card)',
+  border: '1px solid #222',
+  borderRadius: 2,
+  height: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+  position: 'relative',
+  cursor: 'pointer',
+};
+const cardImageContainerBaseSx: SxProps<Theme> = {
+  height: 120,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  position: 'relative',
+};
+const playOverlayContainerSx: SxProps<Theme> = {
+  position: 'absolute',
+  bgcolor: 'rgba(0,0,0,0.5)',
+  borderRadius: '50%',
+  p: 1,
+  opacity: 0,
+  transition: 'opacity 0.2s',
+  display: 'flex',
+  '.movie-card:hover &': { opacity: 1 },
+};
+const playIconSx: SxProps<Theme> = { color: '#fff' };
+const folderIconSx: SxProps<Theme> = { fontSize: 56, color: 'rgba(255,255,255,0.7)' };
+const movieIconSx: SxProps<Theme> = { fontSize: 50, color: 'var(--localflix-red)' };
+
+const pinButtonSx: SxProps<Theme> = {
+  position: 'absolute',
+  top: 8,
+  left: 8,
+  bgcolor: 'rgba(0,0,0,0.4)',
+  '&:hover': { bgcolor: 'rgba(0,0,0,0.6)' },
+};
+const menuButtonSx: SxProps<Theme> = {
+  position: 'absolute',
+  top: 8,
+  right: 8,
+  color: 'rgba(255,255,255,0.7)',
+  bgcolor: 'rgba(0,0,0,0.4)',
+  '&:hover': { bgcolor: 'rgba(0,0,0,0.6)' },
+};
+const bookmarkIconSx: SxProps<Theme> = { fontSize: 18 };
+const cardContentSx: SxProps<Theme> = { p: 2, flexGrow: 1 };
+const cardTitleSx: SxProps<Theme> = {
+  color: '#fff',
+  fontWeight: 600,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  display: '-webkit-box',
+  WebkitLineClamp: 2,
+  WebkitBoxOrient: 'vertical',
+  lineHeight: 1.2,
+  minHeight: '2.4em',
+};
+const sizeTextSx: SxProps<Theme> = { color: 'var(--text-secondary)', display: 'block', mt: 1 };
+const progressContainerSx: SxProps<Theme> = { width: '100%', px: 2, pb: 2 };
+const progressBarSx: SxProps<Theme> = {
+  bgcolor: '#333',
+  height: 4,
+  borderRadius: 1,
+  '& .MuiLinearProgress-bar': {
+    bgcolor: 'var(--localflix-red)',
+  },
+};
+const emptyFolderContainerSx: SxProps<Theme> = {
+  border: '2px dashed #333',
+  borderRadius: 2,
+  p: 6,
+  textAlign: 'center',
+  color: 'var(--text-secondary)',
+};
+const emptyFolderTitleSx: SxProps<Theme> = { mb: 1 };
+const contextMenuPaperSx: SxProps<Theme> = {
+  bgcolor: 'var(--bg-card)',
+  color: '#fff',
+  border: '1px solid #333',
+  minWidth: 180,
+  '& .MuiMenuItem-root': {
+    fontSize: '0.9rem',
+    py: 1,
+    '&:hover': {
+      bgcolor: 'rgba(255,255,255,0.05)',
+    }
+  }
+};
+const removeThumbnailItemSx: SxProps<Theme> = { color: 'var(--localflix-red)' };
+
+const dialogPaperSx: SxProps<Theme> = {
+  bgcolor: 'var(--bg-card)',
+  color: '#fff',
+  border: '1px solid #333',
+  borderRadius: 2,
+  p: 1
+};
+const dialogTitleSx: SxProps<Theme> = { fontWeight: 700, pb: 1 };
+const dialogContentDividerSx: SxProps<Theme> = { borderColor: '#333' };
+const dialogContentBoxSx: SxProps<Theme> = { display: 'flex', flexDirection: 'column', gap: 3, mt: 1 };
+const pinNameInputSx: SxProps<Theme> = {
+  '& .MuiInputLabel-root': { color: 'var(--text-secondary)' },
+  '& .MuiInputBase-root': { color: '#fff' },
+  '& .MuiOutlinedInput-notchedOutline': { borderColor: '#333' },
+  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#555' },
+  '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--localflix-red)' }
+};
+const searchSubtitleSx: SxProps<Theme> = { color: 'var(--text-secondary)', mb: 1.5, fontWeight: 600 };
+const searchBoxSx: SxProps<Theme> = { display: 'flex', gap: 2, mb: 3 };
+const searchImageInputSx: SxProps<Theme> = {
+  '& .MuiInputBase-root': { color: '#fff' },
+  '& .MuiOutlinedInput-notchedOutline': { borderColor: '#333' },
+  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#555' },
+  '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--localflix-red)' }
+};
+const searchButtonSx: SxProps<Theme> = {
+  bgcolor: 'var(--localflix-red)',
+  color: '#fff',
+  fontWeight: 600,
+  px: 3,
+  '&:hover': { bgcolor: 'var(--localflix-dark-red)' },
+  '&.Mui-disabled': { bgcolor: '#444', color: '#888' }
+};
+const searchSpinnerContainerSx: SxProps<Theme> = { display: 'flex', justifyContent: 'center', py: 4 };
+const searchResultsGridSx: SxProps<Theme> = { maxHeight: 300, overflowY: 'auto', pr: 1, '&::-webkit-scrollbar': { width: 6 }, '&::-webkit-scrollbar-thumb': { bgcolor: '#333', borderRadius: 3 } };
+const searchResultItemBaseSx: SxProps<Theme> = {
+  height: 80,
+  borderRadius: 1,
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
+  cursor: 'pointer',
+  position: 'relative',
+  transition: 'all 0.2s',
+  '&:hover': { opacity: 0.8 },
+};
+const selectedIconContainerSx: SxProps<Theme> = { position: 'absolute', top: 4, right: 4, bgcolor: 'var(--bg-dark)', borderRadius: '50%', display: 'flex' };
+const selectedIconSx: SxProps<Theme> = { color: 'var(--localflix-red)', fontSize: 20 };
+const emptySearchBoxSx: SxProps<Theme> = { border: '1px dashed #333', p: 4, textAlign: 'center', borderRadius: 1 };
+
+const dialogActionsSx: SxProps<Theme> = { p: 2, borderColor: '#333' };
+const cancelButtonSx: SxProps<Theme> = { color: 'var(--text-secondary)', fontWeight: 600 };
+const pinSubmitButtonSx: SxProps<Theme> = {
+  bgcolor: 'var(--localflix-red)',
+  color: '#fff',
+  fontWeight: 600,
+  px: 3,
+  '&:hover': { bgcolor: 'var(--localflix-dark-red)' }
+};
+const thumbnailSubmitButtonSx: SxProps<Theme> = {
+  bgcolor: 'var(--localflix-red)',
+  color: '#fff',
+  fontWeight: 600,
+  px: 3,
+  '&:hover': { bgcolor: 'var(--localflix-dark-red)' },
+  '&.Mui-disabled': { bgcolor: '#444', color: '#888' }
+};
+
+const getCardImageSx = (isDir: boolean, thumbnail?: string | null): SxProps<Theme> => ({
+  ...(cardImageContainerBaseSx as object),
+  bgcolor: isDir ? '#1b1b1b' : '#222222',
+  ...(thumbnail && {
+    backgroundImage: `url(${thumbnail})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+  }),
+});
+
+const pinActiveButtonSx: SxProps<Theme> = { ...(pinButtonSx as object), color: 'var(--localflix-red)' };
+const pinInactiveButtonSx: SxProps<Theme> = { ...(pinButtonSx as object), color: 'rgba(255,255,255,0.7)' };
+
+const cardContentWithProgressSx: SxProps<Theme> = { ...(cardContentSx as object), pb: 1 };
+const cardContentNoProgressSx: SxProps<Theme> = { ...(cardContentSx as object), pb: 2 };
+
+const getSearchResultItemSx = (isSelected: boolean, thumbnail: string): SxProps<Theme> => ({
+  ...(searchResultItemBaseSx as object),
+  border: isSelected ? '3px solid var(--localflix-red)' : '1px solid #333',
+  backgroundImage: `url(${thumbnail})`,
+});
 
 export const WebExplorerView: React.FC<ExplorerViewProps> = ({
   currentPath,
@@ -90,18 +308,18 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
   // Helper to construct breadcrumbs
   const renderBreadcrumbs = () => {
     if (!currentPath) {
-      return <Typography sx={{ color: 'var(--localflix-red)', fontWeight: 600 }}>Storage Roots</Typography>;
+      return <Typography sx={rootBreadcrumbTextSx}>Storage Roots</Typography>;
     }
 
     const separator = currentPath.includes('\\') ? '\\' : '/';
     const parts = currentPath.split(separator).filter(Boolean);
 
     return (
-      <Breadcrumbs separator="/" sx={{ color: '#fff', mb: 3 }}>
+      <Breadcrumbs separator="/" sx={breadcrumbBarSx}>
         <Link
           component="button"
           onClick={() => loadDirectory('')}
-          sx={{ color: 'var(--text-secondary)', textDecoration: 'none', cursor: 'pointer', '&:hover': { color: '#fff' } }}
+          sx={breadcrumbLinkSx}
         >
           Roots
         </Link>
@@ -114,7 +332,7 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
 
           if (isLast) {
             return (
-              <Typography key={segmentPath} sx={{ color: 'var(--localflix-red)', fontWeight: 600 }}>
+              <Typography key={segmentPath} sx={rootBreadcrumbTextSx}>
                 {part}
               </Typography>
             );
@@ -124,7 +342,7 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
             return (
               <Typography
                 key={segmentPath}
-                sx={{ color: 'rgba(255, 255, 255, 0.25)', cursor: 'not-allowed', fontStyle: 'italic' }}
+                sx={breadcrumbDisabledSx}
               >
                 {part}
               </Typography>
@@ -136,7 +354,7 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
               key={segmentPath}
               component="button"
               onClick={() => loadDirectory(finalSegmentPath)}
-              sx={{ color: 'var(--text-secondary)', textDecoration: 'none', cursor: 'pointer', '&:hover': { color: '#fff' } }}
+              sx={breadcrumbLinkSx}
             >
               {part}
             </Link>
@@ -161,30 +379,24 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
   const isUpAllowed = isPathAllowed(getUpPath());
 
   return (
-    <Box className="fade-in" sx={{ px: { xs: 3, md: 6 }, pb: 6 }}>
+    <Box className="fade-in" data-style="explorerContainerSx" sx={explorerContainerSx}>
       {/* Explorer Top Toolbar */}
-      <Box sx={{ display: 'flex', justifyItems: 'center', justifyContent: 'space-between', mb: 4, gap: 2 }}>
+      <Box data-style="topToolbarSx" sx={topToolbarSx}>
         <Box>
-          <Typography variant="h4" sx={{ color: '#fff', fontWeight: 700, mb: 1 }}>
+          <Typography variant="h4" sx={titleTextSx}>
             File Explorer
           </Typography>
           {renderBreadcrumbs()}
         </Box>
 
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+        <Box data-style="topToolbarActionsSx" sx={topToolbarActionsSx}>
           {currentPath && (
             <Button
               variant="outlined"
               startIcon={<ArrowUpward />}
               onClick={handleBackClick}
               disabled={!isUpAllowed}
-              sx={{
-                borderColor: '#333',
-                color: '#fff',
-                bgcolor: 'rgba(255,255,255,0.03)',
-                '&:hover': { borderColor: '#555', bgcolor: 'rgba(255,255,255,0.08)' },
-                '&.Mui-disabled': { borderColor: '#222', color: '#444', bgcolor: 'transparent' }
-              }}
+              sx={upButtonSx}
             >
               Up
             </Button>
@@ -197,25 +409,10 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <Search sx={{ color: 'var(--text-secondary)' }} />
+                  <Search sx={searchAdornmentSx} />
                 </InputAdornment>
               ),
-              sx: {
-                color: '#fff',
-                bgcolor: 'var(--bg-card)',
-                borderColor: '#333',
-                borderRadius: 2,
-                width: 240,
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#333',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#555',
-                },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'var(--localflix-red)',
-                },
-              }
+              sx: searchInputSx
             }}
           />
         </Box>
@@ -223,8 +420,8 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
 
       {/* Directory Contents Grid */}
       {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-          <LinearProgress sx={{ width: '50%', bgcolor: '#333', '& .MuiLinearProgress-bar': { bgcolor: 'var(--localflix-red)' } }} />
+        <Box data-style="loadingContainerSx" sx={loadingContainerSx}>
+          <LinearProgress sx={linearProgressSx} />
         </Box>
       ) : filteredItems.length > 0 ? (
         <Grid container spacing={3}>
@@ -241,69 +438,31 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
                   className="movie-card"
                   onClick={() => isDir ? handleFolderClick(item.path) : onPlayVideo(item.path, item.progress?.position || 0)}
                   onContextMenu={(e) => handleOpenContextMenu(e, item)}
-                  sx={{
-                    bgcolor: 'var(--bg-card)',
-                    border: '1px solid #222',
-                    borderRadius: 2,
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    position: 'relative',
-                    cursor: 'pointer',
-                  }}
+                  sx={folderCardSx}
                 >
                   <Box
-                    sx={{
-                      height: 120,
-                      bgcolor: isDir ? '#1b1b1b' : '#222222',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      position: 'relative',
-                      ...(item.thumbnail && {
-                        backgroundImage: `url(${item.thumbnail})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                      }),
-                    }}
+                    data-style="getCardImageSx"
+                    sx={getCardImageSx(isDir, item.thumbnail)}
                   >
                     {item.thumbnail ? (
                       !isDir && (
                         <Box
                           className="play-overlay"
-                          sx={{
-                            position: 'absolute',
-                            bgcolor: 'rgba(0,0,0,0.5)',
-                            borderRadius: '50%',
-                            p: 1,
-                            opacity: 0,
-                            transition: 'opacity 0.2s',
-                            display: 'flex',
-                            '.movie-card:hover &': { opacity: 1 },
-                          }}
+                          data-style="playOverlayContainerSx" sx={playOverlayContainerSx}
                         >
-                          <PlayArrow sx={{ color: '#fff' }} />
+                          <PlayArrow sx={playIconSx} />
                         </Box>
                       )
                     ) : isDir ? (
-                      <Folder sx={{ fontSize: 56, color: 'rgba(255,255,255,0.7)' }} />
+                      <Folder sx={folderIconSx} />
                     ) : (
                       <>
-                        <Movie sx={{ fontSize: 50, color: 'var(--localflix-red)' }} />
+                        <Movie sx={movieIconSx} />
                         <Box
                           className="play-overlay"
-                          sx={{
-                            position: 'absolute',
-                            bgcolor: 'rgba(0,0,0,0.5)',
-                            borderRadius: '50%',
-                            p: 1,
-                            opacity: 0,
-                            transition: 'opacity 0.2s',
-                            display: 'flex',
-                            '.movie-card:hover &': { opacity: 1 },
-                          }}
+                          data-style="playOverlayContainerSx" sx={playOverlayContainerSx}
                         >
-                          <PlayArrow sx={{ color: '#fff' }} />
+                          <PlayArrow sx={playIconSx} />
                         </Box>
                       </>
                     )}
@@ -312,16 +471,9 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
                     {isDir && (
                       <IconButton
                         onClick={(e) => handlePinToggle(e, item)}
-                        sx={{
-                          position: 'absolute',
-                          top: 8,
-                          left: 8,
-                          color: item.isPinned ? 'var(--localflix-red)' : 'rgba(255,255,255,0.7)',
-                          bgcolor: 'rgba(0,0,0,0.4)',
-                          '&:hover': { bgcolor: 'rgba(0,0,0,0.6)' },
-                        }}
+                        data-style={item.isPinned ? "pinActiveButtonSx" : "pinInactiveButtonSx"} sx={item.isPinned ? pinActiveButtonSx : pinInactiveButtonSx}
                       >
-                        {item.isPinned ? <Bookmark sx={{ fontSize: 18 }} /> : <BookmarkBorder sx={{ fontSize: 18 }} />}
+                        {item.isPinned ? <Bookmark sx={bookmarkIconSx} /> : <BookmarkBorder sx={bookmarkIconSx} />}
                       </IconButton>
                     )}
 
@@ -330,56 +482,32 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
                       <IconButton
                         className="menu-button"
                         onClick={(e) => handleOpenMenu(e, item)}
-                        sx={{
-                          position: 'absolute',
-                          top: 8,
-                          right: 8,
-                          color: 'rgba(255,255,255,0.7)',
-                          bgcolor: 'rgba(0,0,0,0.4)',
-                          '&:hover': { bgcolor: 'rgba(0,0,0,0.6)' },
-                        }}
+                        data-style="menuButtonSx" sx={menuButtonSx}
                       >
-                        <MoreVert sx={{ fontSize: 18 }} />
+                        <MoreVert sx={bookmarkIconSx} />
                       </IconButton>
                     )}
                   </Box>
-                  <CardContent sx={{ p: 2, flexGrow: 1, pb: hasProgress ? 1 : 2 }}>
+                  <CardContent sx={hasProgress ? cardContentWithProgressSx : cardContentNoProgressSx}>
                     <Typography
                       variant="subtitle1"
-                      sx={{
-                        color: '#fff',
-                        fontWeight: 600,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                        lineHeight: 1.2,
-                        minHeight: '2.4em',
-                      }}
+                      sx={cardTitleSx}
                     >
                       {item.name}
                     </Typography>
                     {!isDir && (
-                      <Typography variant="caption" sx={{ color: 'var(--text-secondary)', display: 'block', mt: 1 }}>
+                      <Typography variant="caption" sx={sizeTextSx}>
                         {formatSize(item.size)}
                       </Typography>
                     )}
                   </CardContent>
 
                   {!isDir && hasProgress && (
-                    <Box sx={{ width: '100%', px: 2, pb: 2 }}>
+                    <Box data-style="progressContainerSx" sx={progressContainerSx}>
                       <LinearProgress
                         variant="determinate"
                         value={progressPercent}
-                        sx={{
-                          bgcolor: '#333',
-                          height: 4,
-                          borderRadius: 1,
-                          '& .MuiLinearProgress-bar': {
-                            bgcolor: 'var(--localflix-red)',
-                          },
-                        }}
+                        sx={progressBarSx}
                       />
                     </Box>
                   )}
@@ -389,16 +517,8 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
           })}
         </Grid>
       ) : (
-        <Box
-          sx={{
-            border: '2px dashed #333',
-            borderRadius: 2,
-            p: 6,
-            textAlign: 'center',
-            color: 'var(--text-secondary)',
-          }}
-        >
-          <Typography variant="h6" sx={{ mb: 1 }}>
+        <Box data-style="emptyFolderContainerSx" sx={emptyFolderContainerSx}>
+          <Typography variant="h6" sx={emptyFolderTitleSx}>
             Empty Folder
           </Typography>
           <Typography variant="body2">
@@ -419,19 +539,7 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
             : undefined
         }
         PaperProps={{
-          sx: {
-            bgcolor: 'var(--bg-card)',
-            color: '#fff',
-            border: '1px solid #333',
-            minWidth: 180,
-            '& .MuiMenuItem-root': {
-              fontSize: '0.9rem',
-              py: 1,
-              '&:hover': {
-                bgcolor: 'rgba(255,255,255,0.05)',
-              }
-            }
-          }
+          sx: contextMenuPaperSx
         }}
       >
         <MenuItem
@@ -448,7 +556,7 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
               if (menuItem) handleThumbnailRemove(menuItem);
               handleCloseMenu();
             }}
-            sx={{ color: 'var(--localflix-red)' }}
+            sx={removeThumbnailItemSx}
           >
             Remove Thumbnail
           </MenuItem>
@@ -462,40 +570,28 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
         maxWidth="md"
         fullWidth
         PaperProps={{
-          sx: {
-            bgcolor: 'var(--bg-card)',
-            color: '#fff',
-            border: '1px solid #333',
-            borderRadius: 2,
-            p: 1
-          }
+          sx: dialogPaperSx
         }}
       >
-        <DialogTitle sx={{ fontWeight: 700, pb: 1 }}>
+        <DialogTitle sx={dialogTitleSx}>
           Pin Folder to Shortcuts
         </DialogTitle>
-        <DialogContent dividers sx={{ borderColor: '#333' }}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
+        <DialogContent dividers sx={dialogContentDividerSx}>
+          <Box data-style="dialogContentBoxSx" sx={dialogContentBoxSx}>
             <TextField
               fullWidth
               label="Pin Name"
               value={pinTitle}
               onChange={(e) => setPinTitle(e.target.value)}
               variant="outlined"
-              sx={{
-                '& .MuiInputLabel-root': { color: 'var(--text-secondary)' },
-                '& .MuiInputBase-root': { color: '#fff' },
-                '& .MuiOutlinedInput-notchedOutline': { borderColor: '#333' },
-                '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#555' },
-                '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--localflix-red)' }
-              }}
+              sx={pinNameInputSx}
             />
 
             <Box>
-              <Typography variant="subtitle2" sx={{ color: 'var(--text-secondary)', mb: 1.5, fontWeight: 600 }}>
+              <Typography variant="subtitle2" sx={searchSubtitleSx}>
                 Search and Select Thumbnail Cover Art (Optional)
               </Typography>
-              <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+              <Box data-style="searchBoxSx" sx={searchBoxSx}>
                 <TextField
                   fullWidth
                   placeholder="Search artwork..."
@@ -504,58 +600,35 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
                   onKeyDown={(e) => e.key === 'Enter' && handleSearchImages()}
                   variant="outlined"
                   size="small"
-                  sx={{
-                    '& .MuiInputBase-root': { color: '#fff' },
-                    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#333' },
-                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#555' },
-                    '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--localflix-red)' }
-                  }}
+                  sx={searchImageInputSx}
                 />
                 <Button
                   variant="contained"
                   onClick={handleSearchImages}
                   disabled={searchingImages}
-                  sx={{
-                    bgcolor: 'var(--localflix-red)',
-                    color: '#fff',
-                    fontWeight: 600,
-                    px: 3,
-                    '&:hover': { bgcolor: 'var(--localflix-dark-red)' },
-                    '&.Mui-disabled': { bgcolor: '#444', color: '#888' }
-                  }}
+                  sx={searchButtonSx}
                 >
                   {searchingImages ? <CircularProgress size={20} color="inherit" /> : 'Search'}
                 </Button>
               </Box>
 
               {searchingImages && searchResults.length === 0 ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                  <CircularProgress sx={{ color: 'var(--localflix-red)' }} />
+                <Box data-style="searchSpinnerContainerSx" sx={searchSpinnerContainerSx}>
+                  <CircularProgress sx={removeThumbnailItemSx} />
                 </Box>
               ) : searchResults.length > 0 ? (
-                <Grid container spacing={2} sx={{ maxHeight: 300, overflowY: 'auto', pr: 1, '&::-webkit-scrollbar': { width: 6 }, '&::-webkit-scrollbar-thumb': { bgcolor: '#333', borderRadius: 3 } }}>
+                <Grid container spacing={2} sx={searchResultsGridSx}>
                   {searchResults.map((item, idx) => {
                     const isSelected = selectedThumbnail === item.thumbnail;
                     return (
                       <Grid item xs={6} sm={4} md={3} key={idx}>
                         <Box
                           onClick={() => setSelectedThumbnail(isSelected ? null : item.thumbnail)}
-                          sx={{
-                            height: 80,
-                            borderRadius: 1,
-                            border: isSelected ? '3px solid var(--localflix-red)' : '1px solid #333',
-                            backgroundImage: `url(${item.thumbnail})`,
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center',
-                            cursor: 'pointer',
-                            position: 'relative',
-                            transition: 'all 0.2s',
-                            '&:hover': { opacity: 0.8 },
-                          }}
+                          data-style="getSearchResultItemSx" sx={getSearchResultItemSx(isSelected, item.thumbnail)}
                         >
                           {isSelected && (
-                            <Box sx={{ position: 'absolute', top: 4, right: 4, bgcolor: 'var(--bg-dark)', borderRadius: '50%', display: 'flex' }}>
-                              <CheckCircle sx={{ color: 'var(--localflix-red)', fontSize: 20 }} />
+                            <Box data-style="selectedIconContainerSx" sx={selectedIconContainerSx}>
+                              <CheckCircle sx={selectedIconSx} />
                             </Box>
                           )}
                         </Box>
@@ -564,8 +637,8 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
                   })}
                 </Grid>
               ) : (
-                <Box sx={{ border: '1px dashed #333', p: 4, textAlign: 'center', borderRadius: 1 }}>
-                  <Typography variant="body2" sx={{ color: 'var(--text-secondary)' }}>
+                <Box data-style="emptySearchBoxSx" sx={emptySearchBoxSx}>
+                  <Typography variant="body2" sx={searchAdornmentSx}>
                     Search for images above to select a thumbnail (Optional)
                   </Typography>
                 </Box>
@@ -573,20 +646,14 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
             </Box>
           </Box>
         </DialogContent>
-        <DialogActions sx={{ p: 2, borderColor: '#333' }}>
-          <Button onClick={() => setPinDialogOpen(false)} sx={{ color: 'var(--text-secondary)', fontWeight: 600 }}>
+        <DialogActions sx={dialogActionsSx}>
+          <Button onClick={() => setPinDialogOpen(false)} sx={cancelButtonSx}>
             Cancel
           </Button>
           <Button
             onClick={handlePinSubmit}
             variant="contained"
-            sx={{
-              bgcolor: 'var(--localflix-red)',
-              color: '#fff',
-              fontWeight: 600,
-              px: 3,
-              '&:hover': { bgcolor: 'var(--localflix-dark-red)' }
-            }}
+            sx={pinSubmitButtonSx}
           >
             Pin Shortcut
           </Button>
@@ -600,25 +667,19 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
         maxWidth="md"
         fullWidth
         PaperProps={{
-          sx: {
-            bgcolor: 'var(--bg-card)',
-            color: '#fff',
-            border: '1px solid #333',
-            borderRadius: 2,
-            p: 1
-          }
+          sx: dialogPaperSx
         }}
       >
-        <DialogTitle sx={{ fontWeight: 700, pb: 1 }}>
+        <DialogTitle sx={dialogTitleSx}>
           Set Folder Thumbnail
         </DialogTitle>
-        <DialogContent dividers sx={{ borderColor: '#333' }}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
+        <DialogContent dividers sx={dialogContentDividerSx}>
+          <Box data-style="dialogContentBoxSx" sx={dialogContentBoxSx}>
             <Box>
-              <Typography variant="subtitle2" sx={{ color: 'var(--text-secondary)', mb: 1.5, fontWeight: 600 }}>
+              <Typography variant="subtitle2" sx={searchSubtitleSx}>
                 Search and Select Thumbnail Cover Art
               </Typography>
-              <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+              <Box data-style="searchBoxSx" sx={searchBoxSx}>
                 <TextField
                   fullWidth
                   placeholder="Search artwork..."
@@ -627,58 +688,35 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
                   onKeyDown={(e) => e.key === 'Enter' && handleSearchImages()}
                   variant="outlined"
                   size="small"
-                  sx={{
-                    '& .MuiInputBase-root': { color: '#fff' },
-                    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#333' },
-                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#555' },
-                    '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--localflix-red)' }
-                  }}
+                  sx={searchImageInputSx}
                 />
                 <Button
                   variant="contained"
                   onClick={handleSearchImages}
                   disabled={searchingImages}
-                  sx={{
-                    bgcolor: 'var(--localflix-red)',
-                    color: '#fff',
-                    fontWeight: 600,
-                    px: 3,
-                    '&:hover': { bgcolor: 'var(--localflix-dark-red)' },
-                    '&.Mui-disabled': { bgcolor: '#444', color: '#888' }
-                  }}
+                  sx={searchButtonSx}
                 >
                   {searchingImages ? <CircularProgress size={20} color="inherit" /> : 'Search'}
                 </Button>
               </Box>
 
               {searchingImages && searchResults.length === 0 ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                  <CircularProgress sx={{ color: 'var(--localflix-red)' }} />
+                <Box data-style="searchSpinnerContainerSx" sx={searchSpinnerContainerSx}>
+                  <CircularProgress sx={removeThumbnailItemSx} />
                 </Box>
               ) : searchResults.length > 0 ? (
-                <Grid container spacing={2} sx={{ maxHeight: 300, overflowY: 'auto', pr: 1, '&::-webkit-scrollbar': { width: 6 }, '&::-webkit-scrollbar-thumb': { bgcolor: '#333', borderRadius: 3 } }}>
+                <Grid container spacing={2} sx={searchResultsGridSx}>
                   {searchResults.map((item, idx) => {
                     const isSelected = selectedThumbnail === item.thumbnail;
                     return (
                       <Grid item xs={6} sm={4} md={3} key={idx}>
                         <Box
                           onClick={() => setSelectedThumbnail(isSelected ? null : item.thumbnail)}
-                          sx={{
-                            height: 80,
-                            borderRadius: 1,
-                            border: isSelected ? '3px solid var(--localflix-red)' : '1px solid #333',
-                            backgroundImage: `url(${item.thumbnail})`,
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center',
-                            cursor: 'pointer',
-                            position: 'relative',
-                            transition: 'all 0.2s',
-                            '&:hover': { opacity: 0.8 },
-                          }}
+                          data-style="getSearchResultItemSx" sx={getSearchResultItemSx(isSelected, item.thumbnail)}
                         >
                           {isSelected && (
-                            <Box sx={{ position: 'absolute', top: 4, right: 4, bgcolor: 'var(--bg-dark)', borderRadius: '50%', display: 'flex' }}>
-                              <CheckCircle sx={{ color: 'var(--localflix-red)', fontSize: 20 }} />
+                            <Box data-style="selectedIconContainerSx" sx={selectedIconContainerSx}>
+                              <CheckCircle sx={selectedIconSx} />
                             </Box>
                           )}
                         </Box>
@@ -687,8 +725,8 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
                   })}
                 </Grid>
               ) : (
-                <Box sx={{ border: '1px dashed #333', p: 4, textAlign: 'center', borderRadius: 1 }}>
-                  <Typography variant="body2" sx={{ color: 'var(--text-secondary)' }}>
+                <Box data-style="emptySearchBoxSx" sx={emptySearchBoxSx}>
+                  <Typography variant="body2" sx={searchAdornmentSx}>
                     Search for images above to select a thumbnail
                   </Typography>
                 </Box>
@@ -696,22 +734,15 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
             </Box>
           </Box>
         </DialogContent>
-        <DialogActions sx={{ p: 2, borderColor: '#333' }}>
-          <Button onClick={() => setThumbnailDialogOpen(false)} sx={{ color: 'var(--text-secondary)', fontWeight: 600 }}>
+        <DialogActions sx={dialogActionsSx}>
+          <Button onClick={() => setThumbnailDialogOpen(false)} sx={cancelButtonSx}>
             Cancel
           </Button>
           <Button
             onClick={handleThumbnailSubmit}
             variant="contained"
             disabled={!selectedThumbnail}
-            sx={{
-              bgcolor: 'var(--localflix-red)',
-              color: '#fff',
-              fontWeight: 600,
-              px: 3,
-              '&:hover': { bgcolor: 'var(--localflix-dark-red)' },
-              '&.Mui-disabled': { bgcolor: '#444', color: '#888' }
-            }}
+            sx={thumbnailSubmitButtonSx}
           >
             Save Thumbnail
           </Button>

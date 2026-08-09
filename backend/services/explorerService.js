@@ -3,6 +3,7 @@ const fs = require("fs");
 const pinRepository = require("../repositories/pinRepository");
 const progressRepository = require("../repositories/progressRepository");
 const thumbnailRepository = require("../repositories/thumbnailRepository");
+const { isVideoFile } = require("../utils/helpers");
 
 async function getThumbnailsMap(profileId) {
   return thumbnailRepository.getThumbnails(profileId);
@@ -65,8 +66,7 @@ async function readDirectory(queryPath, profileId, allowedPaths) {
     }
 
     const isDirectory = stats.isDirectory();
-    const ext = path.extname(item).toLowerCase();
-    const isVideo = [".mp4", ".mkv", ".ts", ".m4v", ".mov", ".avi"].includes(ext);
+    const isVideo = isVideoFile(fullPath);
 
     // Only include directories or video files
     if (isDirectory || isVideo) {

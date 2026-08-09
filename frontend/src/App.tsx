@@ -7,9 +7,13 @@ import { WebLayout } from "./layouts/WebLayout";
 import { MobileLayout } from "./layouts/MobileLayout";
 import { Router } from "./Router";
 
+import type { SxProps, Theme } from "@mui/material";
+
 type Page = "home" | "explorer" | "history";
 
 const AVATAR_COLORS = ["#1e90ff", "#e50914", "#2ecc71", "#f1c40f", "#9b59b6"];
+
+const appContainerSx: SxProps<Theme> = { minHeight: "100vh", bgcolor: "var(--bg-dark)" };
 
 interface RouteState {
   page: Page;
@@ -135,7 +139,7 @@ function App() {
   const Layout = isMobile ? MobileLayout : WebLayout;
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "var(--bg-dark)" }}>
+    <Box sx={appContainerSx} data-style="appContainerSx">
       <Layout
         activePage={route.page}
         onPageChange={handlePageChange}
