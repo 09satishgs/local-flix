@@ -70,7 +70,7 @@ To keep this guide concise, advanced architecture and technical details are spli
 ### Prerequisites
 
 - **Node.js** v18+ (LTS recommended)
-- **FFmpeg** — Automatically bundled on setup via `ffmpeg-static` (no manual system-level installation needed).
+- **FFmpeg & FFprobe** — Must be globally installed (or download portable versions) on your system and must be added to your system's environment `PATH`.
 
 ### Getting Started
 
