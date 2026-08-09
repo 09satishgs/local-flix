@@ -12,7 +12,7 @@ import {
   Divider,
 } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
-import { PlayArrow, History as HistoryIcon, AccessTime, Movie, Delete } from '@mui/icons-material';
+import { PlayArrow, History as HistoryIcon, AccessTime, Movie, Delete, Replay } from '@mui/icons-material';
 import type { HistoryViewProps } from './types';
 
 // --- Extracted sx style constants ---
@@ -41,6 +41,15 @@ const actionButtonsContainerSx: SxProps<Theme> = { display: 'flex', gap: 1 };
 const deleteButtonSx: SxProps<Theme> = {
   bgcolor: 'rgba(255,255,255,0.05)',
   color: 'rgba(255,255,255,0.6)',
+  '&:hover': {
+    bgcolor: 'var(--localflix-red)',
+    color: '#fff',
+  },
+};
+
+const restartButtonSx: SxProps<Theme> = {
+  bgcolor: 'rgba(255,255,255,0.05)',
+  color: '#fff',
   '&:hover': {
     bgcolor: 'var(--localflix-red)',
     color: '#fff',
@@ -138,13 +147,23 @@ export const WebHistoryView: React.FC<HistoryViewProps> = ({
                           onClick={() => handleDeleteHistoryItem(item.id)}
                           sx={deleteButtonSx}
                           data-style="deleteButtonSx"
+                          title="Delete Record"
                         >
                           <Delete />
+                        </IconButton>
+                        <IconButton
+                          onClick={() => onPlayVideo(item.path, 0)}
+                          sx={restartButtonSx}
+                          data-style="restartButtonSx"
+                          title="Restart from Beginning"
+                        >
+                          <Replay />
                         </IconButton>
                         <IconButton
                           onClick={() => onPlayVideo(item.path, item.position)}
                           sx={playButtonSx}
                           data-style="playButtonSx"
+                          title="Resume Video"
                         >
                           <PlayArrow />
                         </IconButton>

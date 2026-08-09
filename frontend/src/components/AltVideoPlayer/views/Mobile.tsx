@@ -441,6 +441,14 @@ export const MobileVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
                 {isPlaying ? <Pause /> : <PlayArrow />}
               </IconButton>
               <IconButton
+                onClick={handleReplay}
+                sx={altMobileSkipBtnSx}
+                data-style="altMobileSkipBtnSx"
+                title="Restart Video"
+              >
+                <Replay />
+              </IconButton>
+              <IconButton
                 onClick={playNext}
                 disabled={!hasNext}
                 sx={altMobileSkipBtnSx}

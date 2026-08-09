@@ -16,6 +16,7 @@ import {
   History,
   Bookmark,
   Close,
+  Replay,
 } from '@mui/icons-material';
 import { CARD_GRADIENTS } from '../hooks';
 import type { HomeViewProps } from './types';
@@ -134,13 +135,35 @@ const removeButtonSx: SxProps<Theme> = {
 
 const closeIconSx: SxProps<Theme> = { fontSize: 16 };
 
-const playOverlaySx: SxProps<Theme> = {
+const playOverlayContainerSx: SxProps<Theme> = {
   position: 'absolute',
-  bgcolor: 'rgba(0,0,0,0.5)',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  bgcolor: 'rgba(0,0,0,0.6)',
   color: '#fff',
   opacity: 0,
   transition: 'opacity 0.2s',
-  '&:hover': { bgcolor: 'rgba(0,0,0,0.8)' },
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 2,
+  '&:hover': { opacity: 1 },
+};
+
+const playOverlayBtnSx: SxProps<Theme> = {
+  color: '#fff',
+  bgcolor: 'rgba(229, 9, 20, 0.9)',
+  '&:hover': { bgcolor: 'var(--localflix-red)', transform: 'scale(1.1)' },
+  transition: 'transform 0.2s',
+};
+
+const restartOverlayBtnSx: SxProps<Theme> = {
+  color: '#fff',
+  bgcolor: 'rgba(255,255,255,0.2)',
+  '&:hover': { bgcolor: 'rgba(255,255,255,0.4)', transform: 'scale(1.1)' },
+  transition: 'transform 0.2s',
 };
 
 const cardContentSx: SxProps<Theme> = { flexGrow: 1, p: 2, pb: 1 };
@@ -295,6 +318,14 @@ export const WebHomeView: React.FC<HomeViewProps> = ({
               </Button>
               <Button
                 variant="outlined"
+                startIcon={<Replay />}
+                onClick={() => onPlayVideo(heroItem.path, 0)}
+                sx={showFolderButtonSx}
+              >
+                Start Over
+              </Button>
+              <Button
+                variant="outlined"
                 startIcon={<FolderOpen />}
                 onClick={() => onNavigateToPath(heroItem.path.substring(0, heroItem.path.lastIndexOf('\\')))}
                 sx={showFolderButtonSx}
@@ -355,13 +386,34 @@ export const WebHomeView: React.FC<HomeViewProps> = ({
                           <Close sx={closeIconSx} />
                         </IconButton>
 
-                        <IconButton
+                        <Box
                           className="play-overlay"
-                          data-style="playOverlaySx"
-                          sx={playOverlaySx}
+                          data-style="playOverlayContainerSx"
+                          sx={playOverlayContainerSx}
                         >
-                          <PlayArrow fontSize="large" />
-                        </IconButton>
+                          <IconButton
+                            data-style="playOverlayBtnSx"
+                            sx={playOverlayBtnSx}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onPlayVideo(item.path, item.position);
+                            }}
+                            title="Resume Video"
+                          >
+                            <PlayArrow fontSize="large" />
+                          </IconButton>
+                          <IconButton
+                            data-style="restartOverlayBtnSx"
+                            sx={restartOverlayBtnSx}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onPlayVideo(item.path, 0);
+                            }}
+                            title="Restart from Beginning"
+                          >
+                            <Replay fontSize="medium" />
+                          </IconButton>
+                        </Box>
                       </Box>
                       <CardContent sx={cardContentSx}>
                         <Typography

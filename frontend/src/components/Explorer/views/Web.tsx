@@ -31,6 +31,7 @@ import {
   PlayArrow,
   CheckCircle,
   MoreVert,
+  Replay,
 } from '@mui/icons-material';
 import type { ExplorerItem } from '../../../api';
 import type { ExplorerViewProps } from './types';
@@ -90,15 +91,32 @@ const cardImageContainerBaseSx: SxProps<Theme> = {
 };
 const playOverlayContainerSx: SxProps<Theme> = {
   position: 'absolute',
-  bgcolor: 'rgba(0,0,0,0.5)',
-  borderRadius: '50%',
-  p: 1,
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  bgcolor: 'rgba(0,0,0,0.6)',
+  borderRadius: 1,
   opacity: 0,
   transition: 'opacity 0.2s',
   display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 1.5,
   '.movie-card:hover &': { opacity: 1 },
 };
-const playIconSx: SxProps<Theme> = { color: '#fff' };
+const playOverlayBtnSx: SxProps<Theme> = {
+  color: '#fff',
+  bgcolor: 'rgba(229, 9, 20, 0.9)',
+  '&:hover': { bgcolor: 'var(--localflix-red)', transform: 'scale(1.1)' },
+  transition: 'transform 0.2s',
+};
+const replayOverlayBtnSx: SxProps<Theme> = {
+  color: '#fff',
+  bgcolor: 'rgba(255,255,255,0.2)',
+  '&:hover': { bgcolor: 'rgba(255,255,255,0.4)', transform: 'scale(1.1)' },
+  transition: 'transform 0.2s',
+};
 const folderIconSx: SxProps<Theme> = { fontSize: 56, color: 'rgba(255,255,255,0.7)' };
 const movieIconSx: SxProps<Theme> = { fontSize: 50, color: 'var(--localflix-red)' };
 
@@ -450,7 +468,30 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
                           className="play-overlay"
                           data-style="playOverlayContainerSx" sx={playOverlayContainerSx}
                         >
-                          <PlayArrow sx={playIconSx} />
+                          <IconButton
+                            size="small"
+                            data-style="playOverlayBtnSx"
+                            sx={playOverlayBtnSx}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onPlayVideo(item.path, item.progress?.position || 0);
+                            }}
+                            title={hasProgress ? "Resume Video" : "Play Video"}
+                          >
+                            <PlayArrow fontSize="medium" />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            data-style="replayOverlayBtnSx"
+                            sx={replayOverlayBtnSx}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onPlayVideo(item.path, 0);
+                            }}
+                            title="Restart from Beginning"
+                          >
+                            <Replay fontSize="small" />
+                          </IconButton>
                         </Box>
                       )
                     ) : isDir ? (
@@ -462,7 +503,30 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
                           className="play-overlay"
                           data-style="playOverlayContainerSx" sx={playOverlayContainerSx}
                         >
-                          <PlayArrow sx={playIconSx} />
+                          <IconButton
+                            size="small"
+                            data-style="playOverlayBtnSx"
+                            sx={playOverlayBtnSx}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onPlayVideo(item.path, item.progress?.position || 0);
+                            }}
+                            title={hasProgress ? "Resume Video" : "Play Video"}
+                          >
+                            <PlayArrow fontSize="medium" />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            data-style="replayOverlayBtnSx"
+                            sx={replayOverlayBtnSx}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onPlayVideo(item.path, 0);
+                            }}
+                            title="Restart from Beginning"
+                          >
+                            <Replay fontSize="small" />
+                          </IconButton>
                         </Box>
                       </>
                     )}
@@ -542,6 +606,16 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
           sx: contextMenuPaperSx
         }}
       >
+        {!menuItem?.isDirectory && (
+          <MenuItem
+            onClick={() => {
+              if (menuItem) onPlayVideo(menuItem.path, 0);
+              handleCloseMenu();
+            }}
+          >
+            <Replay fontSize="small" sx={{ mr: 1, color: 'var(--text-secondary)' }} /> Restart from Beginning
+          </MenuItem>
+        )}
         <MenuItem
           onClick={() => {
             if (menuItem) handleThumbnailOpen(null, menuItem);

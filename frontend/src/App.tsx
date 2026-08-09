@@ -53,6 +53,8 @@ const navigateTo = (page: Page, path: string, videoPath: string | null, position
   }
   if (position > 0) {
     params.set("position", position.toString());
+  } else {
+    params.delete("position");
   }
 
   const queryStr = params.toString();
@@ -161,6 +163,7 @@ function App() {
       {route.videoPath && (
         useAltPlayer ? (
           <AltVideoPlayer
+            key={`${route.videoPath}_${route.videoPosition}`}
             videoPath={route.videoPath}
             initialPosition={route.videoPosition}
             onClose={() => {
@@ -172,6 +175,7 @@ function App() {
           />
         ) : (
           <VideoPlayer
+            key={`${route.videoPath}_${route.videoPosition}`}
             videoPath={route.videoPath}
             initialPosition={route.videoPosition}
             onClose={() => {

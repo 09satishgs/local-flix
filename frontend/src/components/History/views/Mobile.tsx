@@ -12,7 +12,7 @@ import {
   Divider,
 } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
-import { PlayArrow, History as HistoryIcon, AccessTime, Movie, Delete } from '@mui/icons-material';
+import { PlayArrow, History as HistoryIcon, AccessTime, Movie, Delete, Replay } from '@mui/icons-material';
 import type { HistoryViewProps } from './types';
 
 // --- Extracted sx style constants ---
@@ -48,6 +48,14 @@ const mobileHistoryDeleteBtnSx: SxProps<Theme> = {
   color: 'rgba(255,255,255,0.4)',
   '&:active': {
     color: 'var(--localflix-red)',
+  },
+};
+
+const mobileHistoryRestartBtnSx: SxProps<Theme> = {
+  bgcolor: 'rgba(255,255,255,0.05)',
+  color: '#fff',
+  '&:active': {
+    bgcolor: 'var(--localflix-red)',
   },
 };
 
@@ -149,14 +157,25 @@ export const MobileHistoryView: React.FC<HistoryViewProps> = ({
                           size="small"
                           data-style="mobileHistoryDeleteBtnSx"
                           sx={mobileHistoryDeleteBtnSx}
+                          title="Delete Record"
                         >
                           <Delete fontSize="small" />
+                        </IconButton>
+                        <IconButton
+                          onClick={() => onPlayVideo(item.path, 0)}
+                          size="small"
+                          data-style="mobileHistoryRestartBtnSx"
+                          sx={mobileHistoryRestartBtnSx}
+                          title="Restart from Beginning"
+                        >
+                          <Replay fontSize="small" />
                         </IconButton>
                         <IconButton
                           onClick={() => onPlayVideo(item.path, item.position)}
                           size="small"
                           data-style="mobileHistoryPlayBtnSx"
                           sx={mobileHistoryPlayBtnSx}
+                          title="Resume Video"
                         >
                           <PlayArrow fontSize="small" />
                         </IconButton>

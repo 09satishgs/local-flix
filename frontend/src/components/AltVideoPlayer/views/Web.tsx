@@ -438,6 +438,15 @@ export const WebVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
               >
                 {isPlaying ? <Pause /> : <PlayArrow />}
               </IconButton>
+              <Tooltip title="Restart Video">
+                <IconButton
+                  onClick={handleReplay}
+                  sx={altSkipButtonSx}
+                  data-style="altSkipButtonSx"
+                >
+                  <Replay />
+                </IconButton>
+              </Tooltip>
               <IconButton
                 onClick={playNext}
                 disabled={!hasNext}

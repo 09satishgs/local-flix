@@ -16,6 +16,7 @@ import {
   History,
   Bookmark,
   Close,
+  Replay,
 } from '@mui/icons-material';
 import { CARD_GRADIENTS } from '../hooks';
 import type { HomeViewProps } from './types';
@@ -124,10 +125,23 @@ const continueThumbBoxSx: SxProps<Theme> = {
   flexShrink: 0,
 };
 
-const continuePlayBtnSx: SxProps<Theme> = {
+const mobileActionButtonsBoxSx: SxProps<Theme> = {
   position: 'absolute',
-  bgcolor: 'rgba(0,0,0,0.4)',
+  display: 'flex',
+  gap: 0.5,
+  zIndex: 5,
+};
+
+const continuePlayBtnSx: SxProps<Theme> = {
+  bgcolor: 'rgba(0,0,0,0.6)',
   color: '#fff',
+  '&:hover': { bgcolor: 'rgba(0,0,0,0.8)' },
+};
+
+const continueReplayBtnSx: SxProps<Theme> = {
+  bgcolor: 'rgba(0,0,0,0.6)',
+  color: '#fff',
+  '&:hover': { bgcolor: 'rgba(0,0,0,0.8)' },
 };
 
 const continueInfoBoxSx: SxProps<Theme> = { flexGrow: 1, p: 1.5, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%' };
@@ -275,9 +289,19 @@ export const MobileHomeView: React.FC<HomeViewProps> = ({
               </Button>
               <IconButton
                 size="small"
+                onClick={() => onPlayVideo(heroItem.path, 0)}
+                sx={heroFolderBtnSx}
+                data-style="heroRestartBtnSx"
+                title="Start Over"
+              >
+                <Replay />
+              </IconButton>
+              <IconButton
+                size="small"
                 onClick={() => onNavigateToPath(heroItem.path.substring(0, heroItem.path.lastIndexOf('\\')))}
                 sx={heroFolderBtnSx}
                 data-style="heroFolderBtnSx"
+                title="Show Folder"
               >
                 <FolderOpen />
               </IconButton>
@@ -334,13 +358,32 @@ export const MobileHomeView: React.FC<HomeViewProps> = ({
                         sx={getContinueThumbSx(item.thumbnail, gradient)}
                         data-style="continueThumbBoxSx"
                       >
-                        <IconButton
-                          size="small"
-                          sx={continuePlayBtnSx}
-                          data-style="continuePlayBtnSx"
-                        >
-                          <PlayArrow />
-                        </IconButton>
+                        <Box sx={mobileActionButtonsBoxSx} data-style="mobileActionButtonsBoxSx">
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onPlayVideo(item.path, item.position);
+                            }}
+                            sx={continuePlayBtnSx}
+                            data-style="continuePlayBtnSx"
+                            title="Resume"
+                          >
+                            <PlayArrow fontSize="small" />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onPlayVideo(item.path, 0);
+                            }}
+                            sx={continueReplayBtnSx}
+                            data-style="continueReplayBtnSx"
+                            title="Restart from Beginning"
+                          >
+                            <Replay fontSize="small" />
+                          </IconButton>
+                        </Box>
                       </Box>
                       <Box sx={continueInfoBoxSx} data-style="continueInfoBoxSx">
                         <Box>

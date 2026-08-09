@@ -31,6 +31,7 @@ import {
   PlayArrow,
   CheckCircle,
   MoreVert,
+  Replay,
 } from '@mui/icons-material';
 import type { ExplorerItem } from '../../../api';
 import type { ExplorerViewProps } from './types';
@@ -91,10 +92,22 @@ const mobileCardImageBaseSx: SxProps<Theme> = {
 
 const mobileCardPlayOverlaySx: SxProps<Theme> = {
   position: 'absolute',
-  bgcolor: 'rgba(0,0,0,0.5)',
-  borderRadius: '50%',
+  bgcolor: 'rgba(0,0,0,0.6)',
+  borderRadius: 1,
   p: 0.5,
   display: 'flex',
+  gap: 0.5,
+  zIndex: 5,
+};
+const mobilePlayBtnSx: SxProps<Theme> = {
+  bgcolor: 'rgba(229, 9, 20, 0.9)',
+  color: '#fff',
+  p: 0.5,
+};
+const mobileReplayBtnSx: SxProps<Theme> = {
+  bgcolor: 'rgba(0,0,0,0.6)',
+  color: '#fff',
+  p: 0.5,
 };
 const mobileCardPlayIconSx: SxProps<Theme> = { color: '#fff', fontSize: 18 };
 const mobileFolderIconSx: SxProps<Theme> = { fontSize: 44, color: 'rgba(255,255,255,0.7)' };
@@ -440,7 +453,28 @@ export const MobileExplorerView: React.FC<ExplorerViewProps> = ({
                           data-style="mobileCardPlayOverlaySx"
                           sx={mobileCardPlayOverlaySx}
                         >
-                          <PlayArrow sx={mobileCardPlayIconSx} />
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onPlayVideo(item.path, item.progress?.position || 0);
+                            }}
+                            sx={mobilePlayBtnSx}
+                            title={hasProgress ? "Resume Video" : "Play Video"}
+                          >
+                            <PlayArrow sx={mobileCardPlayIconSx} />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onPlayVideo(item.path, 0);
+                            }}
+                            sx={mobileReplayBtnSx}
+                            title="Restart from Beginning"
+                          >
+                            <Replay sx={mobileCardPlayIconSx} />
+                          </IconButton>
                         </Box>
                       )
                     ) : isDir ? (
@@ -452,7 +486,28 @@ export const MobileExplorerView: React.FC<ExplorerViewProps> = ({
                           data-style="mobileCardPlayOverlaySx"
                           sx={mobileCardPlayOverlaySx}
                         >
-                          <PlayArrow sx={mobileCardPlayIconSx} />
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onPlayVideo(item.path, item.progress?.position || 0);
+                            }}
+                            sx={mobilePlayBtnSx}
+                            title={hasProgress ? "Resume Video" : "Play Video"}
+                          >
+                            <PlayArrow sx={mobileCardPlayIconSx} />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onPlayVideo(item.path, 0);
+                            }}
+                            sx={mobileReplayBtnSx}
+                            title="Restart from Beginning"
+                          >
+                            <Replay sx={mobileCardPlayIconSx} />
+                          </IconButton>
                         </Box>
                       </>
                     )}
@@ -530,6 +585,16 @@ export const MobileExplorerView: React.FC<ExplorerViewProps> = ({
           sx: mobileMenuPaperSx
         }}
       >
+        {!menuItem?.isDirectory && (
+          <MenuItem
+            onClick={() => {
+              if (menuItem) onPlayVideo(menuItem.path, 0);
+              handleCloseMenu();
+            }}
+          >
+            <Replay fontSize="small" sx={{ mr: 1, color: 'var(--text-secondary)' }} /> Restart from Beginning
+          </MenuItem>
+        )}
         <MenuItem
           onClick={() => {
             if (menuItem) handleThumbnailOpen(null, menuItem);

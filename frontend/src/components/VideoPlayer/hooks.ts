@@ -41,6 +41,11 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
   const activeAudioRef = useRef(activeAudio);
 
   useEffect(() => {
+    currentTimeRef.current = initialPosition;
+    setCurrentTime(initialPosition);
+  }, [initialPosition, videoPath]);
+
+  useEffect(() => {
     currentVideoPathRef.current = currentVideoPath;
   }, [currentVideoPath]);
 

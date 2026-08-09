@@ -41,6 +41,11 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
   const activeAudioRef = useRef(activeAudio);
 
   useEffect(() => {
+    currentTimeRef.current = initialPosition;
+    setCurrentTime(initialPosition);
+  }, [initialPosition, videoPath]);
+
+  useEffect(() => {
     currentVideoPathRef.current = currentVideoPath;
   }, [currentVideoPath]);
 
@@ -337,6 +342,9 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
   };
 
   const handleReplay = () => {
+    setIsEnded(false);
+    setCurrentTime(0);
+    currentTimeRef.current = 0;
     const video = videoRef.current;
     if (video) {
       video.currentTime = 0;

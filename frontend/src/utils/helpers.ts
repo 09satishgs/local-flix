@@ -22,7 +22,7 @@ export const syncUrlHash = (newVideoPath: string): void => {
   const params = new URLSearchParams(hash.split("?")[1] || "");
   if (newVideoPath) {
     params.set("video", newVideoPath);
-    params.set("position", "0");
+    params.delete("position");
   } else {
     params.delete("video");
     params.delete("position");
