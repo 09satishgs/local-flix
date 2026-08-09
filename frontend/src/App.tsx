@@ -50,11 +50,7 @@ const navigateTo = (page: Page, path: string, videoPath: string | null, position
   }
   if (videoPath) {
     params.set("video", videoPath);
-  }
-  if (position > 0) {
     params.set("position", position.toString());
-  } else {
-    params.delete("position");
   }
 
   const queryStr = params.toString();

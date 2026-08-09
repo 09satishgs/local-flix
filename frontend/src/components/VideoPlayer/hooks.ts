@@ -29,6 +29,8 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
   const [currentVideoPath, setCurrentVideoPath] = useState(videoPath);
   const [playlist, setPlaylist] = useState<string[]>([]);
 
+  const [hlsKey, setHlsKey] = useState(0);
+
   // Hls.js instance reference
   const hlsRef = useRef<Hls | null>(null);
   const currentTimeRef = useRef(initialPosition);
@@ -43,6 +45,7 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
   useEffect(() => {
     currentTimeRef.current = initialPosition;
     setCurrentTime(initialPosition);
+    setHlsKey((prev) => prev + 1);
   }, [initialPosition, videoPath]);
 
   useEffect(() => {
@@ -238,10 +241,9 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
 
   const handleLoadedMetadata = () => {
     setIsLoading(false);
-    if (videoRef.current) {
-      if (!duration) {
-        setDuration(videoRef.current.duration);
-      }
+    const video = videoRef.current;
+    if (video && video.duration && !isNaN(video.duration) && isFinite(video.duration)) {
+      setDuration((prev) => (prev > 0 ? prev : video.duration));
     }
   };
 
@@ -305,13 +307,9 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
     currentTimeRef.current = 0;
     const video = videoRef.current;
     if (video) {
-      setIsLoading(true);
       video.currentTime = 0;
-      video
-        .play()
-        .catch(console.error)
-        .finally(() => setIsLoading(false));
     }
+    setHlsKey((prev) => prev + 1);
   };
 
   const currentIndex = playlist.indexOf(currentVideoPath);
@@ -629,7 +627,7 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
         hlsRef.current = null;
       }
     };
-  }, [currentVideoPath, activeAudio, loadingMetadata]);
+  }, [currentVideoPath, activeAudio, loadingMetadata, hlsKey]);
 
   // Audio track switching
   const selectAudioTrack = (trackIndex: number | null) => {

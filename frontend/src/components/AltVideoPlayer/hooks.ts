@@ -29,6 +29,8 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
   const [currentVideoPath, setCurrentVideoPath] = useState(videoPath);
   const [playlist, setPlaylist] = useState<string[]>([]);
 
+  const [hlsKey, setHlsKey] = useState(0);
+
   // Hls.js instance reference
   const hlsRef = useRef<Hls | null>(null);
   const currentTimeRef = useRef(initialPosition);
@@ -43,6 +45,7 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
   useEffect(() => {
     currentTimeRef.current = initialPosition;
     setCurrentTime(initialPosition);
+    setHlsKey((prev) => prev + 1);
   }, [initialPosition, videoPath]);
 
   useEffect(() => {
@@ -281,7 +284,7 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
         hlsRef.current = null;
       }
     };
-  }, [currentVideoPath, activeAudio, activeSubtitle, loadingMetadata]);
+  }, [currentVideoPath, activeAudio, activeSubtitle, loadingMetadata, hlsKey]);
 
   // Report watch history ticks
   useEffect(() => {
@@ -315,8 +318,8 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
 
   const handleLoadedMetadata = () => {
     const video = videoRef.current;
-    if (video) {
-      setDuration(video.duration);
+    if (video && video.duration && !isNaN(video.duration) && isFinite(video.duration)) {
+      setDuration((prev) => (prev > 0 ? prev : video.duration));
     }
   };
 
@@ -332,6 +335,12 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
   };
 
   const handleVideoEnded = () => {
+    const video = videoRef.current;
+    if (video && duration > 0 && Math.abs(video.currentTime - duration) > 10) {
+      // Ignore false ended event triggered by buffer end during seeking / HLS detachment
+      return;
+    }
+
     setIsEnded(true);
     setIsPlaying(false);
     // Mark as fully watched
@@ -348,11 +357,8 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
     const video = videoRef.current;
     if (video) {
       video.currentTime = 0;
-      video.play().then(() => {
-        setIsEnded(false);
-        setIsPlaying(true);
-      }).catch(console.error);
     }
+    setHlsKey((prev) => prev + 1);
   };
 
   const handleSeeking = () => setIsLoading(true);
@@ -363,6 +369,7 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
   const handleSeek = (_e: any, value: number | number[]) => {
     const video = videoRef.current;
     if (video) {
+      setIsEnded(false);
       const newTime = Array.isArray(value) ? value[0] : value;
       video.currentTime = newTime;
       setCurrentTime(newTime);
@@ -373,6 +380,7 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
   const seekRelative = (seconds: number) => {
     const video = videoRef.current;
     if (video) {
+      setIsEnded(false);
       const target = Math.max(0, Math.min(duration, video.currentTime + seconds));
       video.currentTime = target;
       setCurrentTime(target);
