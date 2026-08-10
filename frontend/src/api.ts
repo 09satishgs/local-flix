@@ -218,6 +218,12 @@ export const api = {
     if (!res.ok) throw new Error('Failed to fetch profile info');
     return res.json();
   },
+
+  getHoverThumbnailUrl(videoPath: string, time: number): string {
+    const profileId = localStorage.getItem('profileId') || '';
+    const token = localStorage.getItem('profileToken') || '';
+    return `/api/video/thumbnail?path=${encodeURIComponent(videoPath)}&time=${Math.round(time)}&profileId=${encodeURIComponent(profileId)}&profileToken=${encodeURIComponent(token)}`;
+  },
 };
 
 export interface SearchImageResult {

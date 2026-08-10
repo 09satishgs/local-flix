@@ -1,6 +1,7 @@
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
+const crypto = require("crypto");
 const { spawn, execFile } = require("child_process");
 const ffmpegPath = "ffmpeg";
 const ffprobePath = "ffprobe";
@@ -656,6 +657,47 @@ function stopHlsStream(videoPath) {
   }
 }
 
+function getThumbnailFrame(videoPath, time) {
+  return new Promise((resolve, reject) => {
+    const cacheDir = path.join(__dirname, "..", "cache", "frame_thumbnails");
+    if (!fs.existsSync(cacheDir)) {
+      fs.mkdirSync(cacheDir, { recursive: true });
+    }
+
+    const bucketTime = Math.max(0, Math.round(parseFloat(time || 0) / 5) * 5);
+    const hash = crypto.createHash("md5").update(videoPath).digest("hex");
+    const cacheFileName = `${hash}_${bucketTime}.jpg`;
+    const cacheFilePath = path.join(cacheDir, cacheFileName);
+
+    if (fs.existsSync(cacheFilePath)) {
+      return resolve(cacheFilePath);
+    }
+
+    const args = [
+      "-ss",
+      bucketTime.toString(),
+      "-noaccurate_seek",
+      "-i",
+      videoPath,
+      "-vframes",
+      "1",
+      "-vf",
+      "scale=160:-1",
+      "-q:v",
+      "3",
+      cacheFilePath,
+    ];
+
+    execFile(ffmpegPath, args, (err) => {
+      if (err) {
+        console.error("Failed to generate frame thumbnail:", err);
+        return reject(new Error("Failed to generate frame thumbnail"));
+      }
+      resolve(cacheFilePath);
+    });
+  });
+}
+
 module.exports = {
   getVideoMetadata,
   extractSubtitles,
@@ -664,4 +706,5 @@ module.exports = {
   serveHlsFile,
   cleanJob,
   stopHlsStream,
+  getThumbnailFrame,
 };

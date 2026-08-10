@@ -31,6 +31,7 @@ import {
   StarBorder,
 } from "@mui/icons-material";
 import type { VideoPlayerViewProps } from "./types";
+import { useSeekThumbnail } from "../../../hooks/useSeekThumbnail";
 
 const videoStyle: React.CSSProperties = {
   width: "100%",
@@ -264,6 +265,60 @@ const altSpeedButtonSx: SxProps<Theme> = { color: "#fff" };
 const altPipButtonSx: SxProps<Theme> = { color: "#fff" };
 const altFullscreenButtonSx: SxProps<Theme> = { color: "#fff" };
 
+const thumbnailImageSx: SxProps<Theme> = {
+  width: 160,
+  height: 90,
+  objectFit: "cover",
+  borderRadius: "4px",
+  display: "block",
+};
+
+const thumbnailLoadingSx: SxProps<Theme> = {
+  width: 160,
+  height: 90,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  bgcolor: "rgba(0, 0, 0, 0.8)",
+  borderRadius: "4px",
+};
+
+const thumbnailSpinnerSx: SxProps<Theme> = {
+  color: "var(--localflix-red)",
+};
+
+const thumbnailTimeSx: SxProps<Theme> = {
+  color: "#fff",
+  fontWeight: 600,
+  fontSize: "0.75rem",
+  textAlign: "center",
+  mt: 0.5,
+};
+
+const getThumbnailContainerSx = (x: number): SxProps<Theme> => ({
+  position: "absolute",
+  bottom: 24,
+  left: x,
+  transform: "translateX(-50%)",
+  pointerEvents: "none",
+  zIndex: 100,
+  bgcolor: "rgba(0, 0, 0, 0.9)",
+  border: "1px solid rgba(255, 255, 255, 0.2)",
+  borderRadius: "6px",
+  p: 0.5,
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  boxShadow: "0 4px 20px rgba(0, 0, 0, 0.5)",
+});
+
+const altSliderWrapperSx: SxProps<Theme> = {
+  position: "relative",
+  flexGrow: 1,
+  display: "flex",
+  alignItems: "center",
+};
+
 export const WebVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
   videoRef,
   containerRef,
@@ -315,6 +370,14 @@ export const WebVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
   toggleStarSubtitle,
   onClose,
 }) => {
+  const {
+    isHovering,
+    hoverTime,
+    hoverPositionX,
+    thumbnailUrl,
+    handleMouseMove,
+    handleMouseLeave,
+  } = useSeekThumbnail(currentVideoPath, duration);
   return (
     <Box
       ref={containerRef}
@@ -400,14 +463,45 @@ export const WebVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
             <Typography variant="body2" sx={altTimelineTimeLeftSx}>
               {formatTime(currentTime)}
             </Typography>
-            <Slider
-              size="small"
-              value={currentTime}
-              min={0}
-              max={duration || 100}
-              onChange={handleSeek}
-              sx={altTimelineSliderSx}
-            />
+            <Box
+              sx={altSliderWrapperSx}
+              data-style="altSliderWrapperSx"
+              onMouseMove={handleMouseMove}
+              onMouseLeave={handleMouseLeave}
+            >
+              {/* Floating Seek Thumbnail Preview */}
+              {isHovering && hoverTime !== null && (
+                <Box
+                  sx={getThumbnailContainerSx(hoverPositionX)}
+                  data-style="getThumbnailContainerSx"
+                >
+                  {thumbnailUrl ? (
+                    <Box
+                      component="img"
+                      src={thumbnailUrl}
+                      alt="Preview"
+                      sx={thumbnailImageSx}
+                      data-style="thumbnailImageSx"
+                    />
+                  ) : (
+                    <Box sx={thumbnailLoadingSx} data-style="thumbnailLoadingSx">
+                      <CircularProgress size={24} sx={thumbnailSpinnerSx} />
+                    </Box>
+                  )}
+                  <Typography variant="caption" sx={thumbnailTimeSx}>
+                    {formatTime(hoverTime)}
+                  </Typography>
+                </Box>
+              )}
+              <Slider
+                size="small"
+                value={currentTime}
+                min={0}
+                max={duration || 100}
+                onChange={handleSeek}
+                sx={altTimelineSliderSx}
+              />
+            </Box>
             <Typography variant="body2" sx={altTimelineTimeRightSx}>
               {formatTime(duration)}
             </Typography>

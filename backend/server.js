@@ -57,6 +57,7 @@ app.get(
 );
 app.get("/api/video/hls/file", verifyProfile, videoController.serveHlsFile);
 app.post("/api/video/hls/stop", verifyProfile, videoController.stopHlsStream);
+app.get("/api/video/thumbnail", verifyProfile, videoController.getThumbnailFrame);
 
 // Playback progress routes
 app.get(

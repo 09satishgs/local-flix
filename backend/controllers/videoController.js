@@ -132,6 +132,23 @@ function stopHlsStream(req, res) {
   res.json({ success: true });
 }
 
+async function getThumbnailFrame(req, res) {
+  const videoPath = req.query.path;
+  const time = req.query.time;
+
+  if (!videoPath || !isPathAllowed(videoPath, req.profile.allowedPaths)) {
+    return res.status(403).json({ error: "Access denied" });
+  }
+
+  try {
+    const filePath = await videoService.getThumbnailFrame(videoPath, time);
+    res.setHeader("Cache-Control", "public, max-age=86400");
+    res.sendFile(filePath);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
 module.exports = {
   getVideoMetadata,
   extractSubtitles,
@@ -139,4 +156,5 @@ module.exports = {
   getHlsPlaylist,
   serveHlsFile,
   stopHlsStream,
+  getThumbnailFrame,
 };
