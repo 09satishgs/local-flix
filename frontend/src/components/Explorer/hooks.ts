@@ -20,9 +20,15 @@ export const useExplorer = (initialPath: string) => {
 
   const isPathAllowed = (pathStr: string) => {
     if (!pathStr) return true; // roots are always allowed to list
-    const cleanPath = pathStr.replace(/\\/g, '/').toLowerCase();
+    let cleanPath = pathStr.replace(/\\/g, '/').toLowerCase();
+    if (cleanPath.endsWith('/')) {
+      cleanPath = cleanPath.slice(0, -1);
+    }
     return allowedPaths.some(allowed => {
-      const cleanAllowed = allowed.replace(/\\/g, '/').toLowerCase();
+      let cleanAllowed = allowed.replace(/\\/g, '/').toLowerCase();
+      if (cleanAllowed.endsWith('/')) {
+        cleanAllowed = cleanAllowed.slice(0, -1);
+      }
       return cleanPath === cleanAllowed || cleanPath.startsWith(cleanAllowed + '/');
     });
   };
