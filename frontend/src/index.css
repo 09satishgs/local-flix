@@ -73,3 +73,20 @@ body {
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
   z-index: 10;
 }
+
+/* TV Mode / JioSphere Browser Accessibility & Focus Ring Styles */
+body.tv-mode-active {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+body.tv-mode-active *:focus-visible,
+body.tv-mode-active *:focus {
+  outline: 3.5px solid var(--localflix-red) !important;
+  outline-offset: 3px !important;
+  transform: scale(1.05);
+  transition: transform 0.15s ease, outline 0.15s ease;
+  box-shadow: 0 0 18px rgba(218, 26, 39, 0.7) !important;
+  z-index: 100 !important;
+}

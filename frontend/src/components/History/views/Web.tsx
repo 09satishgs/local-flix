@@ -141,6 +141,10 @@ export const WebHistoryView: React.FC<HistoryViewProps> = ({
                 <React.Fragment key={item.id}>
                   <ListItem
                     alignItems="flex-start"
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`Play ${item.name}`}
+                    onClick={() => onPlayVideo(item.path, item.position)}
                     secondaryAction={
                       <Box sx={actionButtonsContainerSx} data-style="actionButtonsContainerSx">
                         <IconButton

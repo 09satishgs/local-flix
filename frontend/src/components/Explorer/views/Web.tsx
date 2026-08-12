@@ -454,6 +454,9 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
               <Grid item xs={12} sm={6} md={4} lg={3} key={item.path}>
                 <Card
                   className="movie-card"
+                  tabIndex={0}
+                  role="button"
+                  aria-label={isDir ? `Open folder ${item.name}` : `Play video ${item.name}`}
                   onClick={() => isDir ? handleFolderClick(item.path) : onPlayVideo(item.path, item.progress?.position || 0)}
                   onContextMenu={(e) => handleOpenContextMenu(e, item)}
                   sx={folderCardSx}
