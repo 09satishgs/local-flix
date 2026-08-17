@@ -729,7 +729,10 @@ function startConversion(videoPath, audioTrack, subtitleTrack, allowedPaths) {
       const base = path.basename(videoPath, ext);
       const outPath = path.join(dir, `${base}_converted.mp4`);
 
-      const args = ["-y", "-i", videoPath];
+      const normalizedInput = videoPath.replace(/\\/g, "/");
+      const normalizedOutput = outPath.replace(/\\/g, "/");
+
+      const args = ["-y", "-i", normalizedInput];
 
       // Video encoding and mapping
       let hasFilter = false;
@@ -781,7 +784,7 @@ function startConversion(videoPath, audioTrack, subtitleTrack, allowedPaths) {
 
       args.push("-c:a", "aac", "-b:a", "192k");
       // Output
-      args.push(outPath);
+      args.push(normalizedOutput);
 
       console.log(`[Conversion Spawn] Command: ffmpeg ${args.join(" ")}`);
       const ffmpeg = spawn(ffmpegPath, args, { windowsHide: true });
@@ -798,8 +801,22 @@ function startConversion(videoPath, audioTrack, subtitleTrack, allowedPaths) {
       activeConversions.set(videoPath, job);
 
       let stderrBuffer = "";
+      let startupLinesPrinted = 0;
       ffmpeg.stderr.on("data", (data) => {
-        stderrBuffer += data.toString();
+        const str = data.toString();
+        stderrBuffer += str;
+        
+        // Log the first 50 lines of conversion stderr output to the console for debugging
+        if (startupLinesPrinted < 50) {
+          const lines = str.split("\n");
+          for (const line of lines) {
+            if (startupLinesPrinted < 50 && line.trim()) {
+              console.log(`[Conversion Stderr] ${line.trim()}`);
+              startupLinesPrinted++;
+            }
+          }
+        }
+
         const lines = stderrBuffer.split(/\r?\n/);
         stderrBuffer = lines.pop() || "";
 
