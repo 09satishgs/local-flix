@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   IconButton,
@@ -438,6 +438,24 @@ export const WebVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
     handleMouseMove,
     handleMouseLeave,
   } = useSeekThumbnail(currentVideoPath, duration);
+
+  const [showFallback, setShowFallback] = useState(false);
+
+  useEffect(() => {
+    if (!isLoading) {
+      setShowFallback(false);
+      return;
+    }
+    const timer = setTimeout(() => {
+      setShowFallback(true);
+    }, 6000);
+    return () => clearTimeout(timer);
+  }, [isLoading]);
+
+  const getStreamUrl = () => {
+    const origin = window.location.origin;
+    return `${origin}/api/video?path=${encodeURIComponent(currentVideoPath)}&profileId=${encodeURIComponent(profileId)}&profileToken=${encodeURIComponent(profileToken)}`;
+  };
   return (
     <Box
       ref={containerRef}
@@ -526,6 +544,52 @@ export const WebVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
           size={80}
           sx={bufferingSpinnerSx}
         />
+      )}
+
+      {isLoading && showFallback && (
+        <Box
+          sx={{
+            position: "absolute",
+            top: "65%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            bgcolor: "rgba(0, 0, 0, 0.85)",
+            borderRadius: 2,
+            p: 3,
+            textAlign: "center",
+            zIndex: 10,
+            boxShadow: 24,
+            border: "1px solid rgba(255,255,255,0.1)",
+            maxWidth: 400,
+          }}
+        >
+          <Typography variant="body1" sx={{ color: "#fff", mb: 2, fontWeight: 500 }}>
+            Having trouble playing this video?
+          </Typography>
+          <Box sx={{ display: "flex", gap: 2, justifyContent: "center" }}>
+            <Button
+              variant="contained"
+              startIcon={<PlayArrow />}
+              onClick={() => {
+                const streamUrl = getStreamUrl();
+                const vlcUrl = `vlc://${streamUrl.replace(/^https?:\/\//, "")}`;
+                window.open(vlcUrl, "_self");
+              }}
+              sx={{ bgcolor: "var(--localflix-red)", color: "#fff", "&:hover": { bgcolor: "#b71c1c" } }}
+            >
+              Play in VLC
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => {
+                window.open(getStreamUrl(), "_blank");
+              }}
+              sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.3)", "&:hover": { borderColor: "#fff", bgcolor: "rgba(255,255,255,0.08)" } }}
+            >
+              Stream in New Tab
+            </Button>
+          </Box>
+        </Box>
       )}
 
       {/* Controls Overlay */}
