@@ -383,6 +383,7 @@ export const WebVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
   } = useSeekThumbnail(currentVideoPath, duration);
 
   const [showFallback, setShowFallback] = useState(false);
+  const [selectedAudioIndex, setSelectedAudioIndex] = useState<number | null>(activeAudio);
 
   useEffect(() => {
     if (!isLoading) {
@@ -395,9 +396,17 @@ export const WebVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
     return () => clearTimeout(timer);
   }, [isLoading]);
 
-  const getStreamUrl = () => {
+  useEffect(() => {
+    setSelectedAudioIndex(activeAudio);
+  }, [activeAudio]);
+
+  const getStreamUrl = (audioIdx: number | null) => {
     const origin = window.location.origin;
-    return `${origin}/api/video?path=${encodeURIComponent(currentVideoPath)}&profileId=${encodeURIComponent(profileId)}&profileToken=${encodeURIComponent(profileToken)}`;
+    let url = `${origin}/api/video?path=${encodeURIComponent(currentVideoPath)}&profileId=${encodeURIComponent(profileId)}&profileToken=${encodeURIComponent(profileToken)}`;
+    if (audioIdx !== null) {
+      url += `&audioTrack=${audioIdx}`;
+    }
+    return url;
   };
   return (
     <Box
@@ -467,26 +476,59 @@ export const WebVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
             top: "65%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            bgcolor: "rgba(0, 0, 0, 0.85)",
+            bgcolor: "rgba(0, 0, 0, 0.9)",
             borderRadius: 2,
             p: 3,
             textAlign: "center",
             zIndex: 10,
             boxShadow: 24,
             border: "1px solid rgba(255,255,255,0.1)",
-            maxWidth: 400,
+            width: 380,
+            maxWidth: "90%",
           }}
         >
           <Typography variant="body1" sx={{ color: "#fff", mb: 2, fontWeight: 500 }}>
             Having trouble playing this video?
           </Typography>
+
+          {audioTracks.length > 1 && (
+            <Box sx={{ mb: 2.5, textAlign: "left" }}>
+              <Typography variant="caption" sx={{ color: "#aaa", mb: 0.5, display: "block", fontWeight: 600 }}>
+                Select Audio Language:
+              </Typography>
+              <select
+                value={selectedAudioIndex !== null ? selectedAudioIndex : ""}
+                onChange={(e) => setSelectedAudioIndex(e.target.value ? Number(e.target.value) : null)}
+                style={{
+                  width: "100%",
+                  backgroundColor: "#1a1a1a",
+                  color: "#fff",
+                  border: "1px solid #444",
+                  borderRadius: "4px",
+                  padding: "8px",
+                  fontSize: "0.875rem",
+                  outline: "none",
+                  cursor: "pointer",
+                }}
+              >
+                <option value="">Default Audio</option>
+                {audioTracks.map((track) => (
+                  <option key={track.index} value={track.index}>
+                    {track.title} ({track.language})
+                  </option>
+                ))}
+              </select>
+            </Box>
+          )}
+
           <Box sx={{ display: "flex", gap: 2, justifyContent: "center" }}>
             <Button
               variant="contained"
               startIcon={<PlayArrow />}
               onClick={() => {
-                const streamUrl = getStreamUrl();
+                const streamUrl = getStreamUrl(selectedAudioIndex);
                 const vlcUrl = `vlc://${streamUrl.replace(/^https?:\/\//, "")}`;
+                onClose();
                 window.open(vlcUrl, "_self");
               }}
               sx={{ bgcolor: "var(--localflix-red)", color: "#fff", "&:hover": { bgcolor: "#b71c1c" } }}
@@ -496,7 +538,9 @@ export const WebVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
             <Button
               variant="outlined"
               onClick={() => {
-                window.open(getStreamUrl(), "_blank");
+                const streamUrl = getStreamUrl(selectedAudioIndex);
+                onClose();
+                window.open(streamUrl, "_blank");
               }}
               sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.3)", "&:hover": { borderColor: "#fff", bgcolor: "rgba(255,255,255,0.08)" } }}
             >
