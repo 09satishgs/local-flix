@@ -6,6 +6,7 @@ import { History } from "./components/History";
 interface RouterProps {
   activePage: "home" | "explorer" | "history";
   explorerPath: string;
+  playerMode: "standard" | "qsv" | "direct";
   onPlayVideo: (path: string, position: number) => void;
   onNavigateToPath: (path: string) => void;
 }
@@ -13,6 +14,7 @@ interface RouterProps {
 export const Router: React.FC<RouterProps> = ({
   activePage,
   explorerPath,
+  playerMode,
   onPlayVideo,
   onNavigateToPath,
 }) => {
@@ -25,6 +27,7 @@ export const Router: React.FC<RouterProps> = ({
           key={explorerPath} // Force complete fresh mount when folder path changes
           initialPath={explorerPath}
           onPlayVideo={onPlayVideo}
+          playerMode={playerMode}
         />
       );
     case "history":

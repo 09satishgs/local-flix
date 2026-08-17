@@ -19,6 +19,7 @@ import {
   CircularProgress,
   Menu,
   MenuItem,
+  Paper,
 } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
 import {
@@ -300,6 +301,20 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
   formatSize,
   onPlayVideo,
   isPathAllowed,
+  playerMode,
+  conversionDialogOpen,
+  setConversionDialogOpen,
+  conversionTargetItem,
+  loadingMetadata,
+  meta,
+  selectedAudio,
+  setSelectedAudio,
+  selectedSubtitle,
+  setSelectedSubtitle,
+  activeJobs,
+  handleConvertClick,
+  handleStartConversion,
+  handleCancelConversion,
 }) => {
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
   const [menuItem, setMenuItem] = useState<ExplorerItem | null>(null);
@@ -457,9 +472,23 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
                   tabIndex={0}
                   role="button"
                   aria-label={isDir ? `Open folder ${item.name}` : `Play video ${item.name}`}
-                  onClick={() => isDir ? handleFolderClick(item.path) : onPlayVideo(item.path, item.progress?.position || 0)}
+                  onClick={() => {
+                    if (isDir) {
+                      handleFolderClick(item.path);
+                    } else if (playerMode === 'direct' && item.path.toLowerCase().endsWith('.mkv')) {
+                      handleConvertClick(item);
+                    } else {
+                      onPlayVideo(item.path, item.progress?.position || 0);
+                    }
+                  }}
                   onContextMenu={(e) => handleOpenContextMenu(e, item)}
-                  sx={folderCardSx}
+                  sx={{
+                    ...folderCardSx,
+                    ...(playerMode === 'direct' && !isDir && item.path.toLowerCase().endsWith('.mkv') && {
+                      opacity: 0.55,
+                      filter: 'grayscale(80%)',
+                    })
+                  }}
                 >
                   <Box
                     data-style="getCardImageSx"
@@ -471,30 +500,46 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
                           className="play-overlay"
                           data-style="playOverlayContainerSx" sx={playOverlayContainerSx}
                         >
-                          <IconButton
-                            size="small"
-                            data-style="playOverlayBtnSx"
-                            sx={playOverlayBtnSx}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onPlayVideo(item.path, item.progress?.position || 0);
-                            }}
-                            title={hasProgress ? "Resume Video" : "Play Video"}
-                          >
-                            <PlayArrow fontSize="medium" />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            data-style="replayOverlayBtnSx"
-                            sx={replayOverlayBtnSx}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onPlayVideo(item.path, 0);
-                            }}
-                            title="Restart from Beginning"
-                          >
-                            <Replay fontSize="small" />
-                          </IconButton>
+                          {playerMode === 'direct' && item.path.toLowerCase().endsWith('.mkv') ? (
+                            <IconButton
+                              size="small"
+                              sx={playOverlayBtnSx}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleConvertClick(item);
+                              }}
+                              title="Convert to MP4"
+                            >
+                              <PlayArrow fontSize="medium" />
+                            </IconButton>
+                          ) : (
+                            <>
+                              <IconButton
+                                size="small"
+                                data-style="playOverlayBtnSx"
+                                sx={playOverlayBtnSx}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onPlayVideo(item.path, item.progress?.position || 0);
+                                }}
+                                title={hasProgress ? "Resume Video" : "Play Video"}
+                              >
+                                <PlayArrow fontSize="medium" />
+                              </IconButton>
+                              <IconButton
+                                size="small"
+                                data-style="replayOverlayBtnSx"
+                                sx={replayOverlayBtnSx}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onPlayVideo(item.path, 0);
+                                }}
+                                title="Restart from Beginning"
+                              >
+                                <Replay fontSize="small" />
+                              </IconButton>
+                            </>
+                          )}
                         </Box>
                       )
                     ) : isDir ? (
@@ -617,6 +662,16 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
             }}
           >
             <Replay fontSize="small" sx={{ mr: 1, color: 'var(--text-secondary)' }} /> Restart from Beginning
+          </MenuItem>
+        )}
+        {!menuItem?.isDirectory && menuItem?.path.toLowerCase().endsWith('.mkv') && (
+          <MenuItem
+            onClick={() => {
+              if (menuItem) handleConvertClick(menuItem);
+              handleCloseMenu();
+            }}
+          >
+            <PlayArrow fontSize="small" sx={{ mr: 1, color: 'var(--text-secondary)' }} /> Convert to MP4
           </MenuItem>
         )}
         <MenuItem
@@ -825,6 +880,190 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Conversion Setup Dialog */}
+      <Dialog
+        open={conversionDialogOpen}
+        onClose={() => setConversionDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: dialogPaperSx
+        }}
+      >
+        <DialogTitle sx={dialogTitleSx}>
+          MP4 Conversion Settings
+        </DialogTitle>
+        <DialogContent dividers sx={dialogContentDividerSx}>
+          {loadingMetadata ? (
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4, gap: 2 }}>
+              <CircularProgress sx={{ color: 'var(--localflix-red)' }} />
+              <Typography variant="body2" sx={{ color: '#aaa' }}>Scanning video streams...</Typography>
+            </Box>
+          ) : meta ? (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, py: 1 }}>
+              <Typography variant="body2" sx={{ color: '#ccc' }}>
+                Converting <strong>{conversionTargetItem?.name}</strong> to MP4 to play in MP4 Player mode.
+              </Typography>
+              
+              {/* Audio Track Selector */}
+              <Box>
+                <Typography variant="subtitle2" sx={{ color: '#fff', mb: 1, fontWeight: 600 }}>
+                  Select Audio Track
+                </Typography>
+                <TextField
+                  select
+                  fullWidth
+                  size="small"
+                  value={selectedAudio}
+                  onChange={(e) => setSelectedAudio(e.target.value)}
+                  SelectProps={{ native: true }}
+                  sx={{
+                    color: '#fff',
+                    bgcolor: 'var(--bg-card)',
+                    '& select': { color: '#fff', bgcolor: 'var(--bg-card)' },
+                    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#444' }
+                  }}
+                >
+                  {meta.audioTracks.map((track: any) => (
+                    <option key={track.index} value={track.index} style={{ backgroundColor: 'var(--bg-card)', color: '#fff' }}>
+                      {track.title} [{track.language.toUpperCase()}] ({track.codec})
+                    </option>
+                  ))}
+                </TextField>
+              </Box>
+
+              {/* Subtitle Track Selector */}
+              <Box>
+                <Typography variant="subtitle2" sx={{ color: '#fff', mb: 1, fontWeight: 600 }}>
+                  Burn Subtitles (Hardsub)
+                </Typography>
+                <TextField
+                  select
+                  fullWidth
+                  size="small"
+                  value={selectedSubtitle}
+                  onChange={(e) => setSelectedSubtitle(e.target.value)}
+                  SelectProps={{ native: true }}
+                  sx={{
+                    color: '#fff',
+                    bgcolor: 'var(--bg-card)',
+                    '& select': { color: '#fff', bgcolor: 'var(--bg-card)' },
+                    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#444' }
+                  }}
+                >
+                  <option value="none" style={{ backgroundColor: 'var(--bg-card)', color: '#fff' }}>
+                    None (No subtitles burned)
+                  </option>
+                  {meta.subtitles.map((track: any) => (
+                    <option key={track.index} value={track.index} style={{ backgroundColor: 'var(--bg-card)', color: '#fff' }}>
+                      {track.title} [{track.language.toUpperCase()}] ({track.codec})
+                    </option>
+                  ))}
+                </TextField>
+                <Typography variant="caption" sx={{ color: 'var(--text-secondary)', display: 'block', mt: 0.5 }}>
+                  Warning: Burning subtitles requires video transcoding and will take longer than a simple format conversion.
+                </Typography>
+              </Box>
+            </Box>
+          ) : (
+            <Typography variant="body2" sx={{ color: 'var(--localflix-red)', py: 2 }}>
+              Failed to load file information.
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions sx={dialogActionsSx}>
+          <Button onClick={() => setConversionDialogOpen(false)} sx={cancelButtonSx}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleStartConversion}
+            variant="contained"
+            disabled={loadingMetadata || !meta}
+            sx={{
+              bgcolor: 'var(--localflix-red)',
+              color: '#fff',
+              '&:hover': { bgcolor: '#b20710' },
+              '&.Mui-disabled': { bgcolor: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.2)' }
+            }}
+          >
+            Begin Conversion
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Bottom Right Conversion Progress Toast Overlay */}
+      {activeJobs.length > 0 && (
+        <Box
+          sx={{
+            position: 'fixed',
+            bottom: 24,
+            right: 24,
+            zIndex: 1100,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 1.5,
+            maxWidth: 320,
+            width: 'calc(100vw - 48px)',
+          }}
+        >
+          {activeJobs.map((job: any) => {
+            const isProcessing = job.status === 'processing';
+            return (
+              <Paper
+                key={job.videoPath}
+                elevation={6}
+                sx={{
+                  p: 2,
+                  bgcolor: 'rgba(25, 25, 25, 0.95)',
+                  border: '1px solid #333',
+                  borderRadius: 2,
+                  color: '#fff',
+                  backdropFilter: 'blur(10px)',
+                }}
+              >
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', mb: 0.5 }}>
+                  {job.videoPath.split(/[\\/]/).pop()}
+                </Typography>
+                
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="caption" sx={{ color: isProcessing ? 'var(--localflix-red)' : job.status === 'completed' ? '#4caf50' : '#f44336' }}>
+                    {isProcessing ? `Converting (${job.progress}%)` : job.status === 'completed' ? 'Conversion Completed' : 'Conversion Failed'}
+                  </Typography>
+                  {isProcessing && (
+                    <IconButton size="small" onClick={() => handleCancelConversion(job.videoPath)} sx={{ color: '#aaa', '&:hover': { color: '#fff' }, p: 0 }}>
+                      <Typography variant="caption" sx={{ fontSize: '0.75rem', fontWeight: 600, border: '1px solid #555', px: 0.75, py: 0.25, borderRadius: 1 }}>
+                        Cancel
+                      </Typography>
+                    </IconButton>
+                  )}
+                </Box>
+                
+                {isProcessing ? (
+                  <LinearProgress
+                    variant="determinate"
+                    value={job.progress}
+                    sx={{
+                      height: 4,
+                      borderRadius: 1,
+                      bgcolor: '#333',
+                      '& .MuiLinearProgress-bar': { bgcolor: 'var(--localflix-red)' }
+                    }}
+                  />
+                ) : job.status === 'completed' ? (
+                  <Typography variant="caption" sx={{ color: '#aaa' }}>
+                    Output: {job.outPath.split(/[\\/]/).pop()}
+                  </Typography>
+                ) : (
+                  <Typography variant="caption" sx={{ color: '#faa', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {job.error || 'Unknown error'}
+                  </Typography>
+                )}
+              </Paper>
+            );
+          })}
+        </Box>
+      )}
     </Box>
   );
 };

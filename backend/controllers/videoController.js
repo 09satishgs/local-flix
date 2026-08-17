@@ -149,6 +149,43 @@ async function getThumbnailFrame(req, res) {
   }
 }
 
+async function startConversion(req, res) {
+  const videoPath = req.body.path;
+  const audioTrack = req.body.audioTrack;
+  const subtitleTrack = req.body.subtitleTrack;
+
+  if (!videoPath || !isPathAllowed(videoPath, req.profile.allowedPaths)) {
+    return res.status(403).json({ error: "Access denied" });
+  }
+
+  try {
+    const result = await videoService.startConversion(
+      videoPath,
+      audioTrack,
+      subtitleTrack,
+      req.profile.allowedPaths
+    );
+    res.json({ success: true, ...result });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+function getConversionStatus(req, res) {
+  const status = videoService.getConversionStatus();
+  res.json(status);
+}
+
+function stopConversion(req, res) {
+  const videoPath = req.body.path;
+  if (!videoPath) {
+    return res.status(400).json({ error: "Path required" });
+  }
+
+  const stopped = videoService.stopConversion(videoPath);
+  res.json({ success: stopped });
+}
+
 module.exports = {
   getVideoMetadata,
   extractSubtitles,
@@ -157,4 +194,7 @@ module.exports = {
   serveHlsFile,
   stopHlsStream,
   getThumbnailFrame,
+  startConversion,
+  getConversionStatus,
+  stopConversion,
 };

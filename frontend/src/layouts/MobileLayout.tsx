@@ -12,6 +12,9 @@ import {
   Paper,
   Switch,
   FormControlLabel,
+  Select,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 import type { SxProps, Theme } from "@mui/material";
 import {
@@ -26,8 +29,8 @@ interface LayoutProps {
   onPageChange: (page: "home" | "explorer" | "history") => void;
   profileName: string | null;
   avatarColor: string;
-  useAltPlayer: boolean;
-  onToggleAltPlayer: (val: boolean) => void;
+  playerMode: "standard" | "qsv" | "direct";
+  onPlayerModeChange: (val: "standard" | "qsv" | "direct") => void;
   useTvMode: boolean;
   onToggleTvMode: (val: boolean) => void;
   onLogout: () => void;
@@ -154,8 +157,8 @@ export const MobileLayout: React.FC<LayoutProps> = ({
   onPageChange,
   profileName,
   avatarColor,
-  useAltPlayer,
-  onToggleAltPlayer,
+  playerMode,
+  onPlayerModeChange,
   useTvMode,
   onToggleTvMode,
   onLogout,
@@ -197,23 +200,27 @@ export const MobileLayout: React.FC<LayoutProps> = ({
                 sx: mobileMenuPaperSx,
               }}
             >
-              <MenuItem disableRipple sx={mobileAltPlayerMenuItemSx}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      size="small"
-                      checked={useAltPlayer}
-                      onChange={(e) => onToggleAltPlayer(e.target.checked)}
-                      color="info"
-                    />
-                  }
-                  label={
-                    <Typography variant="body2" sx={mobileAltPlayerLabelSx}>
-                      Use Alt Player
-                    </Typography>
-                  }
-                  sx={mobileFormControlLabelSx}
-                />
+              <MenuItem disableRipple sx={{ ...mobileAltPlayerMenuItemSx, display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
+                <FormControl size="small" fullWidth sx={{ mt: 0.5 }}>
+                  <InputLabel id="mobile-player-mode-label" sx={{ color: '#aaa', '&.Mui-focused': { color: 'var(--localflix-red)' } }}>Player Mode</InputLabel>
+                  <Select
+                    labelId="mobile-player-mode-label"
+                    value={playerMode}
+                    label="Player Mode"
+                    onChange={(e) => onPlayerModeChange(e.target.value as any)}
+                    sx={{
+                      color: '#fff',
+                      '.MuiOutlinedInput-notchedOutline': { borderColor: '#444' },
+                      '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#666' },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--localflix-red)' },
+                      '.MuiSvgIcon-root': { color: '#fff' }
+                    }}
+                  >
+                    <MenuItem value="standard">HLS Player</MenuItem>
+                    <MenuItem value="qsv">Alt Player</MenuItem>
+                    <MenuItem value="direct">MP4 Player</MenuItem>
+                  </Select>
+                </FormControl>
               </MenuItem>
               <MenuItem disableRipple sx={mobileAltPlayerMenuItemSx}>
                 <FormControlLabel

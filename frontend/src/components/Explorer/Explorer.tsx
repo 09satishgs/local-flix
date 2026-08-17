@@ -7,13 +7,14 @@ import { MobileExplorerView } from './views/Mobile';
 interface ExplorerProps {
   initialPath?: string;
   onPlayVideo: (path: string, position: number) => void;
+  playerMode: "standard" | "qsv" | "direct";
 }
 
-export const Explorer: React.FC<ExplorerProps> = ({ initialPath = '', onPlayVideo }) => {
+export const Explorer: React.FC<ExplorerProps> = ({ initialPath = '', onPlayVideo, playerMode }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-  const state = useExplorer(initialPath);
+  const state = useExplorer(initialPath, playerMode);
 
   if (isMobile) {
     return (

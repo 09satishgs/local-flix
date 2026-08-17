@@ -93,8 +93,12 @@ async function getVideoMetadata(videoPath, profileId, allowedPaths) {
           console.log(`[Metadata Scan] Audio Tracks: ${JSON.stringify(audioTracks, null, 2)}`);
           console.log(`[Metadata Scan] Subtitles: ${JSON.stringify(subtitles, null, 2)}`);
 
+          const videoStream = streams.find((s) => s.codec_type === "video");
+          const videoCodec = videoStream ? videoStream.codec_name : "unknown";
+
           resolve({
             duration: parseFloat(metadata.format?.duration || 0),
+            videoCodec,
             subtitles,
             audioTracks,
             playlist,
@@ -698,6 +702,179 @@ function getThumbnailFrame(videoPath, time) {
   });
 }
 
+const activeConversions = new Map();
+
+function startConversion(videoPath, audioTrack, subtitleTrack, allowedPaths) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (activeConversions.has(videoPath)) {
+        const job = activeConversions.get(videoPath);
+        if (job.status === "processing") {
+          return reject(new Error("Conversion for this video is already in progress"));
+        }
+      }
+
+      // Check if there's any active conversion, and limit to 1 concurrent task
+      for (const [key, job] of activeConversions.entries()) {
+        if (job.status === "processing") {
+          return reject(new Error("Another conversion is already in progress. Please wait."));
+        }
+      }
+
+      const meta = await getVideoMetadata(videoPath, null, allowedPaths);
+      const duration = meta.duration;
+
+      const dir = path.dirname(videoPath);
+      const ext = path.extname(videoPath);
+      const base = path.basename(videoPath, ext);
+      const outPath = path.join(dir, `${base}_converted.mp4`);
+
+      const args = ["-y", "-i", videoPath];
+
+      // Video encoding and mapping
+      let hasFilter = false;
+      let mappedVideo = false;
+      if (subtitleTrack && subtitleTrack !== "none") {
+        const subIdx = parseInt(subtitleTrack, 10);
+        const subTrack = meta.subtitles.find((s) => s.index === subIdx);
+        if (subTrack) {
+          if (["hdmv_pgs_subtitle", "dvd_subtitle"].includes(subTrack.codec)) {
+            args.push("-filter_complex", `[0:v:0][0:${subIdx}]overlay[v]`, "-map", "[v]");
+            mappedVideo = true;
+          } else {
+            const escapedPath = videoPath.replace(/\\/g, "/").replace(/:/g, "\\:");
+            args.push("-vf", `subtitles='${escapedPath}':si=${subTrack.trackIndex}`);
+          }
+          hasFilter = true;
+        }
+      }
+
+      if (!mappedVideo) {
+        args.push("-map", "0:v:0");
+      }
+
+      // Audio track mapping
+      if (audioTrack && audioTrack !== "default" && audioTrack !== "") {
+        args.push("-map", `0:${audioTrack}`);
+      } else {
+        // Find default or first audio track
+        const firstAudio = meta.audioTracks[0];
+        if (firstAudio) {
+          args.push("-map", `0:${firstAudio.index}`);
+        } else {
+          args.push("-map", "0:a:0?");
+        }
+      }
+
+      // Codecs & acceleration
+      if (hasFilter) {
+        // Subtitle burning requires decoding and re-encoding
+        args.push("-c:v", "h264_qsv", "-b:v", "5000k", "-preset", "fast");
+      } else {
+        // Direct copy if video is already h264, else transcode
+        if (meta.videoCodec === "h264") {
+          args.push("-c:v", "copy");
+        } else {
+          args.push("-c:v", "h264_qsv", "-b:v", "5000k", "-preset", "fast");
+        }
+      }
+
+      args.push("-c:a", "aac", "-b:a", "192k");
+      // Output
+      args.push(outPath);
+
+      console.log(`[Conversion Spawn] Command: ffmpeg ${args.join(" ")}`);
+      const ffmpeg = spawn(ffmpegPath, args, { windowsHide: true });
+
+      const job = {
+        videoPath,
+        outPath,
+        status: "processing",
+        progress: 0,
+        error: null,
+        process: ffmpeg,
+      };
+
+      activeConversions.set(videoPath, job);
+
+      let stderrBuffer = "";
+      ffmpeg.stderr.on("data", (data) => {
+        stderrBuffer += data.toString();
+        const lines = stderrBuffer.split(/\r?\n/);
+        stderrBuffer = lines.pop() || "";
+
+        for (const line of lines) {
+          const match = line.match(/time=(\d{2}):(\d{2}):(\d{2})\.(\d{2})/);
+          if (match) {
+            const hrs = parseInt(match[1], 10);
+            const mins = parseInt(match[2], 10);
+            const secs = parseFloat(`${match[3]}.${match[4]}`);
+            const currentSecs = hrs * 3600 + mins * 60 + secs;
+
+            if (duration > 0) {
+              const pct = Math.min(99, Math.round((currentSecs / duration) * 100));
+              job.progress = pct;
+            }
+          }
+        }
+      });
+
+      ffmpeg.on("close", (code) => {
+        if (code === 0) {
+          job.status = "completed";
+          job.progress = 100;
+          console.log(`[Conversion Complete] Finished: ${videoPath} -> ${outPath}`);
+        } else {
+          job.status = "failed";
+          job.error = `FFmpeg process exited with code ${code}`;
+          console.error(`[Conversion Failed] Error: ${job.error}`);
+        }
+        // Keep the job in history but clean the process handle
+        job.process = null;
+      });
+
+      ffmpeg.on("error", (err) => {
+        job.status = "failed";
+        job.error = err.message;
+        job.process = null;
+        console.error(`[Conversion Error] Error: ${err.message}`);
+      });
+
+      resolve({ outPath });
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
+function getConversionStatus() {
+  const list = [];
+  for (const [key, job] of activeConversions.entries()) {
+    list.push({
+      videoPath: job.videoPath,
+      outPath: job.outPath,
+      status: job.status,
+      progress: job.progress,
+      error: job.error,
+    });
+  }
+  return list;
+}
+
+function stopConversion(videoPath) {
+  const job = activeConversions.get(videoPath);
+  if (job && job.process) {
+    try {
+      job.process.kill();
+    } catch (e) {}
+    job.status = "failed";
+    job.error = "Cancelled by user";
+    job.process = null;
+    return true;
+  }
+  return false;
+}
+
 module.exports = {
   getVideoMetadata,
   extractSubtitles,
@@ -707,4 +884,7 @@ module.exports = {
   cleanJob,
   stopHlsStream,
   getThumbnailFrame,
+  startConversion,
+  getConversionStatus,
+  stopConversion,
 };

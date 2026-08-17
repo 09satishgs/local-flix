@@ -1,13 +1,22 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../api';
-import type { ExplorerItem, SearchImageResult } from '../../api';
+import type { ExplorerItem, SearchImageResult, VideoMetadata, ConversionJob } from '../../api';
 
-export const useExplorer = (initialPath: string) => {
+export const useExplorer = (initialPath: string, playerMode: "standard" | "qsv" | "direct") => {
   const [currentPath, setCurrentPath] = useState(initialPath);
   const [items, setItems] = useState<ExplorerItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [allowedPaths, setAllowedPaths] = useState<string[]>([]);
+
+  // Conversion states
+  const [conversionDialogOpen, setConversionDialogOpen] = useState(false);
+  const [conversionTargetItem, setConversionTargetItem] = useState<ExplorerItem | null>(null);
+  const [loadingMetadata, setLoadingMetadata] = useState(false);
+  const [meta, setMeta] = useState<VideoMetadata | null>(null);
+  const [selectedAudio, setSelectedAudio] = useState('');
+  const [selectedSubtitle, setSelectedSubtitle] = useState('none');
+  const [activeJobs, setActiveJobs] = useState<ConversionJob[]>([]);
 
   // Pin dialog states
   const [pinDialogOpen, setPinDialogOpen] = useState(false);
@@ -57,6 +66,31 @@ export const useExplorer = (initialPath: string) => {
   useEffect(() => {
     loadDirectory(initialPath);
   }, [initialPath]);
+
+  // Poll conversions status
+  useEffect(() => {
+    const fetchStatus = () => {
+      api.getConversionStatus()
+        .then(jobs => {
+          // Check if any job transitioned to completed to refresh file list
+          const isNowDone = jobs.some(j => j.status === 'completed' && activeJobs.find(x => x.videoPath === j.videoPath)?.status === 'processing');
+          
+          if (isNowDone) {
+            loadDirectory(currentPath);
+          }
+          setActiveJobs(jobs);
+        })
+        .catch(err => console.error(err));
+    };
+
+    fetchStatus(); // initial check
+
+    const interval = setInterval(() => {
+      fetchStatus();
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [currentPath, activeJobs.length]);
 
   useEffect(() => {
     const handlePlaybackClosed = () => {
@@ -191,6 +225,49 @@ export const useExplorer = (initialPath: string) => {
     }
   };
 
+  const handleConvertClick = async (item: ExplorerItem) => {
+    setConversionTargetItem(item);
+    setLoadingMetadata(true);
+    setConversionDialogOpen(true);
+    setMeta(null);
+    setSelectedAudio('');
+    setSelectedSubtitle('none');
+
+    try {
+      const data = await api.getVideoMetadata(item.path);
+      setMeta(data);
+      if (data.audioTracks.length > 0) {
+        setSelectedAudio(data.audioTracks[0].index.toString());
+      }
+    } catch (err) {
+      console.error('Failed to load video metadata for conversion:', err);
+    } finally {
+      setLoadingMetadata(false);
+    }
+  };
+
+  const handleStartConversion = async () => {
+    if (!conversionTargetItem) return;
+    try {
+      await api.startConversion(conversionTargetItem.path, selectedAudio, selectedSubtitle);
+      setConversionDialogOpen(false);
+      const jobs = await api.getConversionStatus();
+      setActiveJobs(jobs);
+    } catch (err: any) {
+      alert(err.message || 'Failed to start conversion');
+    }
+  };
+
+  const handleCancelConversion = async (path: string) => {
+    try {
+      await api.stopConversion(path);
+      const jobs = await api.getConversionStatus();
+      setActiveJobs(jobs);
+    } catch (err) {
+      console.error('Failed to stop conversion:', err);
+    }
+  };
+
   const formatSize = (bytes?: number) => {
     if (!bytes) return '';
     const gb = bytes / (1024 * 1024 * 1024);
@@ -236,5 +313,19 @@ export const useExplorer = (initialPath: string) => {
     handlePinSubmit,
     formatSize,
     isPathAllowed,
+    playerMode,
+    conversionDialogOpen,
+    setConversionDialogOpen,
+    conversionTargetItem,
+    loadingMetadata,
+    meta,
+    selectedAudio,
+    setSelectedAudio,
+    selectedSubtitle,
+    setSelectedSubtitle,
+    activeJobs,
+    handleConvertClick,
+    handleStartConversion,
+    handleCancelConversion,
   };
 };

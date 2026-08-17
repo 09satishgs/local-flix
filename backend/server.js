@@ -58,6 +58,9 @@ app.get(
 app.get("/api/video/hls/file", verifyProfile, videoController.serveHlsFile);
 app.post("/api/video/hls/stop", verifyProfile, videoController.stopHlsStream);
 app.get("/api/video/thumbnail", verifyProfile, videoController.getThumbnailFrame);
+app.post("/api/video/convert", verifyProfile, videoController.startConversion);
+app.get("/api/video/convert/status", verifyProfile, videoController.getConversionStatus);
+app.post("/api/video/convert/stop", verifyProfile, videoController.stopConversion);
 
 // Playback progress routes
 app.get(

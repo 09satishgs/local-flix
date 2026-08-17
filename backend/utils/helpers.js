@@ -1,10 +1,8 @@
-const path = require("path");
-
 const VIDEO_EXTENSIONS = [".mp4", ".mkv", ".ts", ".m4v", ".mov", ".avi"];
 
 function isVideoFile(filePath) {
   if (!filePath) return false;
-  const ext = path.extname(filePath).toLowerCase();
+  const ext = filePath.slice(filePath.lastIndexOf(".")).toLowerCase();
   return VIDEO_EXTENSIONS.includes(ext);
 }
 
@@ -109,63 +107,17 @@ function cleanWebVTT(rawVtt) {
     }
   }
 
-  const removeRepetitions = (str) => {
-    if (!str) return "";
-    const trimmed = str.trim();
-    const parts = trimmed.split(/\s+/);
-    if (parts.length <= 1) return trimmed;
-    
-    for (let len = 1; len <= Math.floor(parts.length / 2); len++) {
-      if (parts.length % len === 0) {
-        const pattern = parts.slice(0, len).join(" ");
-        let isRepeating = true;
-        for (let i = len; i < parts.length; i += len) {
-          const nextPattern = parts.slice(i, i + len).join(" ");
-          if (nextPattern !== pattern) {
-            isRepeating = false;
-            break;
-          }
-        }
-        if (isRepeating) {
-          return pattern;
-        }
-      }
-    }
-    return trimmed;
-  };
-
-  // Format final cues and join single-characters smartly
-  const finalCues = mergedCues.map(cue => {
-    let text = "";
-    if (cue.textLines.every(line => line.length === 1)) {
-      // If all lines are single characters, join them smartly (insert space on lower -> upper transition)
-      for (let i = 0; i < cue.textLines.length; i++) {
-        const char = cue.textLines[i];
-        if (i > 0) {
-          const prevChar = cue.textLines[i - 1];
-          const isPrevLower = prevChar >= "a" && prevChar <= "z";
-          const isCurrUpper = char >= "A" && char <= "Z";
-          if (isPrevLower && isCurrUpper) {
-            text += " ";
-          }
-        }
-        text += char;
-      }
-    } else {
-      // Otherwise join with space or newlines
-      text = cue.textLines.join(" ");
-    }
-    
-    text = removeRepetitions(text);
-    return `${cue.timestamps}\n${text}`;
-  });
-
-  return "WEBVTT\n\n" + finalCues.join("\n\n");
+  // Generate final WebVTT string
+  let output = "WEBVTT\n\n";
+  for (const cue of mergedCues) {
+    output += `${cue.timestamps}\n${cue.textLines.join("\n")}\n\n`;
+  }
+  return output.trim();
 }
 
 module.exports = {
   VIDEO_EXTENSIONS,
   isVideoFile,
   isValidAudioTrack,
-  cleanWebVTT,
+  cleanWebVTT
 };

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { ProfileSelector } from "./components/ProfileSelector";
 import { VideoPlayer } from "./components/VideoPlayer";
 import { AltVideoPlayer } from "./components/AltVideoPlayer";
+import { DirectVideoPlayer } from "./components/DirectVideoPlayer";
 import { Box, useMediaQuery, useTheme } from "@mui/material";
 import { WebLayout } from "./layouts/WebLayout";
 import { MobileLayout } from "./layouts/MobileLayout";
@@ -65,11 +66,17 @@ function App() {
   const [profileId, setProfileId] = useState<string | null>(null);
   const [profileName, setProfileName] = useState<string | null>(null);
   
-  const [useAltPlayer, setUseAltPlayer] = useState(() => localStorage.getItem("useAltPlayer") === "true");
+  const [playerMode, setPlayerMode] = useState<"standard" | "qsv" | "direct">(() => {
+    const savedMode = localStorage.getItem("playerMode");
+    if (savedMode) return savedMode as any;
+    const oldAlt = localStorage.getItem("useAltPlayer") === "true";
+    return oldAlt ? "qsv" : "standard";
+  });
 
-  const handleToggleAltPlayer = (val: boolean) => {
-    setUseAltPlayer(val);
-    localStorage.setItem("useAltPlayer", val ? "true" : "false");
+  const handlePlayerModeChange = (mode: "standard" | "qsv" | "direct") => {
+    setPlayerMode(mode);
+    localStorage.setItem("playerMode", mode);
+    localStorage.setItem("useAltPlayer", mode === "qsv" ? "true" : "false");
   };
 
   const [useTvMode, setUseTvMode] = useState(() => localStorage.getItem("useTvMode") === "true");
@@ -169,8 +176,8 @@ function App() {
         onPageChange={handlePageChange}
         profileName={profileName}
         avatarColor={getAvatarColor()}
-        useAltPlayer={useAltPlayer}
-        onToggleAltPlayer={handleToggleAltPlayer}
+        playerMode={playerMode}
+        onPlayerModeChange={handlePlayerModeChange}
         useTvMode={useTvMode}
         onToggleTvMode={handleToggleTvMode}
         onLogout={handleLogout}
@@ -178,14 +185,26 @@ function App() {
         <Router
           activePage={route.page}
           explorerPath={route.path}
+          playerMode={playerMode}
           onPlayVideo={handlePlayVideo}
           onNavigateToPath={handleNavigateToFolder}
         />
       </Layout>
 
-      {/* Custom Fullscreen Video Player Overlay */}
       {route.videoPath && (
-        useAltPlayer ? (
+        playerMode === "direct" ? (
+          <DirectVideoPlayer
+            key={`${route.videoPath}_${route.videoPosition}`}
+            videoPath={route.videoPath}
+            initialPosition={route.videoPosition}
+            onClose={() => {
+              // Remove video param and preserve current page and explorer path
+              navigateTo(route.page, route.path, null);
+              // Refresh window locations/data triggers on close to reflect progress updates
+              window.dispatchEvent(new Event("playback-closed"));
+            }}
+          />
+        ) : playerMode === "qsv" ? (
           <AltVideoPlayer
             key={`${route.videoPath}_${route.videoPosition}`}
             videoPath={route.videoPath}

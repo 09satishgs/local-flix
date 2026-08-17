@@ -61,9 +61,18 @@ export interface AudioTrack {
 
 export interface VideoMetadata {
   duration: number;
+  videoCodec: string;
   subtitles: SubtitleTrack[];
   audioTracks: AudioTrack[];
   playlist: string[];
+}
+
+export interface ConversionJob {
+  videoPath: string;
+  outPath: string;
+  status: 'processing' | 'completed' | 'failed';
+  progress: number;
+  error: string | null;
 }
 
 const getHeaders = () => {
@@ -223,6 +232,37 @@ export const api = {
     const profileId = localStorage.getItem('profileId') || '';
     const token = localStorage.getItem('profileToken') || '';
     return `/api/video/thumbnail?path=${encodeURIComponent(videoPath)}&time=${Math.round(time)}&profileId=${encodeURIComponent(profileId)}&profileToken=${encodeURIComponent(token)}`;
+  },
+
+  async startConversion(path: string, audioTrack: string | number, subtitleTrack: string): Promise<{ success: boolean; outPath: string }> {
+    const res = await fetch('/api/video/convert', {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ path, audioTrack, subtitleTrack }),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Failed to start conversion');
+    }
+    return res.json();
+  },
+
+  async getConversionStatus(): Promise<ConversionJob[]> {
+    const res = await fetch('/api/video/convert/status', {
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to fetch conversion status');
+    return res.json();
+  },
+
+  async stopConversion(path: string): Promise<{ success: boolean }> {
+    const res = await fetch('/api/video/convert/stop', {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ path }),
+    });
+    if (!res.ok) throw new Error('Failed to stop conversion');
+    return res.json();
   },
 };
 

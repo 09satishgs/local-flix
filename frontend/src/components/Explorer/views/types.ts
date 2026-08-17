@@ -34,4 +34,18 @@ export interface ExplorerViewProps {
   formatSize: (bytes?: number) => string;
   onPlayVideo: (path: string, position: number) => void;
   isPathAllowed: (path: string) => boolean;
+  playerMode: "standard" | "qsv" | "direct";
+  conversionDialogOpen: boolean;
+  setConversionDialogOpen: (open: boolean) => void;
+  conversionTargetItem: ExplorerItem | null;
+  loadingMetadata: boolean;
+  meta: any;
+  selectedAudio: string;
+  setSelectedAudio: (track: string) => void;
+  selectedSubtitle: string;
+  setSelectedSubtitle: (track: string) => void;
+  activeJobs: any[];
+  handleConvertClick: (item: ExplorerItem) => void;
+  handleStartConversion: () => void;
+  handleCancelConversion: (path: string) => void;
 }
