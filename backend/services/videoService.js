@@ -704,20 +704,22 @@ function getThumbnailFrame(videoPath, time) {
 
 const activeConversions = new Map();
 
-function startConversion(videoPath, audioTrack, subtitleTrack, allowedPaths) {
+function startConversion(videoPath, audioTrack, subtitleTrack, allowedPaths, useQsv = true) {
   return new Promise(async (resolve, reject) => {
     try {
-      if (activeConversions.has(videoPath)) {
-        const job = activeConversions.get(videoPath);
-        if (job.status === "processing") {
-          return reject(new Error("Conversion for this video is already in progress"));
+      if (useQsv) {
+        if (activeConversions.has(videoPath)) {
+          const job = activeConversions.get(videoPath);
+          if (job.status === "processing") {
+            return reject(new Error("Conversion for this video is already in progress"));
+          }
         }
-      }
 
-      // Check if there's any active conversion, and limit to 1 concurrent task
-      for (const [key, job] of activeConversions.entries()) {
-        if (job.status === "processing") {
-          return reject(new Error("Another conversion is already in progress. Please wait."));
+        // Check if there's any active conversion, and limit to 1 concurrent task
+        for (const [key, job] of activeConversions.entries()) {
+          if (job.status === "processing") {
+            return reject(new Error("Another conversion is already in progress. Please wait."));
+          }
         }
       }
 
@@ -772,13 +774,21 @@ function startConversion(videoPath, audioTrack, subtitleTrack, allowedPaths) {
       // Codecs & acceleration
       if (hasFilter) {
         // Subtitle burning requires decoding and re-encoding
-        args.push("-c:v", "h264_qsv", "-b:v", "5000k", "-preset", "fast");
+        if (useQsv) {
+          args.push("-c:v", "h264_qsv", "-b:v", "5000k", "-preset", "fast");
+        } else {
+          args.push("-c:v", "libx264", "-preset", "veryfast", "-b:v", "5000k");
+        }
       } else {
         // Direct copy if video is already h264, else transcode
         if (meta.videoCodec === "h264") {
           args.push("-c:v", "copy");
         } else {
-          args.push("-c:v", "h264_qsv", "-b:v", "5000k", "-preset", "fast");
+          if (useQsv) {
+            args.push("-c:v", "h264_qsv", "-b:v", "5000k", "-preset", "fast");
+          } else {
+            args.push("-c:v", "libx264", "-preset", "veryfast", "-b:v", "5000k");
+          }
         }
       }
 
@@ -786,22 +796,53 @@ function startConversion(videoPath, audioTrack, subtitleTrack, allowedPaths) {
       // Output
       args.push(normalizedOutput);
 
-      console.log(`[Conversion Spawn] Command: ffmpeg ${args.join(" ")}`);
+      console.log(`[Conversion Spawn] Command (useQsv=${useQsv}): ffmpeg ${args.join(" ")}`);
       const ffmpeg = spawn(ffmpegPath, args, { windowsHide: true });
 
-      const job = {
-        videoPath,
-        outPath,
-        status: "processing",
-        progress: 0,
-        error: null,
-        process: ffmpeg,
-      };
-
-      activeConversions.set(videoPath, job);
+      let job = activeConversions.get(videoPath);
+      if (!job) {
+        job = {
+          videoPath,
+          outPath,
+          status: "processing",
+          progress: 0,
+          error: null,
+          process: ffmpeg,
+        };
+        activeConversions.set(videoPath, job);
+      } else {
+        job.process = ffmpeg;
+        job.status = "processing";
+        job.progress = 0;
+        job.error = null;
+      }
 
       let stderrBuffer = "";
       let startupLinesPrinted = 0;
+      let hasError = false;
+
+      // Watchdog: QSV can hang indefinitely in driver init. If progress remains at 0%
+      // for 8 seconds during QSV transcode, kill the process and trigger software fallback.
+      let watchdogTimer = null;
+      if (useQsv && !args.includes("copy")) {
+        watchdogTimer = setTimeout(() => {
+          if (job.status === "processing" && job.progress === 0) {
+            console.warn(`[Conversion Watchdog] QSV transcode hung at 0% for 8s. Forcing fallback to software libx264.`);
+            hasError = true;
+            try {
+              ffmpeg.kill("SIGKILL");
+            } catch (e) {}
+          }
+        }, 8000);
+      }
+
+      const cleanWatchdog = () => {
+        if (watchdogTimer) {
+          clearTimeout(watchdogTimer);
+          watchdogTimer = null;
+        }
+      };
+
       ffmpeg.stderr.on("data", (data) => {
         const str = data.toString();
         stderrBuffer += str;
@@ -815,6 +856,21 @@ function startConversion(videoPath, audioTrack, subtitleTrack, allowedPaths) {
               startupLinesPrinted++;
             }
           }
+        }
+
+        // Detect driver/device errors
+        if (
+          useQsv &&
+          !hasError &&
+          (str.includes("Device setup failed") ||
+            str.includes("Error open") ||
+            (str.includes("qsv") && str.includes("failed")))
+        ) {
+          console.warn("[Conversion Warning] QSV driver error detected in stderr stream. Flagging fallback.");
+          hasError = true;
+          try {
+            ffmpeg.kill();
+          } catch (e) {}
         }
 
         const lines = stderrBuffer.split(/\r?\n/);
@@ -837,24 +893,42 @@ function startConversion(videoPath, audioTrack, subtitleTrack, allowedPaths) {
       });
 
       ffmpeg.on("close", (code) => {
+        cleanWatchdog();
+        
         if (code === 0) {
           job.status = "completed";
           job.progress = 100;
+          job.process = null;
           console.log(`[Conversion Complete] Finished: ${videoPath} -> ${outPath}`);
         } else {
-          job.status = "failed";
-          job.error = `FFmpeg process exited with code ${code}`;
-          console.error(`[Conversion Failed] Error: ${job.error}`);
+          if (useQsv && hasError) {
+            console.log("[Conversion Status] Retrying background transcode with software libx264...");
+            startConversion(videoPath, audioTrack, subtitleTrack, allowedPaths, false)
+              .then(() => resolve({ outPath }))
+              .catch(reject);
+          } else {
+            job.status = "failed";
+            job.error = `FFmpeg process exited with code ${code}`;
+            job.process = null;
+            console.error(`[Conversion Failed] Error: ${job.error}`);
+          }
         }
-        // Keep the job in history but clean the process handle
-        job.process = null;
       });
 
       ffmpeg.on("error", (err) => {
-        job.status = "failed";
-        job.error = err.message;
-        job.process = null;
-        console.error(`[Conversion Error] Error: ${err.message}`);
+        cleanWatchdog();
+        
+        if (useQsv) {
+          console.log("[Conversion Status] FFmpeg error. Retrying background transcode with software libx264...");
+          startConversion(videoPath, audioTrack, subtitleTrack, allowedPaths, false)
+            .then(() => resolve({ outPath }))
+            .catch(reject);
+        } else {
+          job.status = "failed";
+          job.error = err.message;
+          job.process = null;
+          console.error(`[Conversion Error] Error: ${err.message}`);
+        }
       });
 
       resolve({ outPath });
