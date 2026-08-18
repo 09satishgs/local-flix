@@ -26,6 +26,7 @@ import {
   Star,
   StarBorder,
 } from '@mui/icons-material';
+import { api } from '../../../api';
 import type { VideoPlayerViewProps } from './types';
 import { useSeekThumbnail } from '../../../hooks/useSeekThumbnail';
 
@@ -643,6 +644,25 @@ export const MobileVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
             >
               Stream in New Tab
             </Button>
+            {!currentVideoPath.toLowerCase().endsWith(".mp4") && (
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<Download />}
+                onClick={() => {
+                  api.convertVideo(
+                    currentVideoPath,
+                    selectedAudioIndex,
+                    activeSubtitle,
+                    activeSubtitle !== null && activeSubtitle !== undefined
+                  );
+                  onClose();
+                }}
+                sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.3)", "&:hover": { borderColor: "#fff", bgcolor: "rgba(255,255,255,0.08)" } }}
+              >
+                Save as MP4
+              </Button>
+            )}
           </Box>
         </Box>
       )}

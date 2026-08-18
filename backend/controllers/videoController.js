@@ -75,12 +75,13 @@ function streamVideo(req, res) {
   const videoPath = req.query.path;
   const startParam = req.query.start;
   const audioTrack = req.query.audioTrack;
+  const download = req.query.download;
 
   if (!videoPath || !isPathAllowed(videoPath, req.profile.allowedPaths)) {
     return res.status(403).json({ error: "Access denied" });
   }
 
-  videoService.streamVideo(videoPath, startParam, audioTrack, req, res);
+  videoService.streamVideo(videoPath, startParam, audioTrack, download, req, res);
 }
 
 async function getHlsPlaylist(req, res) {
@@ -149,6 +150,45 @@ async function getThumbnailFrame(req, res) {
   }
 }
 
+async function convertVideo(req, res) {
+  const videoPath = req.body.path;
+  const audioTrack = req.body.audioTrack;
+  const subtitleTrack = req.body.subtitleTrack;
+  const burnSubtitles = req.body.burnSubtitles;
+
+  if (!videoPath || !isPathAllowed(videoPath, req.profile.allowedPaths)) {
+    return res.status(403).json({ error: "Access denied" });
+  }
+
+  try {
+    const result = await videoService.convertVideo(
+      videoPath,
+      audioTrack,
+      subtitleTrack,
+      burnSubtitles,
+    );
+    res.json(result);
+  } catch (err) {
+    console.error("Conversion error:", err);
+    res.status(500).json({ error: err.message || "Failed to start conversion" });
+  }
+}
+
+function getConversionStatus(req, res) {
+  const videoPath = req.query.path;
+  const status = videoService.getConversionStatus(videoPath);
+  res.json(status);
+}
+
+function cancelConversion(req, res) {
+  const videoPath = req.body.path;
+  if (!videoPath || !isPathAllowed(videoPath, req.profile.allowedPaths)) {
+    return res.status(403).json({ error: "Access denied" });
+  }
+  const result = videoService.cancelConversion(videoPath);
+  res.json(result);
+}
+
 module.exports = {
   getVideoMetadata,
   extractSubtitles,
@@ -156,5 +196,8 @@ module.exports = {
   getHlsPlaylist,
   serveHlsFile,
   stopHlsStream,
+  convertVideo,
+  getConversionStatus,
+  cancelConversion,
   getThumbnailFrame,
 };

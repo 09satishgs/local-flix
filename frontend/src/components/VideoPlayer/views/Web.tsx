@@ -32,6 +32,7 @@ import {
   Star,
   StarBorder,
 } from "@mui/icons-material";
+import { api } from "../../../api";
 import type { VideoPlayerViewProps } from "./types";
 import { useSeekThumbnail } from "../../../hooks/useSeekThumbnail";
 
@@ -569,7 +570,7 @@ export const WebVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
             zIndex: 10,
             boxShadow: 24,
             border: "1px solid rgba(255,255,255,0.1)",
-            width: 380,
+            width: 440,
             maxWidth: "90%",
           }}
         >
@@ -607,7 +608,7 @@ export const WebVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
             </Box>
           )}
 
-          <Box sx={{ display: "flex", gap: 2, justifyContent: "center" }}>
+          <Box sx={{ display: "flex", gap: 1.5, justifyContent: "center", flexWrap: "wrap" }}>
             <Button
               variant="contained"
               startIcon={<PlayArrow />}
@@ -632,6 +633,24 @@ export const WebVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
             >
               Stream in New Tab
             </Button>
+            {!currentVideoPath.toLowerCase().endsWith(".mp4") && (
+              <Button
+                variant="outlined"
+                startIcon={<Download />}
+                onClick={() => {
+                  api.convertVideo(
+                    currentVideoPath,
+                    selectedAudioIndex,
+                    activeSubtitle,
+                    activeSubtitle !== null && activeSubtitle !== undefined
+                  );
+                  onClose();
+                }}
+                sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.3)", "&:hover": { borderColor: "#fff", bgcolor: "rgba(255,255,255,0.08)" } }}
+              >
+                Save as MP4
+              </Button>
+            )}
           </Box>
         </Box>
       )}

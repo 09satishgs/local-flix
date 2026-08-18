@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -32,9 +32,14 @@ import {
   CheckCircle,
   MoreVert,
   Replay,
+  Download,
+  VideoLibrary,
 } from '@mui/icons-material';
+import { api } from '../../../api';
 import type { ExplorerItem } from '../../../api';
 import type { ExplorerViewProps } from './types';
+import { ConvertDialog } from './ConvertDialog';
+import { ConversionProgressPortal } from './ConversionProgressPortal';
 
 const rootsBreadcrumbSx: SxProps<Theme> = { color: 'var(--localflix-red)', fontWeight: 600, fontSize: '0.9rem' };
 const breadcrumbsScrollContainerSx: SxProps<Theme> = { overflowX: 'auto', width: '100%', pb: 1, '&::-webkit-scrollbar': { height: 4 }, '&::-webkit-scrollbar-thumb': { bgcolor: '#333' } };
@@ -108,6 +113,29 @@ const mobileReplayBtnSx: SxProps<Theme> = {
   bgcolor: 'rgba(0,0,0,0.6)',
   color: '#fff',
   p: 0.5,
+};
+const mobileDownloadBtnSx: SxProps<Theme> = {
+  bgcolor: 'rgba(0,0,0,0.6)',
+  color: '#fff',
+  p: 0.5,
+};
+const mobileToastSx: SxProps<Theme> = {
+  position: 'fixed',
+  bottom: 24,
+  left: '50%',
+  transform: 'translateX(-50%)',
+  bgcolor: 'rgba(0, 0, 0, 0.9)',
+  color: '#fff',
+  px: 2.5,
+  py: 1,
+  borderRadius: 2,
+  zIndex: 1300,
+  border: '1px solid rgba(255, 255, 255, 0.2)',
+  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
+  fontSize: '0.8rem',
+  width: 'max-content',
+  maxWidth: '90%',
+  textAlign: 'center',
 };
 const mobileCardPlayIconSx: SxProps<Theme> = { color: '#fff', fontSize: 18 };
 const mobileFolderIconSx: SxProps<Theme> = { fontSize: 44, color: 'rgba(255,255,255,0.7)' };
@@ -264,6 +292,7 @@ const getMobileSearchResultItemSx = (isSelected: boolean, thumbnail: string | nu
 
 export const MobileExplorerView: React.FC<ExplorerViewProps> = ({
   currentPath,
+  items,
   loading,
   searchQuery,
   setSearchQuery,
@@ -295,6 +324,78 @@ export const MobileExplorerView: React.FC<ExplorerViewProps> = ({
 }) => {
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
   const [menuItem, setMenuItem] = useState<ExplorerItem | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [convertDialogItem, setConvertDialogItem] = useState<ExplorerItem | null>(null);
+  const [batchConvertOpen, setBatchConvertOpen] = useState(false);
+  const [conversions, setConversions] = useState<Record<string, { status: string; progress: number; filename: string }>>({});
+  const completedConversionsRef = useRef<Set<string>>(new Set());
+
+  const convertibleItems = items.filter(
+    (it) => !it.isDirectory && !it.name.toLowerCase().endsWith('.mp4')
+  );
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      api.getConversionStatus().then((res) => {
+        if (res.conversions) {
+          setConversions(res.conversions);
+          let newCompleted = false;
+          for (const [key, c] of Object.entries(res.conversions)) {
+            if (c.progress === 100 && !completedConversionsRef.current.has(key)) {
+              completedConversionsRef.current.add(key);
+              newCompleted = true;
+            }
+          }
+          if (newCompleted) {
+            loadDirectory(currentPath);
+          }
+        }
+      }).catch(() => {});
+    }, 1500);
+
+    return () => clearInterval(interval);
+  }, [currentPath, loadDirectory]);
+
+  const handleStartConvert = (
+    videoPath: string,
+    audioTrack: number | null,
+    subtitleTrack: number | string | null,
+    burnSubtitles: boolean
+  ) => {
+    api.convertVideo(videoPath, audioTrack, subtitleTrack, burnSubtitles)
+      .then((res) => {
+        if (res.queued) {
+          setToastMessage(`Added ${res.filename} to conversion queue.`);
+        } else {
+          setToastMessage(`Converting to ${res.filename}...`);
+        }
+        setTimeout(() => setToastMessage(null), 4000);
+      })
+      .catch((err) => {
+        setToastMessage(`Conversion failed: ${err.message}`);
+        setTimeout(() => setToastMessage(null), 4000);
+      });
+  };
+
+  const handleStartBatchConvert = async (
+    itemsToConvert: ExplorerItem[],
+    audioTrack: number | null,
+    subtitleTrack: number | string | null,
+    burnSubtitles: boolean
+  ) => {
+    setToastMessage(`Queueing ${itemsToConvert.length} videos for conversion...`);
+    setTimeout(() => setToastMessage(null), 4000);
+
+    for (let i = 0; i < itemsToConvert.length; i++) {
+      const it = itemsToConvert[i];
+      api.convertVideo(it.path, audioTrack, subtitleTrack, burnSubtitles).catch((err) => {
+        console.error(`Failed to queue ${it.name}:`, err);
+      });
+      if (i < itemsToConvert.length - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+    }
+  };
 
   const handleOpenMenu = (event: React.MouseEvent, item: ExplorerItem) => {
     event.stopPropagation();
@@ -391,6 +492,31 @@ export const MobileExplorerView: React.FC<ExplorerViewProps> = ({
             Explorer
           </Typography>
           <Box data-style="mobileBackNavGroupSx" sx={mobileBackNavGroupSx}>
+            {currentPath && convertibleItems.length > 0 && (
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<VideoLibrary sx={{ fontSize: 16 }} />}
+                onClick={() => setBatchConvertOpen(true)}
+                sx={{
+                  color: '#fff',
+                  borderColor: 'rgba(229, 9, 20, 0.6)',
+                  bgcolor: 'rgba(229, 9, 20, 0.15)',
+                  fontSize: '0.75rem',
+                  py: 0.25,
+                  px: 1,
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  mr: 0.5,
+                  '&:hover': {
+                    borderColor: 'var(--localflix-red)',
+                    bgcolor: 'rgba(229, 9, 20, 0.25)',
+                  },
+                }}
+              >
+                Convert All ({convertibleItems.length})
+              </Button>
+            )}
             {currentPath && (
               <IconButton
                 data-style="mobileBackButtonSx"
@@ -432,6 +558,7 @@ export const MobileExplorerView: React.FC<ExplorerViewProps> = ({
         <Grid container spacing={2}>
           {filteredItems.map((item) => {
             const isDir = item.isDirectory;
+            const isMp4 = item.name.toLowerCase().endsWith('.mp4') || item.path.toLowerCase().endsWith('.mp4');
             const hasProgress = item.progress && item.progress.position > 5;
             const progressPercent = hasProgress
               ? (item.progress!.position / item.progress!.duration) * 100
@@ -475,6 +602,19 @@ export const MobileExplorerView: React.FC<ExplorerViewProps> = ({
                           >
                             <Replay sx={mobileCardPlayIconSx} />
                           </IconButton>
+                          {!isMp4 && (
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setConvertDialogItem(item);
+                              }}
+                              sx={mobileDownloadBtnSx}
+                              title="Convert & Save as MP4"
+                            >
+                              <Download sx={mobileCardPlayIconSx} />
+                            </IconButton>
+                          )}
                         </Box>
                       )
                     ) : isDir ? (
@@ -508,6 +648,19 @@ export const MobileExplorerView: React.FC<ExplorerViewProps> = ({
                           >
                             <Replay sx={mobileCardPlayIconSx} />
                           </IconButton>
+                          {!isMp4 && (
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setConvertDialogItem(item);
+                              }}
+                              sx={mobileDownloadBtnSx}
+                              title="Convert & Save as MP4"
+                            >
+                              <Download sx={mobileCardPlayIconSx} />
+                            </IconButton>
+                          )}
                         </Box>
                       </>
                     )}
@@ -586,14 +739,26 @@ export const MobileExplorerView: React.FC<ExplorerViewProps> = ({
         }}
       >
         {!menuItem?.isDirectory && (
-          <MenuItem
-            onClick={() => {
-              if (menuItem) onPlayVideo(menuItem.path, 0);
-              handleCloseMenu();
-            }}
-          >
-            <Replay fontSize="small" sx={{ mr: 1, color: 'var(--text-secondary)' }} /> Restart from Beginning
-          </MenuItem>
+          <>
+            <MenuItem
+              onClick={() => {
+                if (menuItem) onPlayVideo(menuItem.path, 0);
+                handleCloseMenu();
+              }}
+            >
+              <Replay fontSize="small" sx={{ mr: 1, color: 'var(--text-secondary)' }} /> Restart from Beginning
+            </MenuItem>
+            {!(menuItem?.name?.toLowerCase().endsWith('.mp4') || menuItem?.path?.toLowerCase().endsWith('.mp4')) && (
+              <MenuItem
+                onClick={() => {
+                  if (menuItem) setConvertDialogItem(menuItem);
+                  handleCloseMenu();
+                }}
+              >
+                <Download fontSize="small" sx={{ mr: 1, color: 'var(--text-secondary)' }} /> Convert & Save as MP4
+              </MenuItem>
+            )}
+          </>
         )}
         <MenuItem
           onClick={() => {
@@ -802,6 +967,40 @@ export const MobileExplorerView: React.FC<ExplorerViewProps> = ({
           </Button>
         </DialogActions>
       </Dialog>
+      {/* Convert Dialog */}
+      <ConvertDialog
+        open={Boolean(convertDialogItem) || batchConvertOpen}
+        item={convertDialogItem}
+        batchItems={batchConvertOpen ? convertibleItems : undefined}
+        onClose={() => {
+          setConvertDialogItem(null);
+          setBatchConvertOpen(false);
+        }}
+        onStartConvert={handleStartConvert}
+        onStartBatchConvert={handleStartBatchConvert}
+      />
+
+      {/* Conversion Progress Floating Portal */}
+      <ConversionProgressPortal
+        conversions={conversions}
+        onCancel={(pathKey) => {
+          api.cancelConversion(pathKey).catch(() => {});
+        }}
+        onDismiss={(pathKey) => {
+          setConversions((prev) => {
+            const next = { ...prev };
+            delete next[pathKey];
+            return next;
+          });
+        }}
+      />
+
+      {/* Notification Toast */}
+      {toastMessage && (
+        <Box sx={mobileToastSx}>
+          {toastMessage}
+        </Box>
+      )}
     </Box>
   );
 };
