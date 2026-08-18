@@ -28,6 +28,8 @@ interface LayoutProps {
   avatarColor: string;
   useAltPlayer: boolean;
   onToggleAltPlayer: (val: boolean) => void;
+  useTvMode: boolean;
+  onToggleTvMode: (val: boolean) => void;
   onLogout: () => void;
   children: React.ReactNode;
 }
@@ -154,6 +156,8 @@ export const MobileLayout: React.FC<LayoutProps> = ({
   avatarColor,
   useAltPlayer,
   onToggleAltPlayer,
+  useTvMode,
+  onToggleTvMode,
   onLogout,
   children,
 }) => {
@@ -206,6 +210,24 @@ export const MobileLayout: React.FC<LayoutProps> = ({
                   label={
                     <Typography variant="body2" sx={mobileAltPlayerLabelSx}>
                       Use Alt Player
+                    </Typography>
+                  }
+                  sx={mobileFormControlLabelSx}
+                />
+              </MenuItem>
+              <MenuItem disableRipple sx={mobileAltPlayerMenuItemSx}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      size="small"
+                      checked={useTvMode}
+                      onChange={(e) => onToggleTvMode(e.target.checked)}
+                      color="secondary"
+                    />
+                  }
+                  label={
+                    <Typography variant="body2" sx={mobileAltPlayerLabelSx}>
+                      TV Mode (JioSphere)
                     </Typography>
                   }
                   sx={mobileFormControlLabelSx}

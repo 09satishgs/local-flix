@@ -369,6 +369,9 @@ export const WebHomeView: React.FC<HomeViewProps> = ({
                   <Grid item xs={12} sm={6} md={4} lg={3} key={item.path}>
                     <Card
                       className="movie-card"
+                      tabIndex={0}
+                      role="button"
+                      aria-label={`Play ${item.name}`}
                       onClick={() => onPlayVideo(item.path, item.position)}
                       sx={continueWatchingCardSx}
                     >

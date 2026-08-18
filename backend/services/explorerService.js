@@ -68,6 +68,11 @@ async function readDirectory(queryPath, profileId, allowedPaths) {
     const isDirectory = stats.isDirectory();
     const isVideo = isVideoFile(fullPath);
 
+    // Hide temp staging directory and hidden directories starting with dot
+    if (isDirectory && (item.toLowerCase() === "temp" || item.startsWith("."))) {
+      continue;
+    }
+
     // Only include directories or video files
     if (isDirectory || isVideo) {
       let progress = null;

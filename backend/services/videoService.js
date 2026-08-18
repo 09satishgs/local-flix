@@ -88,13 +88,21 @@ async function getVideoMetadata(videoPath, profileId, allowedPaths) {
               codec: s.codec_name,
             }));
 
+          const videoStream = streams.find((s) => s.codec_type === "video");
+          const videoCodec = videoStream?.codec_name || "";
+          const pixFmt = videoStream?.pix_fmt || "";
+          const profile = videoStream?.profile || "";
+
           console.log(`[Metadata Scan] Parsed for: ${videoPath}`);
-          console.log(`[Metadata Scan] Raw Streams: ${JSON.stringify(streams.map(s => ({ index: s.index, codec_type: s.codec_type, codec_name: s.codec_name })), null, 2)}`);
+          console.log(`[Metadata Scan] Video Codec: ${videoCodec}, pix_fmt: ${pixFmt}, profile: ${profile}`);
           console.log(`[Metadata Scan] Audio Tracks: ${JSON.stringify(audioTracks, null, 2)}`);
           console.log(`[Metadata Scan] Subtitles: ${JSON.stringify(subtitles, null, 2)}`);
 
           resolve({
             duration: parseFloat(metadata.format?.duration || 0),
+            videoCodec,
+            pixFmt,
+            profile,
             subtitles,
             audioTracks,
             playlist,
@@ -125,10 +133,12 @@ function extractSubtitles(videoPath, trackIndex, startOffset) {
   return spawn(ffmpegPath, args, { windowsHide: true });
 }
 
-function streamVideo(videoPath, startParam, audioTrack, req, res) {
+function streamVideo(videoPath, startParam, audioTrack, download, req, res) {
   const isMkvOrTs =
     videoPath.toLowerCase().endsWith(".mkv") ||
     videoPath.toLowerCase().endsWith(".ts");
+  const filename = `${path.basename(videoPath, path.extname(videoPath))}.mp4`;
+  const isDownload = download === "true" || download === true;
 
   // Direct MP4 range streaming if not MKV/TS and no audio track override
   if (!isMkvOrTs && !isValidAudioTrack(audioTrack)) {
@@ -141,6 +151,10 @@ function streamVideo(videoPath, startParam, audioTrack, req, res) {
     const fileSize = stat.size;
     const range = req.headers.range;
 
+    const dispositionHeaders = isDownload
+      ? { "Content-Disposition": `attachment; filename="${encodeURIComponent(filename)}"; filename*=UTF-8''${encodeURIComponent(filename)}` }
+      : {};
+
     if (range) {
       const parts = range.replace(/bytes=/, "").split("-");
       const start = parseInt(parts[0], 10);
@@ -152,6 +166,7 @@ function streamVideo(videoPath, startParam, audioTrack, req, res) {
         "Accept-Ranges": "bytes",
         "Content-Length": chunksize,
         "Content-Type": "video/mp4",
+        ...dispositionHeaders,
       };
       res.writeHead(206, head);
       file.pipe(res);
@@ -164,6 +179,7 @@ function streamVideo(videoPath, startParam, audioTrack, req, res) {
       const head = {
         "Content-Length": fileSize,
         "Content-Type": "video/mp4",
+        ...dispositionHeaders,
       };
       res.writeHead(200, head);
       fs.createReadStream(videoPath).pipe(res);
@@ -172,11 +188,15 @@ function streamVideo(videoPath, startParam, audioTrack, req, res) {
   }
 
   // Remux (or seek) on-the-fly using FFmpeg!
-  res.writeHead(200, {
+  const responseHeaders = {
     "Content-Type": "video/mp4",
     Connection: "keep-alive",
     "Transfer-Encoding": "chunked",
-  });
+  };
+  if (isDownload) {
+    responseHeaders["Content-Disposition"] = `attachment; filename="${encodeURIComponent(filename)}"; filename*=UTF-8''${encodeURIComponent(filename)}`;
+  }
+  res.writeHead(200, responseHeaders);
 
   const args = [];
   if (startParam) {
@@ -698,6 +718,276 @@ function getThumbnailFrame(videoPath, time) {
   });
 }
 
+const conversionQueue = [];
+let isProcessingQueue = false;
+let currentFfmpegProcess = null;
+let currentConvertingPath = null;
+
+function getConversionStatus(videoPath) {
+  if (videoPath) {
+    const job = conversionQueue.find((j) => j.videoPath === videoPath);
+    return job
+      ? { status: job.status, progress: job.progress, filename: job.filename, error: job.error }
+      : { status: "idle", progress: 0 };
+  }
+  const all = {};
+  for (const job of conversionQueue) {
+    all[job.videoPath] = {
+      status: job.status,
+      progress: job.progress,
+      filename: job.filename,
+      error: job.error,
+    };
+  }
+  const queuedCount = conversionQueue.filter((j) => j.status === "queued").length;
+  return { conversions: all, queuedCount };
+}
+
+function cancelConversion(videoPath) {
+  const job = conversionQueue.find((j) => j.videoPath === videoPath);
+  if (!job) return { success: false, message: "Job not found" };
+
+  if (job.status === "queued") {
+    const idx = conversionQueue.indexOf(job);
+    if (idx !== -1) conversionQueue.splice(idx, 1);
+    return { success: true, message: "Queued conversion canceled" };
+  }
+
+  if (job.status === "converting" && currentFfmpegProcess && currentConvertingPath === videoPath) {
+    try {
+      currentFfmpegProcess.kill();
+    } catch (e) {}
+    job.status = "failed";
+    job.error = "Canceled by user";
+    return { success: true, message: "Active conversion canceled" };
+  }
+
+  return { success: true };
+}
+
+async function convertVideo(videoPath, audioTrack, subtitleTrack, burnSubtitles) {
+  const dir = path.dirname(videoPath);
+  const ext = path.extname(videoPath);
+  const baseName = path.basename(videoPath, ext);
+  const outputFilename = `${baseName}.mp4`;
+
+  // Check if this video is already in queue or currently converting
+  const existingJob = conversionQueue.find(
+    (j) => j.videoPath === videoPath && (j.status === "queued" || j.status === "converting")
+  );
+  if (existingJob) {
+    return {
+      success: true,
+      filename: `mp4/${outputFilename}`,
+      status: existingJob.status,
+      queued: existingJob.status === "queued",
+    };
+  }
+
+  const job = {
+    videoPath,
+    audioTrack,
+    subtitleTrack,
+    burnSubtitles,
+    outputFilename,
+    status: "queued",
+    progress: 0,
+    filename: `mp4/${outputFilename}`,
+    startedAt: Date.now(),
+  };
+
+  conversionQueue.push(job);
+  processNextInQueue();
+
+  return {
+    success: true,
+    filename: `mp4/${outputFilename}`,
+    status: job.status,
+    queued: job.status === "queued",
+  };
+}
+
+async function processNextInQueue() {
+  if (isProcessingQueue) return;
+
+  const nextJob = conversionQueue.find((j) => j.status === "queued");
+  if (!nextJob) return;
+
+  isProcessingQueue = true;
+  nextJob.status = "converting";
+  nextJob.startedAt = Date.now();
+  currentConvertingPath = nextJob.videoPath;
+
+  const { videoPath, audioTrack, subtitleTrack, burnSubtitles, outputFilename } = nextJob;
+  const dir = path.dirname(videoPath);
+
+  try {
+    const tempDir = path.join(dir, "temp");
+    const mp4Dir = path.join(dir, "mp4");
+    if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+    if (!fs.existsSync(mp4Dir)) fs.mkdirSync(mp4Dir, { recursive: true });
+
+    const tempOutputPath = path.join(tempDir, outputFilename);
+    const finalOutputPath = path.join(mp4Dir, outputFilename);
+
+    const cleanInput = videoPath.replace(/\\/g, "/");
+    const cleanTempOutput = tempOutputPath.replace(/\\/g, "/");
+    const cleanFinalOutput = finalOutputPath.replace(/\\/g, "/");
+
+    let meta = null;
+    try {
+      meta = await getVideoMetadata(videoPath);
+    } catch (e) {
+      console.error("Failed to read metadata for conversion:", e);
+    }
+
+    const duration = meta?.duration || 0;
+
+    const isBurning =
+      (burnSubtitles === true || burnSubtitles === "true") &&
+      subtitleTrack !== undefined &&
+      subtitleTrack !== null &&
+      subtitleTrack !== "" &&
+      subtitleTrack !== "none";
+
+    const is10BitOrNonH264 =
+      meta?.videoCodec !== "h264" ||
+      (meta?.pixFmt && meta.pixFmt.includes("10")) ||
+      (meta?.profile && meta.profile.toLowerCase().includes("10"));
+
+    const requiresTranscode = isBurning || is10BitOrNonH264;
+
+    const buildArgs = () => {
+      const args = ["-y", "-i", cleanInput];
+      let mappedVideo = false;
+
+      if (isBurning && meta) {
+        const subIdx = parseInt(subtitleTrack, 10);
+        const subTrack = meta.subtitles.find((s) => s.index === subIdx);
+        if (subTrack) {
+          if (["hdmv_pgs_subtitle", "dvd_subtitle"].includes(subTrack.codec)) {
+            args.push("-filter_complex", `[0:v:0][0:${subIdx}]overlay[v],format=yuv420p`);
+            args.push("-map", "[v]");
+            mappedVideo = true;
+          } else {
+            const escapedPath = videoPath
+              .replace(/\\/g, "/")
+              .replace(/:/g, "\\:")
+              .replace(/'/g, "'\\\\''");
+            args.push(
+              "-vf",
+              `subtitles=filename='${escapedPath}':si=${subTrack.trackIndex},format=yuv420p`,
+            );
+          }
+        }
+      } else if (is10BitOrNonH264) {
+        args.push("-vf", "format=yuv420p");
+      }
+
+      if (!mappedVideo) {
+        args.push("-map", "0:v:0");
+      }
+
+      if (isValidAudioTrack(audioTrack)) {
+        args.push("-map", `0:${audioTrack}`);
+      } else {
+        args.push("-map", "0:a:0?");
+      }
+
+      if (requiresTranscode) {
+        args.push("-c:v", "libx264", "-pix_fmt", "yuv420p", "-preset", "veryfast", "-crf", "20");
+      } else {
+        args.push("-c:v", "copy");
+      }
+
+      args.push("-c:a", "aac", "-b:a", "192k", "-ac", "2");
+      args.push("-movflags", "+faststart");
+      args.push("-progress", "pipe:1");
+      args.push(cleanTempOutput);
+      return args;
+    };
+
+    const args = buildArgs();
+    console.log(`[FFmpeg Convert Queue] Starting [${nextJob.filename}]: ffmpeg ${args.join(" ")}`);
+
+    const ffmpeg = spawn(ffmpegPath, args, { windowsHide: true });
+    currentFfmpegProcess = ffmpeg;
+
+    ffmpeg.stdout.on("data", (data) => {
+      const str = data.toString();
+      const lines = str.split("\n");
+      for (const line of lines) {
+        const parts = line.split("=");
+        if (parts[0] === "out_time_us" && duration > 0) {
+          const us = parseInt(parts[1], 10);
+          if (!isNaN(us)) {
+            const currentSecs = us / 1000000;
+            const pct = Math.min(99, Math.round((currentSecs / duration) * 100));
+            if (nextJob.status === "converting") {
+              nextJob.progress = pct;
+            }
+          }
+        }
+      }
+    });
+
+    ffmpeg.stderr.on("data", () => {});
+
+    ffmpeg.on("close", (code) => {
+      currentFfmpegProcess = null;
+      currentConvertingPath = null;
+      isProcessingQueue = false;
+
+      if (code === 0) {
+        console.log(`[FFmpeg Convert Queue] Completed encoding: ${cleanTempOutput}`);
+        try {
+          if (fs.existsSync(finalOutputPath)) {
+            fs.unlinkSync(finalOutputPath);
+          }
+          fs.renameSync(tempOutputPath, finalOutputPath);
+          console.log(`[FFmpeg Convert Queue] Moved to destination: ${cleanFinalOutput}`);
+        } catch (moveErr) {
+          console.error(`[FFmpeg Convert Queue] Failed to move temp file:`, moveErr);
+        }
+
+        nextJob.progress = 100;
+        nextJob.status = "completed";
+
+        setTimeout(() => {
+          const idx = conversionQueue.indexOf(nextJob);
+          if (idx !== -1) conversionQueue.splice(idx, 1);
+        }, 20000);
+      } else {
+        console.error(`[FFmpeg Convert Queue] Failed with code ${code}: ${cleanTempOutput}`);
+        nextJob.status = "failed";
+        nextJob.error = nextJob.error || `Conversion process exited with code ${code}`;
+
+        try {
+          if (fs.existsSync(tempOutputPath)) {
+            fs.unlinkSync(tempOutputPath);
+          }
+        } catch (err) {}
+
+        setTimeout(() => {
+          const idx = conversionQueue.indexOf(nextJob);
+          if (idx !== -1) conversionQueue.splice(idx, 1);
+        }, 20000);
+      }
+
+      // Automatically start next queued conversion
+      processNextInQueue();
+    });
+  } catch (err) {
+    console.error(`[FFmpeg Convert Queue] Error executing job:`, err);
+    nextJob.status = "failed";
+    nextJob.error = err.message;
+    isProcessingQueue = false;
+    currentFfmpegProcess = null;
+    currentConvertingPath = null;
+    processNextInQueue();
+  }
+}
+
 module.exports = {
   getVideoMetadata,
   extractSubtitles,
@@ -706,5 +996,8 @@ module.exports = {
   serveHlsFile,
   cleanJob,
   stopHlsStream,
+  convertVideo,
+  getConversionStatus,
+  cancelConversion,
   getThumbnailFrame,
 };

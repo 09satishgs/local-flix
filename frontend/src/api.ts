@@ -224,6 +224,71 @@ export const api = {
     const token = localStorage.getItem('profileToken') || '';
     return `/api/video/thumbnail?path=${encodeURIComponent(videoPath)}&time=${Math.round(time)}&profileId=${encodeURIComponent(profileId)}&profileToken=${encodeURIComponent(token)}`;
   },
+
+  getVideoDownloadUrl(videoPath: string, audioTrack?: number | null): string {
+    const profileId = localStorage.getItem('profileId') || '';
+    const token = localStorage.getItem('profileToken') || '';
+    let url = `/api/video?path=${encodeURIComponent(videoPath)}&download=true&profileId=${encodeURIComponent(profileId)}&profileToken=${encodeURIComponent(token)}`;
+    if (audioTrack !== undefined && audioTrack !== null) {
+      url += `&audioTrack=${audioTrack}`;
+    }
+    return url;
+  },
+
+  downloadVideo(videoPath: string, audioTrack?: number | null): void {
+    const url = this.getVideoDownloadUrl(videoPath, audioTrack);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = '';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  },
+
+  async convertVideo(
+    filepath: string,
+    audioTrack?: number | null,
+    subtitleTrack?: number | string | null,
+    burnSubtitles?: boolean
+  ): Promise<{ success: boolean; filename: string; status?: string; queued?: boolean }> {
+    const res = await fetch('/api/video/convert', {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({
+        path: filepath,
+        audioTrack,
+        subtitleTrack,
+        burnSubtitles,
+      }),
+    });
+    if (!res.ok) throw new Error('Failed to start conversion');
+    return res.json();
+  },
+
+  async cancelConversion(filepath: string): Promise<{ success: boolean; message?: string }> {
+    const res = await fetch('/api/video/convert/cancel', {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ path: filepath }),
+    });
+    if (!res.ok) throw new Error('Failed to cancel conversion');
+    return res.json();
+  },
+
+  async getConversionStatus(filepath?: string): Promise<{
+    status?: string;
+    progress?: number;
+    filename?: string;
+    queuedCount?: number;
+    conversions?: Record<string, { status: string; progress: number; filename: string; error?: string }>;
+  }> {
+    const url = filepath
+      ? `/api/video/convert/status?path=${encodeURIComponent(filepath)}`
+      : '/api/video/convert/status';
+    const res = await fetch(url, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch conversion status');
+    return res.json();
+  },
 };
 
 export interface SearchImageResult {

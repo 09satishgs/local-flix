@@ -6,6 +6,7 @@ import { Box, useMediaQuery, useTheme } from "@mui/material";
 import { WebLayout } from "./layouts/WebLayout";
 import { MobileLayout } from "./layouts/MobileLayout";
 import { Router } from "./Router";
+import { useTvNavigation } from "./hooks/useTvNavigation";
 
 import type { SxProps, Theme } from "@mui/material";
 
@@ -70,8 +71,33 @@ function App() {
     setUseAltPlayer(val);
     localStorage.setItem("useAltPlayer", val ? "true" : "false");
   };
-  
+
+  const [useTvMode, setUseTvMode] = useState(() => localStorage.getItem("useTvMode") === "true");
+
+  const handleToggleTvMode = (val: boolean) => {
+    setUseTvMode(val);
+    localStorage.setItem("useTvMode", val ? "true" : "false");
+  };
+
+  useEffect(() => {
+    if (useTvMode) {
+      document.body.classList.add("tv-mode-active");
+    } else {
+      document.body.classList.remove("tv-mode-active");
+    }
+  }, [useTvMode]);
+
   const [route, setRoute] = useState<RouteState>(parseHash());
+
+  useTvNavigation({
+    enabled: useTvMode,
+    activeVideoPath: route.videoPath,
+    activePage: route.page,
+    explorerPath: route.path,
+    onClosePlayer: () => navigateTo(route.page, route.path, null),
+    onNavigateFolder: (path) => navigateTo("explorer", path, null),
+    onPageChange: (page) => navigateTo(page, "", null),
+  });
 
   // Listen for hash changes to sync routing state
   useEffect(() => {
@@ -134,7 +160,7 @@ function App() {
     return <ProfileSelector onProfileSelected={handleProfileSelected} />;
   }
 
-  const Layout = isMobile ? MobileLayout : WebLayout;
+  const Layout = (useTvMode || !isMobile) ? WebLayout : MobileLayout;
 
   return (
     <Box sx={appContainerSx} data-style="appContainerSx">
@@ -145,6 +171,8 @@ function App() {
         avatarColor={getAvatarColor()}
         useAltPlayer={useAltPlayer}
         onToggleAltPlayer={handleToggleAltPlayer}
+        useTvMode={useTvMode}
+        onToggleTvMode={handleToggleTvMode}
         onLogout={handleLogout}
       >
         <Router

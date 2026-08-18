@@ -21,6 +21,8 @@ interface LayoutProps {
   avatarColor: string;
   useAltPlayer: boolean;
   onToggleAltPlayer: (val: boolean) => void;
+  useTvMode: boolean;
+  onToggleTvMode: (val: boolean) => void;
   onLogout: () => void;
   children: React.ReactNode;
 }
@@ -162,6 +164,8 @@ export const WebLayout: React.FC<LayoutProps> = ({
   avatarColor,
   useAltPlayer,
   onToggleAltPlayer,
+  useTvMode,
+  onToggleTvMode,
   onLogout,
   children,
 }) => {
@@ -259,6 +263,24 @@ export const WebLayout: React.FC<LayoutProps> = ({
                   label={
                     <Typography variant="body2" sx={altPlayerLabelSx}>
                       Use Alt Player
+                    </Typography>
+                  }
+                  sx={formControlLabelSx}
+                />
+              </MenuItem>
+              <MenuItem disableRipple sx={altPlayerMenuItemSx}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      size="small"
+                      checked={useTvMode}
+                      onChange={(e) => onToggleTvMode(e.target.checked)}
+                      color="secondary"
+                    />
+                  }
+                  label={
+                    <Typography variant="body2" sx={altPlayerLabelSx}>
+                      TV Mode (JioSphere)
                     </Typography>
                   }
                   sx={formControlLabelSx}
