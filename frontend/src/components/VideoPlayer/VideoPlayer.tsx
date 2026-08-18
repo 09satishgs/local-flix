@@ -1,8 +1,8 @@
 import React from 'react';
-import { useMediaQuery, useTheme } from '@mui/material';
 import { useVideoPlayer } from './hooks';
 import { WebVideoPlayerView } from './views/Web';
 import { MobileVideoPlayerView } from './views/Mobile';
+import { useViewMode } from '../../context/ViewModeContext';
 
 interface VideoPlayerProps {
   videoPath: string;
@@ -15,12 +15,10 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   initialPosition = 0,
   onClose,
 }) => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-
+  const { isMobileView } = useViewMode();
   const state = useVideoPlayer(videoPath, initialPosition);
 
-  if (isMobile) {
+  if (isMobileView) {
     return (
       <MobileVideoPlayerView
         {...state}

@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { logDebug } from "../utils/debugLogger";
 
 interface TvNavigationOptions {
   enabled: boolean;
@@ -118,6 +119,10 @@ export const useTvNavigation = ({
       const code = e.code;
       const key = e.key;
       const keyCode = e.keyCode;
+      const which = e.which;
+
+      // Debug logging on every remote keypress
+      logDebug(`key: "${key}" | code: "${code}" | keyCode: ${keyCode} | which: ${which}`);
 
       // Spatial Navigation
       if (code === "ArrowUp" || key === "ArrowUp" || keyCode === 38) {

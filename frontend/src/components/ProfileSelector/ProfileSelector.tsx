@@ -1,9 +1,10 @@
 import React from 'react';
-import { useMediaQuery, useTheme, Box, CircularProgress, Typography, Button } from '@mui/material';
+import { Box, CircularProgress, Typography, Button } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
 import { useProfileSelector } from './hooks';
 import { WebProfileSelectorView } from './views/Web';
 import { MobileProfileSelectorView } from './views/Mobile';
+import { useViewMode } from '../../context/ViewModeContext';
 
 interface ProfileSelectorProps {
   onProfileSelected: (profileId: string, name: string) => void;
@@ -17,9 +18,7 @@ const errorMessageSx: SxProps<Theme> = { color: 'var(--text-secondary)', mb: 3 }
 const retryButtonSx: SxProps<Theme> = { bgcolor: 'var(--localflix-red)', '&:hover': { bgcolor: 'var(--localflix-dark-red)' } };
 
 export const ProfileSelector: React.FC<ProfileSelectorProps> = ({ onProfileSelected }) => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  
+  const { isMobileView } = useViewMode();
   const state = useProfileSelector(onProfileSelected);
 
   if (state.loading) {
@@ -46,7 +45,7 @@ export const ProfileSelector: React.FC<ProfileSelectorProps> = ({ onProfileSelec
     );
   }
 
-  if (isMobile) {
+  if (isMobileView) {
     return <MobileProfileSelectorView {...state} />;
   }
 

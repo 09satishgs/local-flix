@@ -1,21 +1,20 @@
 import React from 'react';
-import { useMediaQuery, useTheme, Box, CircularProgress } from '@mui/material';
+import { Box, CircularProgress } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
 import { useHistory } from './hooks';
 import { WebHistoryView } from './views/Web';
 import { MobileHistoryView } from './views/Mobile';
+import { useViewMode } from '../../context/ViewModeContext';
 
 interface HistoryProps {
-  onPlayVideo: (path: string, position: number) => void;
+  onPlayVideo: (path: string, position: number, playerType?: "hls" | "alt" | "tv") => void;
 }
 
 const loadingContainerSx: SxProps<Theme> = { display: 'flex', justifyContent: 'center', py: 8 };
 const progressSx: SxProps<Theme> = { color: 'var(--localflix-red)' };
 
 export const History: React.FC<HistoryProps> = ({ onPlayVideo }) => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-
+  const { isMobileView } = useViewMode();
   const state = useHistory();
 
   if (state.loading) {
@@ -26,7 +25,7 @@ export const History: React.FC<HistoryProps> = ({ onPlayVideo }) => {
     );
   }
 
-  if (isMobile) {
+  if (isMobileView) {
     return (
       <MobileHistoryView
         {...state}

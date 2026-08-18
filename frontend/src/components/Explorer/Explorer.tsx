@@ -1,21 +1,19 @@
 import React from 'react';
-import { useMediaQuery, useTheme } from '@mui/material';
 import { useExplorer } from './hooks';
 import { WebExplorerView } from './views/Web';
 import { MobileExplorerView } from './views/Mobile';
+import { useViewMode } from '../../context/ViewModeContext';
 
 interface ExplorerProps {
   initialPath?: string;
-  onPlayVideo: (path: string, position: number) => void;
+  onPlayVideo: (path: string, position: number, playerType?: "hls" | "alt" | "tv") => void;
 }
 
 export const Explorer: React.FC<ExplorerProps> = ({ initialPath = '', onPlayVideo }) => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-
+  const { isMobileView } = useViewMode();
   const state = useExplorer(initialPath);
 
-  if (isMobile) {
+  if (isMobileView) {
     return (
       <MobileExplorerView
         {...state}

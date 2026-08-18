@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -8,6 +8,8 @@ import {
   IconButton,
   Button,
   LinearProgress,
+  Menu,
+  MenuItem,
 } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
 import {
@@ -17,6 +19,8 @@ import {
   Bookmark,
   Close,
   Replay,
+  Tv,
+  PlayCircleOutline,
 } from '@mui/icons-material';
 import { CARD_GRADIENTS } from '../hooks';
 import type { HomeViewProps } from './types';
@@ -259,6 +263,21 @@ export const MobileHomeView: React.FC<HomeViewProps> = ({
   handleRemoveContinue,
   handleRemovePin,
 }) => {
+  const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
+  const [contextMenuItem, setContextMenuItem] = useState<any>(null);
+
+  const handleOpenContextMenu = (e: React.MouseEvent, item: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenuPos({ x: e.clientX, y: e.clientY });
+    setContextMenuItem(item);
+  };
+
+  const handleCloseContextMenu = () => {
+    setContextMenuPos(null);
+    setContextMenuItem(null);
+  };
+
   return (
     <Box className="fade-in" sx={containerSx} data-style="containerSx">
       {/* Hero Billboard Banner */}
@@ -266,6 +285,7 @@ export const MobileHomeView: React.FC<HomeViewProps> = ({
         <Box
           sx={heroBannerSx}
           data-style="heroBannerSx"
+          onContextMenu={(e) => handleOpenContextMenu(e, heroItem)}
         >
           <Box sx={heroContentBoxSx} data-style="heroContentBoxSx">
             <Typography variant="overline" sx={heroOverlineSx}>
@@ -342,6 +362,7 @@ export const MobileHomeView: React.FC<HomeViewProps> = ({
                   <Grid item xs={12} sm={6} key={item.path}>
                     <Card
                       onClick={() => onPlayVideo(item.path, item.position)}
+                      onContextMenu={(e) => handleOpenContextMenu(e, item)}
                       sx={continueCardSx}
                     >
                       {/* Remove button */}
@@ -477,6 +498,68 @@ export const MobileHomeView: React.FC<HomeViewProps> = ({
           )}
         </Box>
       </Box>
+
+      {/* Video Context Menu */}
+      <Menu
+        open={contextMenuPos !== null}
+        onClose={handleCloseContextMenu}
+        anchorReference="anchorPosition"
+        anchorPosition={
+          contextMenuPos !== null
+            ? { top: contextMenuPos.y, left: contextMenuPos.x }
+            : undefined
+        }
+        PaperProps={{
+          sx: {
+            bgcolor: 'var(--bg-card)',
+            color: '#fff',
+            border: '1px solid #333',
+            minWidth: 230,
+            '& .MuiMenuItem-root': {
+              fontSize: '0.9rem',
+              py: 1,
+              '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' },
+            },
+          },
+        }}
+      >
+        {contextMenuItem && (
+          <>
+            <MenuItem
+              onClick={() => {
+                onPlayVideo(contextMenuItem.path, contextMenuItem.position || 0, 'hls');
+                handleCloseContextMenu();
+              }}
+            >
+              <PlayArrow fontSize="small" sx={{ mr: 1.5, color: 'var(--text-secondary)' }} /> Play with HLS Player
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                onPlayVideo(contextMenuItem.path, contextMenuItem.position || 0, 'alt');
+                handleCloseContextMenu();
+              }}
+            >
+              <PlayCircleOutline fontSize="small" sx={{ mr: 1.5, color: 'var(--text-secondary)' }} /> Play with Alt Player
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                onPlayVideo(contextMenuItem.path, contextMenuItem.position || 0, 'tv');
+                handleCloseContextMenu();
+              }}
+            >
+              <Tv fontSize="small" sx={{ mr: 1.5, color: 'var(--text-secondary)' }} /> Play with TV Player (MP4)
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                onPlayVideo(contextMenuItem.path, 0);
+                handleCloseContextMenu();
+              }}
+            >
+              <Replay fontSize="small" sx={{ mr: 1.5, color: 'var(--text-secondary)' }} /> Restart from Beginning
+            </MenuItem>
+          </>
+        )}
+      </Menu>
     </Box>
   );
 };

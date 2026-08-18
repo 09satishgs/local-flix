@@ -6,7 +6,7 @@ import { History } from "./components/History";
 interface RouterProps {
   activePage: "home" | "explorer" | "history";
   explorerPath: string;
-  onPlayVideo: (path: string, position: number) => void;
+  onPlayVideo: (path: string, position: number, playerType?: "hls" | "alt" | "tv") => void;
   onNavigateToPath: (path: string) => void;
 }
 

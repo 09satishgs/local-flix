@@ -13,6 +13,8 @@ import {
 } from "@mui/material";
 import type { SxProps, Theme } from "@mui/material";
 import SwitchAccountIcon from "@mui/icons-material/SwitchAccount";
+import DevicesIcon from "@mui/icons-material/Devices";
+import { useViewMode } from "../context/ViewModeContext";
 
 interface LayoutProps {
   activePage: "home" | "explorer" | "history";
@@ -21,8 +23,8 @@ interface LayoutProps {
   avatarColor: string;
   useAltPlayer: boolean;
   onToggleAltPlayer: (val: boolean) => void;
-  useTvMode: boolean;
-  onToggleTvMode: (val: boolean) => void;
+  useTvMode?: boolean;
+  onToggleTvMode?: (val: boolean) => void;
   onLogout: () => void;
   children: React.ReactNode;
 }
@@ -164,11 +166,10 @@ export const WebLayout: React.FC<LayoutProps> = ({
   avatarColor,
   useAltPlayer,
   onToggleAltPlayer,
-  useTvMode,
-  onToggleTvMode,
   onLogout,
   children,
 }) => {
+  const { viewMode, resetViewMode } = useViewMode();
   const [profileMenuAnchor, setProfileMenuAnchor] =
     useState<null | HTMLElement>(null);
 
@@ -268,23 +269,17 @@ export const WebLayout: React.FC<LayoutProps> = ({
                   sx={formControlLabelSx}
                 />
               </MenuItem>
-              <MenuItem disableRipple sx={altPlayerMenuItemSx}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      size="small"
-                      checked={useTvMode}
-                      onChange={(e) => onToggleTvMode(e.target.checked)}
-                      color="secondary"
-                    />
-                  }
-                  label={
-                    <Typography variant="body2" sx={altPlayerLabelSx}>
-                      TV Mode (JioSphere)
-                    </Typography>
-                  }
-                  sx={formControlLabelSx}
-                />
+              <MenuItem
+                onClick={() => {
+                  setProfileMenuAnchor(null);
+                  resetViewMode();
+                }}
+                sx={logoutMenuItemSx}
+              >
+                <DevicesIcon fontSize="small" sx={switchAccountIconSx} />
+                <Typography variant="body2">
+                  Change Mode ({viewMode === "tv" ? "TV" : viewMode === "mobile" ? "Mobile" : "Web"})
+                </Typography>
               </MenuItem>
               <MenuItem onClick={onLogout} sx={logoutMenuItemSx}>
                 <SwitchAccountIcon fontSize="small" sx={switchAccountIconSx} />

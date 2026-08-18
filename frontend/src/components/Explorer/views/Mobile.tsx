@@ -34,6 +34,8 @@ import {
   Replay,
   Download,
   VideoLibrary,
+  Tv,
+  PlayCircleOutline,
 } from '@mui/icons-material';
 import { api } from '../../../api';
 import type { ExplorerItem } from '../../../api';
@@ -740,6 +742,30 @@ export const MobileExplorerView: React.FC<ExplorerViewProps> = ({
       >
         {!menuItem?.isDirectory && (
           <>
+            <MenuItem
+              onClick={() => {
+                if (menuItem) onPlayVideo(menuItem.path, menuItem.progress?.position || 0, 'hls');
+                handleCloseMenu();
+              }}
+            >
+              <PlayArrow fontSize="small" sx={{ mr: 1, color: 'var(--text-secondary)' }} /> Play with HLS Player (Standard)
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                if (menuItem) onPlayVideo(menuItem.path, menuItem.progress?.position || 0, 'alt');
+                handleCloseMenu();
+              }}
+            >
+              <PlayCircleOutline fontSize="small" sx={{ mr: 1, color: 'var(--text-secondary)' }} /> Play with Alt Player
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                if (menuItem) onPlayVideo(menuItem.path, menuItem.progress?.position || 0, 'tv');
+                handleCloseMenu();
+              }}
+            >
+              <Tv fontSize="small" sx={{ mr: 1, color: 'var(--text-secondary)' }} /> Play with TV Player (MP4 Direct)
+            </MenuItem>
             <MenuItem
               onClick={() => {
                 if (menuItem) onPlayVideo(menuItem.path, 0);

@@ -32,6 +32,6 @@ export interface ExplorerViewProps {
   handleSearchImages: () => void;
   handlePinSubmit: () => void;
   formatSize: (bytes?: number) => string;
-  onPlayVideo: (path: string, position: number) => void;
+  onPlayVideo: (path: string, position: number, playerType?: "hls" | "alt" | "tv") => void;
   isPathAllowed: (path: string) => boolean;
 }

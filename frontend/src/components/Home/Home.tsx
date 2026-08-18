@@ -1,21 +1,19 @@
 import React from 'react';
-import { useMediaQuery, useTheme } from '@mui/material';
 import { useHome } from './hooks';
 import { WebHomeView } from './views/Web';
 import { MobileHomeView } from './views/Mobile';
+import { useViewMode } from '../../context/ViewModeContext';
 
 interface HomeProps {
-  onPlayVideo: (path: string, position: number) => void;
+  onPlayVideo: (path: string, position: number, playerType?: "hls" | "alt" | "tv") => void;
   onNavigateToPath: (path: string) => void;
 }
 
 export const Home: React.FC<HomeProps> = ({ onPlayVideo, onNavigateToPath }) => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-
+  const { isMobileView } = useViewMode();
   const state = useHome();
 
-  if (isMobile) {
+  if (isMobileView) {
     return (
       <MobileHomeView
         {...state}

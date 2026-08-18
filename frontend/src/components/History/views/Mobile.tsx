@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -10,9 +10,11 @@ import {
   ListItemAvatar,
   Avatar,
   Divider,
+  Menu,
+  MenuItem,
 } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
-import { PlayArrow, History as HistoryIcon, AccessTime, Movie, Delete, Replay } from '@mui/icons-material';
+import { PlayArrow, History as HistoryIcon, AccessTime, Movie, Delete, Replay, Tv, PlayCircleOutline } from '@mui/icons-material';
 import type { HistoryViewProps } from './types';
 
 // --- Extracted sx style constants ---
@@ -134,6 +136,21 @@ export const MobileHistoryView: React.FC<HistoryViewProps> = ({
   onPlayVideo,
   handleDeleteHistoryItem,
 }) => {
+  const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
+  const [contextMenuItem, setContextMenuItem] = useState<any>(null);
+
+  const handleOpenContextMenu = (e: React.MouseEvent, item: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenuPos({ x: e.clientX, y: e.clientY });
+    setContextMenuItem(item);
+  };
+
+  const handleCloseContextMenu = () => {
+    setContextMenuPos(null);
+    setContextMenuItem(null);
+  };
+
   return (
     <Box className="fade-in" data-style="mobileHistoryContainerSx" sx={mobileHistoryContainerSx}>
       <Typography variant="h5" sx={mobileHistoryTitleSx}>
@@ -150,6 +167,7 @@ export const MobileHistoryView: React.FC<HistoryViewProps> = ({
                 <React.Fragment key={item.id}>
                   <ListItem
                     alignItems="center"
+                    onContextMenu={(e) => handleOpenContextMenu(e, item)}
                     secondaryAction={
                       <Box data-style="mobileHistoryActionsContainerSx" sx={mobileHistoryActionsContainerSx}>
                         <IconButton
@@ -231,6 +249,68 @@ export const MobileHistoryView: React.FC<HistoryViewProps> = ({
           </Typography>
         </Box>
       )}
+
+      {/* Video Context Menu */}
+      <Menu
+        open={contextMenuPos !== null}
+        onClose={handleCloseContextMenu}
+        anchorReference="anchorPosition"
+        anchorPosition={
+          contextMenuPos !== null
+            ? { top: contextMenuPos.y, left: contextMenuPos.x }
+            : undefined
+        }
+        PaperProps={{
+          sx: {
+            bgcolor: 'var(--bg-card)',
+            color: '#fff',
+            border: '1px solid #333',
+            minWidth: 230,
+            '& .MuiMenuItem-root': {
+              fontSize: '0.9rem',
+              py: 1,
+              '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' },
+            },
+          },
+        }}
+      >
+        {contextMenuItem && (
+          <>
+            <MenuItem
+              onClick={() => {
+                onPlayVideo(contextMenuItem.path, contextMenuItem.position || 0, 'hls');
+                handleCloseContextMenu();
+              }}
+            >
+              <PlayArrow fontSize="small" sx={{ mr: 1.5, color: 'var(--text-secondary)' }} /> Play with HLS Player
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                onPlayVideo(contextMenuItem.path, contextMenuItem.position || 0, 'alt');
+                handleCloseContextMenu();
+              }}
+            >
+              <PlayCircleOutline fontSize="small" sx={{ mr: 1.5, color: 'var(--text-secondary)' }} /> Play with Alt Player
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                onPlayVideo(contextMenuItem.path, contextMenuItem.position || 0, 'tv');
+                handleCloseContextMenu();
+              }}
+            >
+              <Tv fontSize="small" sx={{ mr: 1.5, color: 'var(--text-secondary)' }} /> Play with TV Player (MP4)
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                onPlayVideo(contextMenuItem.path, 0);
+                handleCloseContextMenu();
+              }}
+            >
+              <Replay fontSize="small" sx={{ mr: 1.5, color: 'var(--text-secondary)' }} /> Restart from Beginning
+            </MenuItem>
+          </>
+        )}
+      </Menu>
     </Box>
   );
 };
