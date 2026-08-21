@@ -32,24 +32,39 @@ function matchThumbnail(itemPath, pins) {
   return bestMatch ? bestMatch.thumbnail : null;
 }
 
+function isFolderEmpty(folderPath) {
+  try {
+    const subItems = fs.readdirSync(folderPath);
+    const visibleSubItems = subItems.filter(
+      (item) => item.toLowerCase() !== "temp" && !item.startsWith(".")
+    );
+    return visibleSubItems.length === 0;
+  } catch (e) {
+    return true; // Treat unreadable / inaccessible folders as empty
+  }
+}
+
 async function readDirectory(queryPath, profileId, allowedPaths) {
   const pins = await getThumbnailsMap(profileId);
 
   // If no path is requested, send the root allowed paths
   if (!queryPath) {
-    const rootPaths = await Promise.all(
-      allowedPaths.map(async (p) => {
-        const isPinned = await pinRepository.isFolderPinned(profileId, p);
-        return {
-          name: path.basename(p) || p,
-          path: p,
-          isDirectory: true,
-          isPinned,
-          isRoot: true,
-          thumbnail: matchThumbnail(p, pins),
-        };
-      })
-    );
+    const rootPaths = (
+      await Promise.all(
+        allowedPaths.map(async (p) => {
+          if (isFolderEmpty(p)) return null;
+          const isPinned = await pinRepository.isFolderPinned(profileId, p);
+          return {
+            name: path.basename(p) || p,
+            path: p,
+            isDirectory: true,
+            isPinned,
+            isRoot: true,
+            thumbnail: matchThumbnail(p, pins),
+          };
+        })
+      )
+    ).filter(Boolean);
     return { currentPath: "", items: rootPaths };
   }
 
@@ -70,6 +85,11 @@ async function readDirectory(queryPath, profileId, allowedPaths) {
 
     // Hide temp staging directory and hidden directories starting with dot
     if (isDirectory && (item.toLowerCase() === "temp" || item.startsWith("."))) {
+      continue;
+    }
+
+    // Hide empty folders (no files or folders within them)
+    if (isDirectory && isFolderEmpty(fullPath)) {
       continue;
     }
 
