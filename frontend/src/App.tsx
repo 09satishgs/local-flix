@@ -20,6 +20,7 @@ import { MobileLayout } from "./layouts/MobileLayout";
 import { Router } from "./Router";
 import { useTvNavigation } from "./hooks/useTvNavigation";
 import { ViewModeProvider, useViewMode } from "./context/ViewModeContext";
+import { api } from "./api";
 
 import type { SxProps, Theme } from "@mui/material";
 
@@ -121,6 +122,8 @@ function AppContent() {
     onPageChange: (page) => navigateTo(page, "", null),
   });
 
+  const [isAdmin, setIsAdmin] = useState(false);
+
   // Listen for hash changes to sync routing state
   useEffect(() => {
     const handleHashChange = () => {
@@ -137,12 +140,18 @@ function AppContent() {
     if (savedId && savedName) {
       setProfileId(savedId);
       setProfileName(savedName);
+      api.getCurrentProfile()
+        .then((p) => setIsAdmin(!!p.isAdmin))
+        .catch(() => {});
     }
   }, []);
 
   const handleProfileSelected = (id: string, name: string) => {
     setProfileId(id);
     setProfileName(name);
+    api.getCurrentProfile()
+      .then((p) => setIsAdmin(!!p.isAdmin))
+      .catch(() => {});
     // Clear out any old parameters and go home on login
     navigateTo("home", "", null);
   };
@@ -151,8 +160,11 @@ function AppContent() {
     localStorage.removeItem("profileId");
     localStorage.removeItem("profileName");
     localStorage.removeItem("profileToken");
+    sessionStorage.removeItem("adminBypassToken");
+    sessionStorage.removeItem("adminBypassDrives");
     setProfileId(null);
     setProfileName(null);
+    setIsAdmin(false);
     window.location.hash = "";
   };
 
@@ -210,6 +222,7 @@ function AppContent() {
         onToggleAltPlayer={handleToggleAltPlayer}
         debugToastEnabled={debugToastEnabled}
         onToggleDebugToast={handleToggleDebugToast}
+        isAdmin={isAdmin}
         onLogout={handleLogout}
       >
         <Router

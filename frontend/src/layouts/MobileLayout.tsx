@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   AppBar,
@@ -7,11 +7,11 @@ import {
   Avatar,
   Menu,
   MenuItem,
+  Switch,
+  FormControlLabel,
   BottomNavigation,
   BottomNavigationAction,
   Paper,
-  Switch,
-  FormControlLabel,
 } from "@mui/material";
 import type { SxProps, Theme } from "@mui/material";
 import {
@@ -20,8 +20,11 @@ import {
   History as HistoryIcon,
   SwitchAccount as SwitchAccountIcon,
   Devices as DevicesIcon,
+  AdminPanelSettings as AdminPanelSettingsIcon,
 } from "@mui/icons-material";
 import { useViewMode } from "../context/ViewModeContext";
+import { AdminBypassDialog } from "../components/AdminBypassDialog";
+import { api } from "../api";
 
 interface LayoutProps {
   activePage: "home" | "explorer" | "history";
@@ -32,6 +35,7 @@ interface LayoutProps {
   onToggleAltPlayer: (val: boolean) => void;
   debugToastEnabled?: boolean;
   onToggleDebugToast?: (val: boolean) => void;
+  isAdmin?: boolean;
   useTvMode?: boolean;
   onToggleTvMode?: (val: boolean) => void;
   onLogout: () => void;
@@ -60,7 +64,6 @@ const mobileToolbarSx: SxProps<Theme> = {
   px: 2,
   display: "flex",
   justifyContent: "space-between",
-  minHeight: 56,
 };
 
 const mobileLogoTextSx: SxProps<Theme> = {
@@ -76,25 +79,24 @@ const mobileLogoTextSx: SxProps<Theme> = {
 const mobileProfileCardSx: SxProps<Theme> = {
   display: "flex",
   alignItems: "center",
+  gap: 1,
   cursor: "pointer",
-  p: 0.5,
-  borderRadius: 1,
 };
 
 const mobileAvatarBaseSx: SxProps<Theme> = {
-  width: 30,
-  height: 30,
+  width: 32,
+  height: 32,
   fontSize: "0.85rem",
   fontWeight: 700,
-  borderRadius: 0.75,
+  borderRadius: 1,
 };
 
 const mobileMenuPaperSx: SxProps<Theme> = {
   bgcolor: "var(--bg-card)",
   color: "#fff",
   border: "1px solid #333",
-  mt: 1,
-  minWidth: 180,
+  mt: 1.5,
+  minWidth: 200,
 };
 
 const mobileAltPlayerMenuItemSx: SxProps<Theme> = {
@@ -162,12 +164,28 @@ export const MobileLayout: React.FC<LayoutProps> = ({
   onToggleAltPlayer,
   debugToastEnabled = false,
   onToggleDebugToast,
+  isAdmin = false,
   onLogout,
   children,
 }) => {
   const { viewMode, resetViewMode } = useViewMode();
   const [profileMenuAnchor, setProfileMenuAnchor] =
     useState<null | HTMLElement>(null);
+  const [adminBypassOpen, setAdminBypassOpen] = useState(false);
+  const [adminBypassActive, setAdminBypassActive] = useState(() =>
+    api.isAdminBypassActive()
+  );
+
+  useEffect(() => {
+    const handleBypassChange = (e: Event) => {
+      const customEvent = e as CustomEvent<{ active: boolean }>;
+      setAdminBypassActive(customEvent.detail?.active ?? api.isAdminBypassActive());
+    };
+    window.addEventListener("admin-bypass-changed", handleBypassChange);
+    return () => {
+      window.removeEventListener("admin-bypass-changed", handleBypassChange);
+    };
+  }, []);
 
   return (
     <Box sx={mobileRootSx} data-style="mobileRootSx">
@@ -238,6 +256,34 @@ export const MobileLayout: React.FC<LayoutProps> = ({
                   sx={mobileFormControlLabelSx}
                 />
               </MenuItem>
+
+              {/* Admin Bypass Secret Config Unlock */}
+              {isAdmin && (
+                <MenuItem
+                  onClick={() => {
+                    setProfileMenuAnchor(null);
+                    if (adminBypassActive) {
+                      api.lockAdminBypass();
+                    } else {
+                      setAdminBypassOpen(true);
+                    }
+                  }}
+                  sx={{
+                    ...mobileLogoutMenuItemSx,
+                    color: adminBypassActive ? "#ffaa00" : "#fff",
+                    bgcolor: adminBypassActive ? "rgba(255, 170, 0, 0.1)" : "transparent",
+                  }}
+                >
+                  <AdminPanelSettingsIcon
+                    fontSize="small"
+                    sx={{ color: adminBypassActive ? "#ffaa00" : "var(--text-secondary)" }}
+                  />
+                  <Typography variant="body2" sx={{ fontWeight: adminBypassActive ? 700 : 500 }}>
+                    {adminBypassActive ? "Admin Bypass (Active)" : "Admin Bypass"}
+                  </Typography>
+                </MenuItem>
+              )}
+
               <MenuItem
                 onClick={() => {
                   setProfileMenuAnchor(null);
@@ -296,6 +342,12 @@ export const MobileLayout: React.FC<LayoutProps> = ({
           />
         </BottomNavigation>
       </Paper>
+
+      {/* Admin Bypass Passkey Dialog */}
+      <AdminBypassDialog
+        open={adminBypassOpen}
+        onClose={() => setAdminBypassOpen(false)}
+      />
     </Box>
   );
 };

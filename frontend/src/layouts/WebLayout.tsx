@@ -18,7 +18,10 @@ import SwitchAccountIcon from "@mui/icons-material/SwitchAccount";
 import DevicesIcon from "@mui/icons-material/Devices";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
 import FullscreenExitIcon from "@mui/icons-material/FullscreenExit";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import { useViewMode } from "../context/ViewModeContext";
+import { AdminBypassDialog } from "../components/AdminBypassDialog";
+import { api } from "../api";
 
 export interface LayoutProps {
   activePage: "home" | "explorer" | "history";
@@ -29,6 +32,7 @@ export interface LayoutProps {
   onToggleAltPlayer: (val: boolean) => void;
   debugToastEnabled?: boolean;
   onToggleDebugToast?: (val: boolean) => void;
+  isAdmin?: boolean;
   useTvMode?: boolean;
   onToggleTvMode?: (val: boolean) => void;
   onLogout: () => void;
@@ -140,7 +144,7 @@ const menuPaperSx: SxProps<Theme> = {
   color: "#fff",
   border: "1px solid #333",
   mt: 1.5,
-  minWidth: 200,
+  minWidth: 220,
 };
 
 const toggleMenuItemSx: SxProps<Theme> = {
@@ -182,6 +186,7 @@ export const WebLayout: React.FC<LayoutProps> = ({
   onToggleAltPlayer,
   debugToastEnabled = false,
   onToggleDebugToast,
+  isAdmin = false,
   onLogout,
   children,
 }) => {
@@ -191,13 +196,27 @@ export const WebLayout: React.FC<LayoutProps> = ({
   const [isFullscreen, setIsFullscreen] = useState(
     Boolean(document.fullscreenElement)
   );
+  const [adminBypassOpen, setAdminBypassOpen] = useState(false);
+  const [adminBypassActive, setAdminBypassActive] = useState(() =>
+    api.isAdminBypassActive()
+  );
 
   useEffect(() => {
     const handleFsChange = () => {
       setIsFullscreen(Boolean(document.fullscreenElement));
     };
+    const handleBypassChange = (e: Event) => {
+      const customEvent = e as CustomEvent<{ active: boolean }>;
+      setAdminBypassActive(customEvent.detail?.active ?? api.isAdminBypassActive());
+    };
+
     document.addEventListener("fullscreenchange", handleFsChange);
-    return () => document.removeEventListener("fullscreenchange", handleFsChange);
+    window.addEventListener("admin-bypass-changed", handleBypassChange);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFsChange);
+      window.removeEventListener("admin-bypass-changed", handleBypassChange);
+    };
   }, []);
 
   const handleToggleFullscreen = () => {
@@ -338,6 +357,39 @@ export const WebLayout: React.FC<LayoutProps> = ({
                   sx={formControlLabelSx}
                 />
               </MenuItem>
+
+              {/* Admin Bypass Secret Config Unlock */}
+              {isAdmin && (
+                <MenuItem
+                  onClick={() => {
+                    setProfileMenuAnchor(null);
+                    if (adminBypassActive) {
+                      api.lockAdminBypass();
+                    } else {
+                      setAdminBypassOpen(true);
+                    }
+                  }}
+                  sx={{
+                    ...logoutMenuItemSx,
+                    color: adminBypassActive ? "#ffaa00" : "#fff",
+                    bgcolor: adminBypassActive ? "rgba(255, 170, 0, 0.1)" : "transparent",
+                    "&:hover": {
+                      bgcolor: adminBypassActive
+                        ? "rgba(255, 170, 0, 0.2)"
+                        : "rgba(255, 255, 255, 0.08)",
+                    },
+                  }}
+                >
+                  <AdminPanelSettingsIcon
+                    fontSize="small"
+                    sx={{ color: adminBypassActive ? "#ffaa00" : "var(--text-secondary)" }}
+                  />
+                  <Typography variant="body2" sx={{ fontWeight: adminBypassActive ? 700 : 500 }}>
+                    {adminBypassActive ? "Admin Bypass (Active)" : "Admin Bypass"}
+                  </Typography>
+                </MenuItem>
+              )}
+
               <MenuItem
                 onClick={() => {
                   setProfileMenuAnchor(null);
@@ -363,6 +415,12 @@ export const WebLayout: React.FC<LayoutProps> = ({
       <Box sx={mainContentContainerSx} data-style="mainContentContainerSx">
         {children}
       </Box>
+
+      {/* Admin Bypass Passkey Dialog */}
+      <AdminBypassDialog
+        open={adminBypassOpen}
+        onClose={() => setAdminBypassOpen(false)}
+      />
     </Box>
   );
 };

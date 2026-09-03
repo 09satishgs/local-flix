@@ -21,6 +21,7 @@ app.use(express.json());
 app.get("/api/profiles", profileController.getProfiles);
 app.post("/api/profiles/login", profileController.loginProfile);
 app.get("/api/profiles/me", verifyProfile, profileController.getMe);
+app.post("/api/admin/unlock", verifyProfile, profileController.unlockAdminBypass);
 
 // Explorer routes
 app.get(

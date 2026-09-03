@@ -215,8 +215,13 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
       hlsRef.current = null;
     }
 
-    const burnParam = activeSubtitle !== null ? "true" : "false";
-    const playlistUrl = `/api/video/hls/index.m3u8?path=${encodeURIComponent(currentVideoPath)}&audioTrack=${activeAudio ?? ""}&subtitleTrack=${activeSubtitle ?? ""}&burnSubtitles=${burnParam}&startTime=${resumeTime}&profileId=${encodeURIComponent(profileId)}&profileToken=${encodeURIComponent(profileToken)}`;
+    const burnParam = activeSubtitle !== null;
+    const playlistUrl = api.getHlsPlaylistUrl(currentVideoPath, {
+      audioTrack: activeAudio,
+      subtitleTrack: activeSubtitle,
+      burnSubtitles: burnParam,
+      startTime: resumeTime,
+    });
 
     setIsLoading(true);
 

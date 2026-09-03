@@ -320,8 +320,6 @@ const altMobileSliderWrapperSx: SxProps<Theme> = {
 export const MobileVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
   videoRef,
   containerRef,
-  profileId,
-  profileToken,
   isPlaying,
   duration,
   currentTime,
@@ -393,12 +391,7 @@ export const MobileVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
   }, [activeAudio]);
 
   const getStreamUrl = (audioIdx: number | null) => {
-    const origin = window.location.origin;
-    let url = `${origin}/api/video?path=${encodeURIComponent(currentVideoPath)}&profileId=${encodeURIComponent(profileId)}&profileToken=${encodeURIComponent(profileToken)}`;
-    if (audioIdx !== null) {
-      url += `&audioTrack=${audioIdx}`;
-    }
-    return url;
+    return api.getDirectStreamUrl(currentVideoPath, audioIdx);
   };
   return (
     <Box

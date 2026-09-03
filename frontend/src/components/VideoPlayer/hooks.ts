@@ -557,7 +557,10 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
       hlsRef.current = null;
     }
 
-    const playlistUrl = `/api/video/hls/index.m3u8?path=${encodeURIComponent(currentVideoPath)}&audioTrack=${activeAudio ?? ""}&startTime=${resumeTime}&profileId=${encodeURIComponent(profileId)}&profileToken=${encodeURIComponent(profileToken)}`;
+    const playlistUrl = api.getHlsPlaylistUrl(currentVideoPath, {
+      audioTrack: activeAudio,
+      startTime: resumeTime,
+    });
 
     setIsLoading(true);
 
@@ -737,8 +740,7 @@ export const useVideoPlayer = (videoPath: string, initialPosition: number) => {
   };
 
   const downloadSubtitles = (trackIndex: number) => {
-    const token = localStorage.getItem('profileToken') || '';
-    const url = `/api/video/subtitles?path=${encodeURIComponent(currentVideoPath)}&trackIndex=${trackIndex}&download=true&profileId=${encodeURIComponent(profileId)}&profileToken=${encodeURIComponent(token)}`;
+    const url = api.getSubtitleStreamUrl(currentVideoPath, trackIndex, true);
     window.open(url, '_blank');
   };
 

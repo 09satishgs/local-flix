@@ -20,6 +20,7 @@ export const useExplorer = (initialPath: string) => {
 
   const isPathAllowed = (pathStr: string) => {
     if (!pathStr) return true; // roots are always allowed to list
+    if (api.isAdminBypassActive()) return true; // all paths allowed during admin bypass
     let cleanPath = pathStr.replace(/\\/g, '/').toLowerCase();
     if (cleanPath.endsWith('/')) {
       cleanPath = cleanPath.slice(0, -1);
@@ -47,12 +48,26 @@ export const useExplorer = (initialPath: string) => {
   };
 
   useEffect(() => {
-    api.getCurrentProfile()
-      .then(profile => {
-        setAllowedPaths(profile.allowedPaths || []);
-      })
-      .catch(err => console.error('Failed to fetch profile details:', err));
-  }, []);
+    const fetchProfileAllowed = () => {
+      api.getCurrentProfile()
+        .then(profile => {
+          setAllowedPaths(profile.allowedPaths || []);
+        })
+        .catch(err => console.error('Failed to fetch profile details:', err));
+    };
+
+    fetchProfileAllowed();
+
+    const handleAdminBypassChanged = () => {
+      fetchProfileAllowed();
+      loadDirectory(initialPath);
+    };
+
+    window.addEventListener('admin-bypass-changed', handleAdminBypassChanged);
+    return () => {
+      window.removeEventListener('admin-bypass-changed', handleAdminBypassChanged);
+    };
+  }, [initialPath]);
 
   useEffect(() => {
     loadDirectory(initialPath);

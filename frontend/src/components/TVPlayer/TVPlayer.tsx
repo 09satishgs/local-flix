@@ -256,7 +256,6 @@ export const TVPlayer: React.FC<TVPlayerProps> = ({
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const profileId = localStorage.getItem("profileId") || "";
-  const profileToken = localStorage.getItem("profileToken") || "";
 
   const [currentVideoPath, setCurrentVideoPath] = useState(initialVideoPath);
   const [playlist, setPlaylist] = useState<string[]>([]);
@@ -652,7 +651,7 @@ export const TVPlayer: React.FC<TVPlayerProps> = ({
   const displayTime = targetSeekTime !== null ? targetSeekTime : currentTime;
 
   // Direct MP4 Stream URL
-  const mp4StreamUrl = `/api/video?path=${encodeURIComponent(currentVideoPath)}&profileId=${encodeURIComponent(profileId)}&profileToken=${encodeURIComponent(profileToken)}${activeAudio !== null ? `&audioTrack=${activeAudio}` : ""}`;
+  const mp4StreamUrl = api.getDirectStreamUrl(currentVideoPath, activeAudio);
 
   return (
     <Box sx={playerRootSx} onMouseMove={showOsdTemporarily} onClick={showOsdTemporarily}>
@@ -700,7 +699,7 @@ export const TVPlayer: React.FC<TVPlayerProps> = ({
             kind="subtitles"
             label={sub.title || sub.language || `Track ${sub.index}`}
             srcLang={sub.language || "en"}
-            src={`/api/video/subtitles?path=${encodeURIComponent(currentVideoPath)}&trackIndex=${sub.index}&profileId=${encodeURIComponent(profileId)}&profileToken=${encodeURIComponent(profileToken)}`}
+            src={api.getSubtitleStreamUrl(currentVideoPath, sub.index)}
             default={activeSubtitle === sub.index}
           />
         ))}

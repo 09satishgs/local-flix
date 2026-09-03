@@ -2,6 +2,7 @@ export interface Profile {
   id: string;
   name: string;
   hasPin: boolean;
+  isAdmin?: boolean;
 }
 
 export interface PlaybackProgress {
@@ -69,14 +70,48 @@ export interface VideoMetadata {
 const getHeaders = () => {
   const profileId = localStorage.getItem('profileId') || '';
   const token = localStorage.getItem('profileToken') || '';
-  return {
+  const adminBypassToken = sessionStorage.getItem('adminBypassToken') || '';
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'X-Profile-ID': profileId,
     'X-Profile-Token': token,
   };
+  if (adminBypassToken) {
+    headers['X-Admin-Bypass-Token'] = adminBypassToken;
+  }
+  return headers;
 };
 
 export const api = {
+  // Admin Bypass
+  async unlockAdminBypass(passkey: string): Promise<{ success: boolean; token: string; drives: string[] }> {
+    const res = await fetch('/api/admin/unlock', {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ passkey }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || 'Failed to unlock admin bypass');
+    }
+    const data = await res.json();
+    if (data.token) {
+      sessionStorage.setItem('adminBypassToken', data.token);
+      sessionStorage.setItem('adminBypassDrives', JSON.stringify(data.drives || []));
+      window.dispatchEvent(new CustomEvent('admin-bypass-changed', { detail: { active: true } }));
+    }
+    return data;
+  },
+
+  lockAdminBypass(): void {
+    sessionStorage.removeItem('adminBypassToken');
+    sessionStorage.removeItem('adminBypassDrives');
+    window.dispatchEvent(new CustomEvent('admin-bypass-changed', { detail: { active: false } }));
+  },
+
+  isAdminBypassActive(): boolean {
+    return Boolean(sessionStorage.getItem('adminBypassToken'));
+  },
   // Profiles
   async getProfiles(): Promise<Profile[]> {
     const res = await fetch('/api/profiles');
@@ -213,22 +248,57 @@ export const api = {
     if (!res.ok) throw new Error('Failed to remove history');
   },
 
-  async getCurrentProfile(): Promise<{ id: string; name: string; allowedPaths: string[] }> {
+  async getCurrentProfile(): Promise<{ id: string; name: string; allowedPaths: string[]; isAdmin?: boolean; isAdminBypass?: boolean }> {
     const res = await fetch('/api/profiles/me', { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to fetch profile info');
     return res.json();
   },
 
-  getHoverThumbnailUrl(videoPath: string, time: number): string {
+  getAuthQueryParams(): string {
     const profileId = localStorage.getItem('profileId') || '';
     const token = localStorage.getItem('profileToken') || '';
-    return `/api/video/thumbnail?path=${encodeURIComponent(videoPath)}&time=${Math.round(time)}&profileId=${encodeURIComponent(profileId)}&profileToken=${encodeURIComponent(token)}`;
+    const adminBypassToken = sessionStorage.getItem('adminBypassToken') || '';
+    let params = `profileId=${encodeURIComponent(profileId)}&profileToken=${encodeURIComponent(token)}`;
+    if (adminBypassToken) {
+      params += `&adminBypassToken=${encodeURIComponent(adminBypassToken)}`;
+    }
+    return params;
+  },
+
+  getDirectStreamUrl(videoPath: string, audioTrack?: number | null): string {
+    let url = `/api/video?path=${encodeURIComponent(videoPath)}&${this.getAuthQueryParams()}`;
+    if (audioTrack !== undefined && audioTrack !== null) {
+      url += `&audioTrack=${audioTrack}`;
+    }
+    return url;
+  },
+
+  getHlsPlaylistUrl(
+    videoPath: string,
+    options: {
+      audioTrack?: number | null;
+      subtitleTrack?: number | string | null;
+      burnSubtitles?: boolean;
+      startTime?: number;
+    } = {}
+  ): string {
+    return `/api/video/hls/index.m3u8?path=${encodeURIComponent(videoPath)}&audioTrack=${options.audioTrack ?? ''}&subtitleTrack=${options.subtitleTrack ?? ''}&burnSubtitles=${options.burnSubtitles ? 'true' : 'false'}&startTime=${options.startTime ?? 0}&${this.getAuthQueryParams()}`;
+  },
+
+  getSubtitleStreamUrl(videoPath: string, trackIndex: number, download: boolean = false): string {
+    let url = `/api/video/subtitles?path=${encodeURIComponent(videoPath)}&trackIndex=${trackIndex}&${this.getAuthQueryParams()}`;
+    if (download) {
+      url += '&download=true';
+    }
+    return url;
+  },
+
+  getHoverThumbnailUrl(videoPath: string, time: number): string {
+    return `/api/video/thumbnail?path=${encodeURIComponent(videoPath)}&time=${Math.round(time)}&${this.getAuthQueryParams()}`;
   },
 
   getVideoDownloadUrl(videoPath: string, audioTrack?: number | null): string {
-    const profileId = localStorage.getItem('profileId') || '';
-    const token = localStorage.getItem('profileToken') || '';
-    let url = `/api/video?path=${encodeURIComponent(videoPath)}&download=true&profileId=${encodeURIComponent(profileId)}&profileToken=${encodeURIComponent(token)}`;
+    let url = `/api/video?path=${encodeURIComponent(videoPath)}&download=true&${this.getAuthQueryParams()}`;
     if (audioTrack !== undefined && audioTrack !== null) {
       url += `&audioTrack=${audioTrack}`;
     }

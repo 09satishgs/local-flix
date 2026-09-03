@@ -399,8 +399,6 @@ const getThumbnailContainerSx = (x: number): SxProps<Theme> => ({
 export const MobileVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
   videoRef,
   containerRef,
-  profileId,
-  profileToken,
   isPlaying,
   duration,
   currentTime,
@@ -477,12 +475,7 @@ export const MobileVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
   }, [activeAudio]);
 
   const getStreamUrl = (audioIdx: number | null) => {
-    const origin = window.location.origin;
-    let url = `${origin}/api/video?path=${encodeURIComponent(currentVideoPath)}&profileId=${encodeURIComponent(profileId)}&profileToken=${encodeURIComponent(profileToken)}`;
-    if (audioIdx !== null) {
-      url += `&audioTrack=${audioIdx}`;
-    }
-    return url;
+    return api.getDirectStreamUrl(currentVideoPath, audioIdx);
   };
   return (
     <Box
@@ -508,7 +501,7 @@ export const MobileVideoPlayerView: React.FC<VideoPlayerViewProps> = ({
         {subtitles.map((track) => (
           <track
             key={track.index}
-            src={`/api/video/subtitles?path=${encodeURIComponent(currentVideoPath)}&trackIndex=${track.index}&profileId=${encodeURIComponent(profileId)}&profileToken=${encodeURIComponent(profileToken)}`}
+            src={api.getSubtitleStreamUrl(currentVideoPath, track.index)}
             kind="subtitles"
             srcLang={track.language}
             label={track.title}
