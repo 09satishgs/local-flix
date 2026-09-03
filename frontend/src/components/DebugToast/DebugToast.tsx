@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Box, Typography } from "@mui/material";
 import type { SxProps, Theme } from "@mui/material";
+import { isDebugToastEnabled } from "../../utils/debugLogger";
 
 interface DebugMessage {
   id: number;
@@ -69,10 +70,12 @@ const counterBadgeSx: SxProps<Theme> = {
 
 export const DebugToast: React.FC = () => {
   const [messages, setMessages] = useState<DebugMessage[]>([]);
+  const [isEnabled, setIsEnabled] = useState(() => isDebugToastEnabled());
   const clearTimerRef = useRef<any>(null);
 
   useEffect(() => {
     const handleDebugEvent = (e: Event) => {
+      if (!isDebugToastEnabled()) return;
       const customEvent = e as CustomEvent<{ message: string }>;
       const newText = customEvent.detail?.message || "";
       if (!newText) return;
@@ -91,14 +94,26 @@ export const DebugToast: React.FC = () => {
       }, 4000);
     };
 
+    const handleToggleEvent = (e: Event) => {
+      const customEvent = e as CustomEvent<{ enabled: boolean }>;
+      const enabled = customEvent.detail?.enabled ?? isDebugToastEnabled();
+      setIsEnabled(enabled);
+      if (!enabled) {
+        setMessages([]);
+        if (clearTimerRef.current) clearTimeout(clearTimerRef.current);
+      }
+    };
+
     window.addEventListener("localflix-debug-log", handleDebugEvent);
+    window.addEventListener("localflix-debug-toggle", handleToggleEvent);
     return () => {
       window.removeEventListener("localflix-debug-log", handleDebugEvent);
+      window.removeEventListener("localflix-debug-toggle", handleToggleEvent);
       if (clearTimerRef.current) clearTimeout(clearTimerRef.current);
     };
   }, []);
 
-  if (messages.length === 0) return null;
+  if (!isEnabled || messages.length === 0) return null;
 
   return (
     <Box sx={toastContainerSx}>

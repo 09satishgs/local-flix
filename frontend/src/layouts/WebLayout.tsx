@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   AppBar,
@@ -10,19 +10,25 @@ import {
   MenuItem,
   Switch,
   FormControlLabel,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 import type { SxProps, Theme } from "@mui/material";
 import SwitchAccountIcon from "@mui/icons-material/SwitchAccount";
 import DevicesIcon from "@mui/icons-material/Devices";
+import FullscreenIcon from "@mui/icons-material/Fullscreen";
+import FullscreenExitIcon from "@mui/icons-material/FullscreenExit";
 import { useViewMode } from "../context/ViewModeContext";
 
-interface LayoutProps {
+export interface LayoutProps {
   activePage: "home" | "explorer" | "history";
   onPageChange: (page: "home" | "explorer" | "history") => void;
   profileName: string | null;
   avatarColor: string;
   useAltPlayer: boolean;
   onToggleAltPlayer: (val: boolean) => void;
+  debugToastEnabled?: boolean;
+  onToggleDebugToast?: (val: boolean) => void;
   useTvMode?: boolean;
   onToggleTvMode?: (val: boolean) => void;
   onLogout: () => void;
@@ -94,7 +100,15 @@ const navButtonInactiveSx: SxProps<Theme> = {
 const profileActionContainerSx: SxProps<Theme> = {
   display: "flex",
   alignItems: "center",
-  gap: 1,
+  gap: 1.5,
+};
+
+const fullscreenButtonSx: SxProps<Theme> = {
+  color: "var(--text-secondary)",
+  "&:hover": {
+    color: "#fff",
+    bgcolor: "rgba(255,255,255,0.08)",
+  },
 };
 
 const profileCardSx: SxProps<Theme> = {
@@ -126,18 +140,18 @@ const menuPaperSx: SxProps<Theme> = {
   color: "#fff",
   border: "1px solid #333",
   mt: 1.5,
-  minWidth: 180,
+  minWidth: 200,
 };
 
-const altPlayerMenuItemSx: SxProps<Theme> = {
+const toggleMenuItemSx: SxProps<Theme> = {
   gap: 1.5,
-  py: 1,
+  py: 0.8,
   borderBottom: "1px solid #222",
-  backgroundColor: "#5858589b",
+  backgroundColor: "#33333366",
   cursor: "default",
 };
 
-const altPlayerLabelSx: SxProps<Theme> = {
+const toggleLabelSx: SxProps<Theme> = {
   fontWeight: 600,
   color: "#d8dde6",
 };
@@ -166,12 +180,37 @@ export const WebLayout: React.FC<LayoutProps> = ({
   avatarColor,
   useAltPlayer,
   onToggleAltPlayer,
+  debugToastEnabled = false,
+  onToggleDebugToast,
   onLogout,
   children,
 }) => {
   const { viewMode, resetViewMode } = useViewMode();
   const [profileMenuAnchor, setProfileMenuAnchor] =
     useState<null | HTMLElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(
+    Boolean(document.fullscreenElement)
+  );
+
+  useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    document.addEventListener("fullscreenchange", handleFsChange);
+    return () => document.removeEventListener("fullscreenchange", handleFsChange);
+  }, []);
+
+  const handleToggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch((err) => {
+        console.error("Fullscreen request failed:", err);
+      });
+    } else {
+      document.exitFullscreen().catch((err) => {
+        console.error("Exit fullscreen failed:", err);
+      });
+    }
+  };
 
   return (
     <Box sx={rootContainerSx} data-style="rootContainerSx">
@@ -222,11 +261,23 @@ export const WebLayout: React.FC<LayoutProps> = ({
             </Box>
           </Box>
 
-          {/* User Profile Info & Switch Account */}
+          {/* User Profile Info, Fullscreen & Switch Account */}
           <Box
             sx={profileActionContainerSx}
             data-style="profileActionContainerSx"
           >
+            {/* Fullscreen PC Button */}
+            <Tooltip title={isFullscreen ? "Exit Fullscreen (F11)" : "Enter Fullscreen (F11)"}>
+              <IconButton
+                onClick={handleToggleFullscreen}
+                sx={fullscreenButtonSx}
+                size="medium"
+                aria-label="Toggle Fullscreen"
+              >
+                {isFullscreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
+              </IconButton>
+            </Tooltip>
+
             <Box
               onClick={(e) => setProfileMenuAnchor(e.currentTarget)}
               sx={profileCardSx}
@@ -251,7 +302,7 @@ export const WebLayout: React.FC<LayoutProps> = ({
                 sx: menuPaperSx,
               }}
             >
-              <MenuItem disableRipple sx={altPlayerMenuItemSx}>
+              <MenuItem disableRipple sx={toggleMenuItemSx}>
                 <FormControlLabel
                   control={
                     <Switch
@@ -262,8 +313,26 @@ export const WebLayout: React.FC<LayoutProps> = ({
                     />
                   }
                   label={
-                    <Typography variant="body2" sx={altPlayerLabelSx}>
+                    <Typography variant="body2" sx={toggleLabelSx}>
                       Use Alt Player
+                    </Typography>
+                  }
+                  sx={formControlLabelSx}
+                />
+              </MenuItem>
+              <MenuItem disableRipple sx={toggleMenuItemSx}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      size="small"
+                      checked={debugToastEnabled}
+                      onChange={(e) => onToggleDebugToast?.(e.target.checked)}
+                      color="warning"
+                    />
+                  }
+                  label={
+                    <Typography variant="body2" sx={toggleLabelSx}>
+                      Debug Toasts
                     </Typography>
                   }
                   sx={formControlLabelSx}

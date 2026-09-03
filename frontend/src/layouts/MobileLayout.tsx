@@ -30,6 +30,8 @@ interface LayoutProps {
   avatarColor: string;
   useAltPlayer: boolean;
   onToggleAltPlayer: (val: boolean) => void;
+  debugToastEnabled?: boolean;
+  onToggleDebugToast?: (val: boolean) => void;
   useTvMode?: boolean;
   onToggleTvMode?: (val: boolean) => void;
   onLogout: () => void;
@@ -158,6 +160,8 @@ export const MobileLayout: React.FC<LayoutProps> = ({
   avatarColor,
   useAltPlayer,
   onToggleAltPlayer,
+  debugToastEnabled = false,
+  onToggleDebugToast,
   onLogout,
   children,
 }) => {
@@ -211,6 +215,24 @@ export const MobileLayout: React.FC<LayoutProps> = ({
                   label={
                     <Typography variant="body2" sx={mobileAltPlayerLabelSx}>
                       Use Alt Player
+                    </Typography>
+                  }
+                  sx={mobileFormControlLabelSx}
+                />
+              </MenuItem>
+              <MenuItem disableRipple sx={mobileAltPlayerMenuItemSx}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      size="small"
+                      checked={debugToastEnabled}
+                      onChange={(e) => onToggleDebugToast?.(e.target.checked)}
+                      color="warning"
+                    />
+                  }
+                  label={
+                    <Typography variant="body2" sx={mobileAltPlayerLabelSx}>
+                      Debug Toasts
                     </Typography>
                   }
                   sx={mobileFormControlLabelSx}

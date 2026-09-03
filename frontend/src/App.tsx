@@ -96,10 +96,17 @@ function AppContent() {
   const [profileName, setProfileName] = useState<string | null>(null);
   
   const [useAltPlayer, setUseAltPlayer] = useState(() => localStorage.getItem("useAltPlayer") === "true");
+  const [debugToastEnabled, setDebugToastEnabledState] = useState(() => localStorage.getItem("debugToastEnabled") === "true");
 
   const handleToggleAltPlayer = (val: boolean) => {
     setUseAltPlayer(val);
     localStorage.setItem("useAltPlayer", val ? "true" : "false");
+  };
+
+  const handleToggleDebugToast = (val: boolean) => {
+    setDebugToastEnabledState(val);
+    localStorage.setItem("debugToastEnabled", val ? "true" : "false");
+    window.dispatchEvent(new CustomEvent("localflix-debug-toggle", { detail: { enabled: val } }));
   };
 
   const [route, setRoute] = useState<RouteState>(parseHash());
@@ -201,6 +208,8 @@ function AppContent() {
         avatarColor={getAvatarColor()}
         useAltPlayer={useAltPlayer}
         onToggleAltPlayer={handleToggleAltPlayer}
+        debugToastEnabled={debugToastEnabled}
+        onToggleDebugToast={handleToggleDebugToast}
         onLogout={handleLogout}
       >
         <Router
