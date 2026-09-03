@@ -4,3 +4,4 @@ backend/config.json
 backend/database.db
 backend/dist
 backend/cache
+.env
