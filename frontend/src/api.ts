@@ -182,6 +182,81 @@ export const api = {
     if (!res.ok) throw new Error('Failed to delete thumbnail');
   },
 
+  async deleteItem(itemPath: string): Promise<{ success: boolean }> {
+    const res = await fetch('/api/explorer/delete', {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ path: itemPath }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || 'Failed to delete item');
+    }
+    return res.json();
+  },
+
+  async deleteItems(itemPaths: string[]): Promise<{ success: boolean; count: number }> {
+    const res = await fetch('/api/explorer/delete', {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ paths: itemPaths }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || 'Failed to delete items');
+    }
+    return res.json();
+  },
+
+  async renameItem(itemPath: string, newName: string): Promise<{ success: boolean; newPath: string; newName: string }> {
+    const res = await fetch('/api/explorer/rename', {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ path: itemPath, newName }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || 'Failed to rename item');
+    }
+    return res.json();
+  },
+
+  async moveItem(sourcePath: string, targetDirectory: string): Promise<{ success: boolean; newPath: string }> {
+    const res = await fetch('/api/explorer/move', {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ sourcePath, targetDirectory }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || 'Failed to move item');
+    }
+    return res.json();
+  },
+
+  async moveItems(sourcePaths: string[], targetDirectory: string): Promise<{ success: boolean; count: number }> {
+    const res = await fetch('/api/explorer/move', {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ sourcePaths, targetDirectory }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || 'Failed to move items');
+    }
+    return res.json();
+  },
+
+  async getFolders(pathQuery?: string): Promise<{ currentPath: string; folders: { name: string; path: string }[] }> {
+    const url = pathQuery ? `/api/explorer/folders?path=${encodeURIComponent(pathQuery)}` : '/api/explorer/folders';
+    const res = await fetch(url, { headers: getHeaders() });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || 'Failed to list folders');
+    }
+    return res.json();
+  },
+
   // Metadata
   async getVideoMetadata(videoPath: string): Promise<VideoMetadata> {
     const res = await fetch(`/api/video/metadata?path=${encodeURIComponent(videoPath)}`, { headers: getHeaders() });

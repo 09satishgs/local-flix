@@ -36,12 +36,20 @@ import {
   VideoLibrary,
   Tv,
   PlayCircleOutline,
+  DeleteOutline,
+  DriveFileRenameOutline,
+  DriveFileMove,
+  CheckBox,
+  CheckBoxOutlineBlank,
+  Checklist,
+  Clear,
 } from '@mui/icons-material';
 import { api } from '../../../api';
 import type { ExplorerItem } from '../../../api';
 import type { ExplorerViewProps } from './types';
 import { ConvertDialog } from './ConvertDialog';
 import { ConversionProgressPortal } from './ConversionProgressPortal';
+import { DeleteConfirmDialog, RenameDialog, MoveDialog } from './FileActionDialogs';
 
 
 const rootBreadcrumbTextSx: SxProps<Theme> = { color: 'var(--localflix-red)', fontWeight: 600 };
@@ -339,7 +347,61 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
   const [conversions, setConversions] = useState<Record<string, { status: string; progress: number; filename: string }>>({});
   const completedConversionsRef = useRef<Set<string>>(new Set());
 
+  // File action dialog states
+  const [renameTargetItem, setRenameTargetItem] = useState<ExplorerItem | null>(null);
+  const [moveTargetItem, setMoveTargetItem] = useState<ExplorerItem | null>(null);
+  const [deleteTargetItem, setDeleteTargetItem] = useState<ExplorerItem | null>(null);
+
+  // Multi-selection states
+  const [isSelectMode, setIsSelectMode] = useState(false);
+  const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkMoveOpen, setBulkMoveOpen] = useState(false);
+  const [selectedBatchConvertOpen, setSelectedBatchConvertOpen] = useState(false);
+
   const convertibleItems = items.filter(
+    (it) => !it.isDirectory && !it.name.toLowerCase().endsWith('.mp4')
+  );
+
+  // Clear selection when navigating directories
+  useEffect(() => {
+    setSelectedPaths(new Set());
+    setIsSelectMode(false);
+    setSelectedBatchConvertOpen(false);
+  }, [currentPath]);
+
+  const toggleSelectItem = (path: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setSelectedPaths((prev) => {
+      const next = new Set(prev);
+      if (next.has(path)) {
+        next.delete(path);
+      } else {
+        next.add(path);
+      }
+      return next;
+    });
+  };
+
+  const handleSelectAllVideos = () => {
+    const videoPaths = filteredItems.filter((it) => !it.isDirectory).map((it) => it.path);
+    setSelectedPaths(new Set(videoPaths));
+    setIsSelectMode(true);
+  };
+
+  const handleSelectAll = () => {
+    setSelectedPaths(new Set(filteredItems.map((it) => it.path)));
+    setIsSelectMode(true);
+  };
+
+  const handleClearSelection = () => {
+    setSelectedPaths(new Set());
+    setIsSelectMode(false);
+    setSelectedBatchConvertOpen(false);
+  };
+
+  const selectedItemsList = filteredItems.filter((it) => selectedPaths.has(it.path));
+  const selectedConvertibleItems = selectedItemsList.filter(
     (it) => !it.isDirectory && !it.name.toLowerCase().endsWith('.mp4')
   );
 
@@ -509,6 +571,32 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
         </Box>
 
         <Box data-style="topToolbarActionsSx" sx={topToolbarActionsSx}>
+          {filteredItems.length > 0 && (
+            <Button
+              variant={isSelectMode ? "contained" : "outlined"}
+              startIcon={<Checklist />}
+              onClick={() => {
+                if (isSelectMode) {
+                  handleClearSelection();
+                } else {
+                  setIsSelectMode(true);
+                }
+              }}
+              sx={{
+                color: '#fff',
+                borderColor: isSelectMode ? 'var(--localflix-red)' : '#444',
+                bgcolor: isSelectMode ? 'var(--localflix-red)' : 'transparent',
+                textTransform: 'none',
+                fontWeight: 600,
+                '&:hover': {
+                  bgcolor: isSelectMode ? 'var(--localflix-dark-red)' : 'rgba(255,255,255,0.08)',
+                  borderColor: 'var(--localflix-red)',
+                },
+              }}
+            >
+              {isSelectMode ? "Exit Selection" : "Select"}
+            </Button>
+          )}
           {currentPath && convertibleItems.length > 0 && (
             <Button
               variant="outlined"
@@ -571,6 +659,7 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
             const progressPercent = hasProgress
               ? (item.progress!.position / item.progress!.duration) * 100
               : 0;
+            const isSelected = selectedPaths.has(item.path);
 
             return (
               <Grid item xs={12} sm={6} md={4} lg={3} key={item.path}>
@@ -579,14 +668,50 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
                   tabIndex={0}
                   role="button"
                   aria-label={isDir ? `Open folder ${item.name}` : `Play video ${item.name}`}
-                  onClick={() => isDir ? handleFolderClick(item.path) : onPlayVideo(item.path, item.progress?.position || 0)}
+                  onClick={() => {
+                    if (isSelectMode) {
+                      toggleSelectItem(item.path);
+                      return;
+                    }
+                    return isDir ? handleFolderClick(item.path) : onPlayVideo(item.path, item.progress?.position || 0);
+                  }}
                   onContextMenu={(e) => handleOpenContextMenu(e, item)}
-                  sx={folderCardSx}
+                  sx={{
+                    ...folderCardSx,
+                    border: isSelected
+                      ? '2px solid var(--localflix-red)'
+                      : '1px solid rgba(255, 255, 255, 0.08)',
+                    boxShadow: isSelected
+                      ? '0 0 16px rgba(229, 9, 20, 0.4)'
+                      : undefined,
+                  }}
                 >
                   <Box
                     data-style="getCardImageSx"
                     sx={getCardImageSx(isDir, item.thumbnail)}
                   >
+                    {/* Multi-selection Checkbox */}
+                    {(isSelectMode || selectedPaths.size > 0 || isSelected) && (
+                      <IconButton
+                        size="small"
+                        onClick={(e) => toggleSelectItem(item.path, e)}
+                        sx={{
+                          position: 'absolute',
+                          top: 8,
+                          left: isDir ? 44 : 8,
+                          zIndex: 5,
+                          bgcolor: isSelected ? 'var(--localflix-red)' : 'rgba(0,0,0,0.65)',
+                          color: '#fff',
+                          p: 0.5,
+                          border: isSelected ? 'none' : '1px solid rgba(255,255,255,0.3)',
+                          '&:hover': {
+                            bgcolor: isSelected ? 'var(--localflix-dark-red)' : 'rgba(0,0,0,0.85)',
+                          },
+                        }}
+                      >
+                        {isSelected ? <CheckBox sx={{ fontSize: 20 }} /> : <CheckBoxOutlineBlank sx={{ fontSize: 20 }} />}
+                      </IconButton>
+                    )}
                     {item.thumbnail ? (
                       !isDir && (
                         <Box
@@ -824,6 +949,43 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
             Remove Thumbnail
           </MenuItem>
         )}
+        <MenuItem
+          onClick={() => {
+            if (menuItem) setRenameTargetItem(menuItem);
+            handleCloseMenu();
+          }}
+        >
+          <DriveFileRenameOutline fontSize="small" sx={{ mr: 1, color: 'var(--text-secondary)' }} /> Rename
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            if (menuItem) setMoveTargetItem(menuItem);
+            handleCloseMenu();
+          }}
+        >
+          <DriveFileMove fontSize="small" sx={{ mr: 1, color: 'var(--text-secondary)' }} /> Move to...
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            if (menuItem) setDeleteTargetItem(menuItem);
+            handleCloseMenu();
+          }}
+          sx={{ color: 'var(--localflix-red)' }}
+        >
+          <DeleteOutline fontSize="small" sx={{ mr: 1, color: 'var(--localflix-red)' }} /> Delete
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            if (menuItem) {
+              toggleSelectItem(menuItem.path);
+              setIsSelectMode(true);
+            }
+            handleCloseMenu();
+          }}
+        >
+          <Checklist fontSize="small" sx={{ mr: 1, color: 'var(--text-secondary)' }} />
+          {menuItem && selectedPaths.has(menuItem.path) ? "Deselect Item" : "Select Item"}
+        </MenuItem>
       </Menu>
 
       {/* Pin Title Customization Dialog */}
@@ -1013,16 +1175,120 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
       </Dialog>
       {/* Convert Dialog */}
       <ConvertDialog
-        open={Boolean(convertDialogItem) || batchConvertOpen}
+        open={Boolean(convertDialogItem) || batchConvertOpen || selectedBatchConvertOpen}
         item={convertDialogItem}
-        batchItems={batchConvertOpen ? convertibleItems : undefined}
+        batchItems={
+          selectedBatchConvertOpen
+            ? selectedConvertibleItems
+            : batchConvertOpen
+            ? convertibleItems
+            : undefined
+        }
         onClose={() => {
           setConvertDialogItem(null);
           setBatchConvertOpen(false);
+          setSelectedBatchConvertOpen(false);
         }}
         onStartConvert={handleStartConvert}
-        onStartBatchConvert={handleStartBatchConvert}
+        onStartBatchConvert={(itemsToConvert, audio, sub, burn) => {
+          handleStartBatchConvert(itemsToConvert, audio, sub, burn);
+          if (selectedBatchConvertOpen) {
+            handleClearSelection();
+          }
+        }}
       />
+
+      {/* Multi-selection Floating Action Bar */}
+      {selectedPaths.size > 0 && (
+        <Box
+          sx={{
+            position: 'fixed',
+            bottom: 30,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 1200,
+            bgcolor: 'rgba(20, 20, 20, 0.95)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid var(--localflix-red)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.7)',
+            borderRadius: 3,
+            px: 3,
+            py: 1.5,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+          }}
+        >
+          <Typography variant="body2" sx={{ color: '#fff', fontWeight: 700 }}>
+            {selectedPaths.size} {selectedPaths.size === 1 ? 'item' : 'items'} selected
+          </Typography>
+          <Button
+            size="small"
+            onClick={handleSelectAllVideos}
+            sx={{ color: 'var(--text-secondary)', textTransform: 'none', '&:hover': { color: '#fff' } }}
+          >
+            All Videos
+          </Button>
+          <Button
+            size="small"
+            onClick={handleSelectAll}
+            sx={{ color: 'var(--text-secondary)', textTransform: 'none', '&:hover': { color: '#fff' } }}
+          >
+            All Items
+          </Button>
+          {selectedConvertibleItems.length > 0 && (
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<VideoLibrary />}
+              onClick={() => setSelectedBatchConvertOpen(true)}
+              sx={{
+                bgcolor: 'rgba(229, 9, 20, 0.25)',
+                color: '#fff',
+                border: '1px solid rgba(229, 9, 20, 0.6)',
+                textTransform: 'none',
+                fontWeight: 600,
+                '&:hover': { bgcolor: 'rgba(229, 9, 20, 0.45)' },
+              }}
+            >
+              Convert ({selectedConvertibleItems.length})
+            </Button>
+          )}
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<DriveFileMove />}
+            onClick={() => setBulkMoveOpen(true)}
+            sx={{
+              bgcolor: '#333',
+              color: '#fff',
+              textTransform: 'none',
+              fontWeight: 600,
+              '&:hover': { bgcolor: '#444' },
+            }}
+          >
+            Move ({selectedPaths.size})
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<DeleteOutline />}
+            onClick={() => setBulkDeleteOpen(true)}
+            sx={{
+              bgcolor: 'var(--localflix-red)',
+              color: '#fff',
+              textTransform: 'none',
+              fontWeight: 600,
+              '&:hover': { bgcolor: 'var(--localflix-dark-red)' },
+            }}
+          >
+            Delete ({selectedPaths.size})
+          </Button>
+          <IconButton size="small" onClick={handleClearSelection} sx={{ color: 'var(--text-secondary)', '&:hover': { color: '#fff' } }}>
+            <Clear fontSize="small" />
+          </IconButton>
+        </Box>
+      )}
 
       {/* Conversion Progress Floating Portal */}
       <ConversionProgressPortal
@@ -1036,6 +1302,50 @@ export const WebExplorerView: React.FC<ExplorerViewProps> = ({
             delete next[pathKey];
             return next;
           });
+        }}
+      />
+
+      {/* File Management Action Dialogs */}
+      <DeleteConfirmDialog
+        open={Boolean(deleteTargetItem) || bulkDeleteOpen}
+        item={deleteTargetItem}
+        items={bulkDeleteOpen ? selectedItemsList : undefined}
+        onClose={() => {
+          setDeleteTargetItem(null);
+          setBulkDeleteOpen(false);
+        }}
+        onSuccess={() => {
+          const count = bulkDeleteOpen ? selectedItemsList.length : 1;
+          setToastMessage(count > 1 ? `Deleted ${count} items successfully` : "Deleted successfully");
+          setTimeout(() => setToastMessage(null), 3500);
+          handleClearSelection();
+          loadDirectory(currentPath);
+        }}
+      />
+      <RenameDialog
+        open={Boolean(renameTargetItem)}
+        item={renameTargetItem}
+        onClose={() => setRenameTargetItem(null)}
+        onSuccess={() => {
+          setToastMessage("Renamed successfully");
+          setTimeout(() => setToastMessage(null), 3500);
+          loadDirectory(currentPath);
+        }}
+      />
+      <MoveDialog
+        open={Boolean(moveTargetItem) || bulkMoveOpen}
+        item={moveTargetItem}
+        items={bulkMoveOpen ? selectedItemsList : undefined}
+        onClose={() => {
+          setMoveTargetItem(null);
+          setBulkMoveOpen(false);
+        }}
+        onSuccess={() => {
+          const count = bulkMoveOpen ? selectedItemsList.length : 1;
+          setToastMessage(count > 1 ? `Moved ${count} items successfully` : "Moved successfully");
+          setTimeout(() => setToastMessage(null), 3500);
+          handleClearSelection();
+          loadDirectory(currentPath);
         }}
       />
 

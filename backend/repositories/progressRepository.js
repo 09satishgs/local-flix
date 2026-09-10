@@ -25,6 +25,22 @@ async function deleteProgress(profileId, filepath) {
   );
 }
 
+async function deleteProgressByPath(filepath) {
+  const db = getDb();
+  return db.run(
+    "DELETE FROM playback_progress WHERE filepath = ?",
+    [filepath]
+  );
+}
+
+async function updateFilePath(oldPath, newPath) {
+  const db = getDb();
+  return db.run(
+    "UPDATE playback_progress SET filepath = ? WHERE filepath = ?",
+    [newPath, oldPath]
+  );
+}
+
 async function getContinueWatchingList(profileId) {
   const db = getDb();
   return db.all(
@@ -41,5 +57,7 @@ module.exports = {
   getProgress,
   upsertProgress,
   deleteProgress,
+  deleteProgressByPath,
+  updateFilePath,
   getContinueWatchingList,
 };

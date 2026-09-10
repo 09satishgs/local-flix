@@ -29,6 +29,10 @@ app.get(
   verifyProfile,
   explorerController.getDirectoryContents,
 );
+app.get("/api/explorer/folders", verifyProfile, explorerController.getFolders);
+app.post("/api/explorer/delete", verifyProfile, explorerController.deleteItem);
+app.post("/api/explorer/rename", verifyProfile, explorerController.renameItem);
+app.post("/api/explorer/move", verifyProfile, explorerController.moveItem);
 app.get("/api/explorer/pins", verifyProfile, explorerController.getPins);
 app.post("/api/explorer/pin", verifyProfile, explorerController.pinFolder);
 app.post("/api/explorer/unpin", verifyProfile, explorerController.unpinFolder);

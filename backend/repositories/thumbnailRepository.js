@@ -24,8 +24,26 @@ async function deleteThumbnail(profileId, folderPath) {
   );
 }
 
+async function deleteThumbnailByPath(folderPath) {
+  const db = getDb();
+  return db.run(
+    "DELETE FROM folder_thumbnails WHERE path = ?",
+    [folderPath]
+  );
+}
+
+async function updateFolderPath(oldPath, newPath) {
+  const db = getDb();
+  return db.run(
+    "UPDATE folder_thumbnails SET path = ? WHERE path = ?",
+    [newPath, oldPath]
+  );
+}
+
 module.exports = {
   getThumbnails,
   setThumbnail,
   deleteThumbnail,
+  deleteThumbnailByPath,
+  updateFolderPath,
 };

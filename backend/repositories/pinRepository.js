@@ -24,6 +24,22 @@ async function unpinFolder(profileId, folderPath) {
   );
 }
 
+async function deletePinByPath(folderPath) {
+  const db = getDb();
+  return db.run(
+    "DELETE FROM pinned_folders WHERE path = ?",
+    [folderPath]
+  );
+}
+
+async function updateFolderPath(oldPath, newPath) {
+  const db = getDb();
+  return db.run(
+    "UPDATE pinned_folders SET path = ? WHERE path = ?",
+    [newPath, oldPath]
+  );
+}
+
 async function isFolderPinned(profileId, folderPath) {
   const db = getDb();
   const record = await db.get(
@@ -37,5 +53,7 @@ module.exports = {
   getPins,
   pinFolder,
   unpinFolder,
+  deletePinByPath,
+  updateFolderPath,
   isFolderPinned,
 };

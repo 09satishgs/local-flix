@@ -52,9 +52,27 @@ async function deleteHistoryEntry(profileId, id) {
   );
 }
 
+async function deleteHistoryByPath(filepath) {
+  const db = getDb();
+  return db.run(
+    "DELETE FROM watch_history WHERE filepath = ?",
+    [filepath]
+  );
+}
+
+async function updateFilePath(oldPath, newPath) {
+  const db = getDb();
+  return db.run(
+    "UPDATE watch_history SET filepath = ? WHERE filepath = ?",
+    [newPath, oldPath]
+  );
+}
+
 module.exports = {
   getWatchHistory,
   upsertHistoryEntry,
   getLastHistoryEntry,
   deleteHistoryEntry,
+  deleteHistoryByPath,
+  updateFilePath,
 };
